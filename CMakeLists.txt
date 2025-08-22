@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.31)
-project(MyRTOSC)
+project(MyRTOS C)
 
 set(CMAKE_C_STANDARD 11)
 set(C_STANDARD 89)
