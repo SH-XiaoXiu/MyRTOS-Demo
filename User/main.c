@@ -78,13 +78,20 @@ void c_task(void *param) {
         printf("任务 C 正在运行,第 %d 次\n", index);
         Mutex_Unlock(&print_lock);
         Task_Delay(2000);
+        if (index == 30) {
+            printf("任务 C 将删除 任务 B\n");
+            Task_Delete(b_task_h);
+        }
+        if (index == 60) {
+            printf("任务 C 将删除 任务 C\n");
+            Task_Delete(c_task_h);
+        }
     }
 }
 
 
 void sys_config() {
     lib_usart0_init();
-    // 初始化互斥锁
     Mutex_Init(&print_lock);
 }
 
@@ -109,6 +116,7 @@ int main(void) {
     printf("|  Version: 0.0             \n");
     printf("|  MCU: GD32                \n");
     printf("==================================\n");
+    // MyRTOS_Init();
     a_task_h = Task_Create(a_task, NULL);
     b_task_h = Task_Create(b_task, NULL);
     c_task_h = Task_Create(c_task, NULL);
