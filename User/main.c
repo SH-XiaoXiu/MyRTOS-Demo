@@ -10,6 +10,10 @@
 
 Mutex_t print_lock;
 
+Task_t *a_task_h;
+Task_t *b_task_h;
+Task_t *c_task_h;
+
 void a_task(void *param) {
     static uint8_t i = 0;
     Mutex_Lock(&print_lock); //为了启动时打印混乱 加锁
@@ -23,7 +27,7 @@ void a_task(void *param) {
             if (i == 5) {
                 i = 0;
                 printf("任务 A 唤醒 任务 B, 并开始等待 任务 B 的唤醒\n");
-                Task_Notify(B_TASK);
+                Task_Notify(b_task_h->taskId);
                 break;
             }
             Task_Delay(1000); //1s
@@ -45,7 +49,7 @@ void b_task(void *param) {
             if (i == 3) {
                 i = 0;
                 printf("任务 B 唤醒 任务 A, 并开始等待 任务 A 的唤醒\n");
-                Task_Notify(A_TASK);
+                Task_Notify(a_task_h->taskId);
                 break;
             }
             Task_Delay(1000); //1s
@@ -59,7 +63,7 @@ void c_task(void *param) {
     printf("任务 C 启动\n");
     printf("任务 C 唤醒 任务 A\n");
     Mutex_Unlock(&print_lock);
-    Task_Notify(A_TASK);
+    Task_Notify(a_task_h->taskId);
     while (1) {
         index++;
         printf("任务 C 正在运行,第 %d 次\n", index);
@@ -95,9 +99,9 @@ int main(void) {
     printf("|  Version: 0.0             \n");
     printf("|  MCU: GD32                \n");
     printf("==================================\n");
-    Task_Create(A_TASK, a_task, NULL);
-    Task_Create(B_TASK, b_task, NULL);
-    Task_Create(C_TASK, c_task, NULL);
+    a_task_h = Task_Create(a_task, NULL);
+    b_task_h = Task_Create(b_task, NULL);
+    c_task_h = Task_Create(c_task, NULL);
     printf("System Starting...\n");
     Task_StartScheduler();
     while (1) {

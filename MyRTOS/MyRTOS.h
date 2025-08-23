@@ -26,14 +26,18 @@ typedef enum {
 } TaskState_t;
 
 // 任务控制块 (TCB)
-typedef struct {
-    void *sp; // 任务栈顶指针 (必须是第一个成员，方便汇编)
-    TaskState_t state; // 任务当前状态
-    void (*func)(void *); // 任务函数指针
-    void *param; // 任务函数参数
-    uint32_t delay; // 延时节拍数
-    uint32_t notification; //通知值 -保留字段
-    int is_waiting_notification; // 标记是否在等待通知
+//为了保持汇编代码的兼容性 sp 必须是结构体的第一个成员
+typedef struct Task_t {
+    void *sp;                        // 栈指针 (Stack Pointer)
+    void (*func)(void *);            // 任务函数指针
+    void *param;                     // 任务参数
+    volatile uint32_t delay;         // 任务延时节拍数
+    volatile TaskState_t state;      // 任务状态
+    uint32_t notification;           // 任务通知值
+    uint8_t is_waiting_notification; // 是否在等待通知的标志
+    uint32_t taskId;                 // 任务ID
+    uint32_t *stack_base;            // 栈的基地址，用于释放内存
+    struct Task_t *next;             // 指向下一个任务的指针
 } Task_t;
 
 // 互斥锁结构体
@@ -43,7 +47,9 @@ typedef struct {
     volatile uint32_t waiting_mask; // 等待该锁的任务掩码 (假设 MAX_TASKS <= 32)
 } Mutex_t;
 
-int Task_Create(uint32_t taskId, void (*func)(void *), void *param);
+Task_t* Task_Create(void (*func)(void *), void *param);
+
+int Task_Delete(const Task_t *task_h);
 
 void Task_StartScheduler(void);
 
