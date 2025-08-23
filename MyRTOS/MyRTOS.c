@@ -313,6 +313,8 @@ int Task_Delete(const Task_t *task_h) {
     uint32_t primask_status;
     int trigger_yield = 0; // 是否需要在函数末尾触发调度的标志
     MY_RTOS_ENTER_CRITICAL(primask_status);
+    //修改任务状态
+    task_to_delete->state = TASK_STATE_UNUSED;
     //自动释放任务持有的所有互斥锁，防止死锁
     Mutex_t *p_mutex = task_to_delete->held_mutexes_head;
     while (p_mutex != NULL) {
