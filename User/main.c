@@ -30,7 +30,7 @@ void a_task(void *param) {
         while (1) {
             i++;
             Mutex_Lock(&print_lock);
-            printf("A 任务正在运行,第 %d 次\n", i);
+            printf("任务 A 正在运行,第 %d 次\n", i);
             Mutex_Unlock(&print_lock);
             if (i == 5) {
                 i = 0;
@@ -55,7 +55,7 @@ void b_task(void *param) {
         Task_Wait();
         while (1) {
             Mutex_Lock(&print_lock);\
-            printf("B 任务正在运行,第 %d 次\n", i);
+            printf("任务 B 正在运行,第 %d 次\n", i);
             Mutex_Unlock(&print_lock);
             i++;
             if (i == 3) {
@@ -83,7 +83,7 @@ void c_task(void *param) {
         Mutex_Unlock(&print_lock);
         if (index == 5) {
             index = 0;
-            printf("任务 C 删除自己\n");
+            printf("任务 C 删除 任务 C\n");
             Task_Delete(c_task_h);
         }
         Task_Delay(1000);
@@ -99,7 +99,7 @@ void d_task(void *param) {
         if (c_task_h == NULL || c_task_h->state == TASK_STATE_UNUSED) {
             index++;
             if (index == 5) {
-                printf("任务 D 将创建任务 C\n");
+                printf("任务 D 将 创建 任务 C\n");
                 c_task_h = Task_Create(c_task, NULL);
                 index = 0;
             }
