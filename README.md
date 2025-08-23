@@ -72,8 +72,8 @@ void a_task(void *param) {
   <li>无时间片抢占</li>
 </ul>
 
-<h2>示例输出</h2>
-![示例输出](./assets/usart_log.png)
+**<h2>示例输出</h2>**
+![示例输出](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/usart_log.png)
 
 <h2>参考</h2>
 <ul>
