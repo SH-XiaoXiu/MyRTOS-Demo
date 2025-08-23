@@ -9,7 +9,7 @@
 
 
 // 调试输出开关
-#define DEBUG_PRINT 0  // 设置为1开启调试输出,0关闭
+#define DEBUG_PRINT 1  // 设置为1开启调试输出,0关闭
 //调试输出函数
 #if DEBUG_PRINT
 #include <stdio.h>
@@ -26,6 +26,18 @@ typedef enum {
     TASK_STATE_BLOCKED // 任务因等待资源（如互斥锁、通知）而阻塞
 } TaskState_t;
 
+
+struct Task_t;
+
+// 互斥锁结构体
+typedef struct Mutex_t {
+    volatile int locked;
+    volatile uint32_t owner;
+    volatile uint32_t waiting_mask;
+    struct Task_t* owner_tcb;
+    struct Mutex_t* next_held_mutex;
+} Mutex_t;
+
 // 任务控制块 (TCB)
 //为了保持汇编代码的兼容性 sp 必须是结构体的第一个成员
 typedef struct Task_t {
@@ -39,14 +51,10 @@ typedef struct Task_t {
     uint32_t taskId; // 任务ID
     uint32_t *stack_base; // 栈的基地址，用于释放内存
     struct Task_t *next; // 指向下一个任务的指针
+    Mutex_t* held_mutexes_head;
 } Task_t;
 
-// 互斥锁结构体
-typedef struct {
-    volatile int locked; // 锁状态
-    volatile uint32_t owner; // 当前持有锁的任务ID
-    volatile uint32_t waiting_mask; // 等待该锁的任务掩码 (假设 MAX_TASKS <= 32)
-} Mutex_t;
+
 
 
 
@@ -88,6 +96,8 @@ do {                                     \
 SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; \
 __ISB();                             \
 } while(0)
+
+void MyRTOS_Init(void);
 
 Task_t *Task_Create(void (*func)(void *), void *param);
 
