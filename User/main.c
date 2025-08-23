@@ -22,11 +22,15 @@ void a_task(void *param) {
     while (1) {
         Task_Wait();
         while (1) {
+            Mutex_Lock(&print_lock);
             printf("A 任务正在运行,第 %d 次\n", i);
+            Mutex_Unlock(&print_lock);
             i++;
             if (i == 5) {
                 i = 0;
+                Mutex_Lock(&print_lock);
                 printf("任务 A 唤醒 任务 B, 并开始等待 任务 B 的唤醒\n");
+                Mutex_Unlock(&print_lock);
                 Task_Notify(b_task_h->taskId);
                 break;
             }
@@ -44,11 +48,15 @@ void b_task(void *param) {
     while (1) {
         Task_Wait();
         while (1) {
+            Mutex_Lock(&print_lock);\
             printf("B 任务正在运行,第 %d 次\n", i);
+            Mutex_Unlock(&print_lock);
             i++;
             if (i == 3) {
                 i = 0;
+                Mutex_Lock(&print_lock);
                 printf("任务 B 唤醒 任务 A, 并开始等待 任务 A 的唤醒\n");
+                Mutex_Unlock(&print_lock);
                 Task_Notify(a_task_h->taskId);
                 break;
             }
@@ -66,7 +74,9 @@ void c_task(void *param) {
     Task_Notify(a_task_h->taskId);
     while (1) {
         index++;
+        Mutex_Lock(&print_lock);
         printf("任务 C 正在运行,第 %d 次\n", index);
+        Mutex_Unlock(&print_lock);
         Task_Delay(2000);
     }
 }

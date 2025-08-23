@@ -5,7 +5,6 @@
 #include "MyRTOS.h"
 
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -156,8 +155,8 @@ Task_t *Task_Create(void (*func)(void *), void *param) {
     t->sp = stk;
 
     //将新任务添加到链表末尾
-    uint32_t primask = __get_PRIMASK();
-    __disable_irq();
+    uint32_t primask_status;
+    MY_RTOS_ENTER_CRITICAL(primask_status);
     if (taskListHead == NULL) {
         taskListHead = t;
     } else {
@@ -167,7 +166,7 @@ Task_t *Task_Create(void (*func)(void *), void *param) {
         }
         p->next = t;
     }
-    __set_PRIMASK(primask);
+    MY_RTOS_EXIT_CRITICAL(primask_status);
 
     DBG_PRINTF("Task %ld created. Stack top: %p, Initial SP: %p\n", t->taskId, &stack[STACK_SIZE - 1], t->sp);
     return t; // 创建成功, 返回任务句柄
@@ -176,8 +175,8 @@ Task_t *Task_Create(void (*func)(void *), void *param) {
 int Task_Delete(const Task_t *task_h) {
     if (task_h == NULL) return -1;
 
-    uint32_t primask = __get_PRIMASK();
-    __disable_irq();
+    uint32_t primask_status;
+    MY_RTOS_ENTER_CRITICAL(primask_status);
 
     //从链表中移除任务
     Task_t *prev = NULL;
@@ -190,7 +189,7 @@ int Task_Delete(const Task_t *task_h) {
 
     if (curr == NULL) {
         // 任务不在链表中
-        __set_PRIMASK(primask);
+        MY_RTOS_EXIT_CRITICAL(primask_status);
         return -2;
     }
 
@@ -207,10 +206,10 @@ int Task_Delete(const Task_t *task_h) {
     //如果删除的是当前任务，立即触发调度
     if (curr == currentTask) {
         currentTask = NULL; // 防止悬空指针
-        SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+        MY_RTOS_YIELD();
     }
 
-    __set_PRIMASK(primask);
+    MY_RTOS_EXIT_CRITICAL(primask_status);
     DBG_PRINTF("Task %d deleted (memory not reclaimed).\n", task_h->taskId);
     return 0;
 }
@@ -218,14 +217,14 @@ int Task_Delete(const Task_t *task_h) {
 
 void Task_Delay(uint32_t tick) {
     if (tick == 0) return;
-    uint32_t primask = __get_PRIMASK();
-    __disable_irq();
+    uint32_t primask_status;
+    MY_RTOS_ENTER_CRITICAL(primask_status);
 
     currentTask->delay = tick;
     currentTask->state = TASK_STATE_DELAYED;
-    SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; // 触发调度
+    MY_RTOS_YIELD();
 
-    __set_PRIMASK(primask);
+    MY_RTOS_EXIT_CRITICAL(primask_status);
     __ISB();
 }
 
@@ -268,8 +267,8 @@ void *schedule_next_task(void) {
 
 
 void SysTick_Handler(void) {
-    uint32_t ulPreviousMask = __get_PRIMASK();
-    __disable_irq();
+    uint32_t primask_status;
+    MY_RTOS_ENTER_CRITICAL(primask_status);
 
     Task_t *p = taskListHead;
     while (p != NULL) {
@@ -287,8 +286,8 @@ void SysTick_Handler(void) {
     }
 
     // 手动触发PendSV进行调度，让就绪任务有机会被调用
-    SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
-    __set_PRIMASK(ulPreviousMask);
+    MY_RTOS_YIELD();
+    MY_RTOS_EXIT_CRITICAL(primask_status);
 }
 
 __attribute__((naked)) void PendSV_Handler(void) {
@@ -397,26 +396,22 @@ void Mutex_Init(Mutex_t *mutex) {
 }
 
 void Mutex_Lock(Mutex_t *mutex) {
-    uint32_t primask;
-    primask = __get_PRIMASK();
-    __disable_irq(); //这边就是进入临界区
-
+    uint32_t primask_status;
+    MY_RTOS_ENTER_CRITICAL(primask_status);
     while (mutex->locked && mutex->owner != currentTask->taskId) {
         // 锁被其他任务持有，当前任务需要等待
-        // 警告: 如果任务ID超过31，位掩码会失效。这里假设任务数量不多。
+        // 如果任务ID超过31，位掩码会失效。这里假设任务数量不多。
         if (currentTask->taskId < 32) {
             mutex->waiting_mask |= (1 << currentTask->taskId);
         }
         currentTask->state = TASK_STATE_BLOCKED; // 标记为阻塞
 
-        __set_PRIMASK(primask); // 允许中断以进行调度
+        MY_RTOS_EXIT_CRITICAL(primask_status);
         SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
         __ISB();
         __WFI(); // 等待被唤醒
-
         // 唤醒后，重新关闭中断并再次检查锁
-        primask = __get_PRIMASK();
-        __disable_irq();
+        MY_RTOS_ENTER_CRITICAL(primask_status);
     }
 
     // 获取锁成功
@@ -425,13 +420,12 @@ void Mutex_Lock(Mutex_t *mutex) {
     if (currentTask->taskId < 32) {
         mutex->waiting_mask &= ~(1 << currentTask->taskId); // 从等待掩码中移除自己
     }
-    __set_PRIMASK(primask); // 退出临界区
+    MY_RTOS_EXIT_CRITICAL(primask_status);
 }
 
 void Mutex_Unlock(Mutex_t *mutex) {
-    uint32_t primask = __get_PRIMASK();
-    __disable_irq();
-
+    uint32_t primask_status;
+    MY_RTOS_ENTER_CRITICAL(primask_status);
     if (mutex->locked && mutex->owner == currentTask->taskId) {
         mutex->locked = 0;
         mutex->owner = (uint32_t) -1;
@@ -447,12 +441,11 @@ void Mutex_Unlock(Mutex_t *mutex) {
                 }
                 p = p->next;
             }
-            // 触发调度
-            SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+            MY_RTOS_YIELD();
         }
     }
 
-    __set_PRIMASK(primask);
+    MY_RTOS_EXIT_CRITICAL(primask_status);
 }
 
 //======================挂起 通知==================
@@ -463,25 +456,24 @@ int Task_Notify(uint32_t task_id) {
         return -1; // 无效ID
     }
 
-    uint32_t primask = __get_PRIMASK();
-    __disable_irq();
+    uint32_t primask_status;
+    MY_RTOS_ENTER_CRITICAL(primask_status);
 
     if (task_to_notify->is_waiting_notification && task_to_notify->state == TASK_STATE_BLOCKED) {
         task_to_notify->is_waiting_notification = 0;
         task_to_notify->state = TASK_STATE_READY; // 唤醒
-        //手动触发,通知能更快处理
-        SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+        MY_RTOS_YIELD();
     }
-    __set_PRIMASK(primask);
+    MY_RTOS_EXIT_CRITICAL(primask_status);
     return 0;
 }
 
 void Task_Wait(void) {
-    uint32_t primask = __get_PRIMASK();
-    __disable_irq();
+    uint32_t primask_status;
+    MY_RTOS_ENTER_CRITICAL(primask_status);
     currentTask->is_waiting_notification = 1;
     currentTask->state = TASK_STATE_BLOCKED; // 设置为阻塞
-    __set_PRIMASK(primask);
-    SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; // 触发调度
+    MY_RTOS_EXIT_CRITICAL(primask_status);
+    MY_RTOS_YIELD();
     __ISB();
 }

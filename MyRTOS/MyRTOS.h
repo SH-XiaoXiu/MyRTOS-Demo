@@ -12,7 +12,8 @@
 #define DEBUG_PRINT 0  // 设置为1开启调试输出,0关闭
 //调试输出函数
 #if DEBUG_PRINT
-#define DBG_PRINTF(...) printf(__VA_ARGS__)	
+#include <stdio.h>
+#define DBG_PRINTF(...) printf(__VA_ARGS__)
 #else
 #define DBG_PRINTF(...)
 #endif
@@ -28,16 +29,16 @@ typedef enum {
 // 任务控制块 (TCB)
 //为了保持汇编代码的兼容性 sp 必须是结构体的第一个成员
 typedef struct Task_t {
-    void *sp;                        // 栈指针 (Stack Pointer)
-    void (*func)(void *);            // 任务函数指针
-    void *param;                     // 任务参数
-    volatile uint32_t delay;         // 任务延时节拍数
-    volatile TaskState_t state;      // 任务状态
-    uint32_t notification;           // 任务通知值
+    void *sp; // 栈指针 (Stack Pointer)
+    void (*func)(void *); // 任务函数指针
+    void *param; // 任务参数
+    volatile uint32_t delay; // 任务延时节拍数
+    volatile TaskState_t state; // 任务状态
+    uint32_t notification; // 任务通知值
     uint8_t is_waiting_notification; // 是否在等待通知的标志
-    uint32_t taskId;                 // 任务ID
-    uint32_t *stack_base;            // 栈的基地址，用于释放内存
-    struct Task_t *next;             // 指向下一个任务的指针
+    uint32_t taskId; // 任务ID
+    uint32_t *stack_base; // 栈的基地址，用于释放内存
+    struct Task_t *next; // 指向下一个任务的指针
 } Task_t;
 
 // 互斥锁结构体
@@ -47,7 +48,48 @@ typedef struct {
     volatile uint32_t waiting_mask; // 等待该锁的任务掩码 (假设 MAX_TASKS <= 32)
 } Mutex_t;
 
-Task_t* Task_Create(void (*func)(void *), void *param);
+
+
+/**
+ * @brief 进入临界区
+ *
+ * 该宏会保存当前的中断状态（PRIMASK寄存器），然后禁用所有可屏蔽中断。
+ * 必须与 MY_RTOS_EXIT_CRITICAL 成对使用。
+ *
+ * @param status_var 一个 uint32_t 类型的局部变量，用于保存中断状态。
+ */
+#define MY_RTOS_ENTER_CRITICAL(status_var)   \
+do {                                     \
+(status_var) = __get_PRIMASK();      \
+__disable_irq();                     \
+} while(0)
+
+/**
+ * @brief 退出临界区
+ *
+ * 该宏会恢复由 MY_RTOS_ENTER_CRITICAL 保存的中断状态。
+ *
+ * @param status_var 之前用于保存中断状态的同一个变量。
+ */
+#define MY_RTOS_EXIT_CRITICAL(status_var)       \
+do {                                            \
+__set_PRIMASK(status_var);                      \
+} while(0)
+
+
+/**
+ * @brief 手动触发任务调度
+ *
+ * 该宏会挂起 PendSV 中断，请求调度器在适当的时候（通常是所有其他中断处理完毕后）
+ * 进行一次任务上下文切换, j就是任务让步
+ */
+#define MY_RTOS_YIELD()                      \
+do {                                     \
+SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; \
+__ISB();                             \
+} while(0)
+
+Task_t *Task_Create(void (*func)(void *), void *param);
 
 int Task_Delete(const Task_t *task_h);
 
