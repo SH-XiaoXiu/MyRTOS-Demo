@@ -38,11 +38,12 @@
 /* 内存块的头部结构，用于构建空闲内存块链表 */
 typedef struct BlockLink_t {
     struct BlockLink_t *pxNextFreeBlock; /* 指向链表中下一个空闲内存块 */
-    size_t xBlockSize;                   /* 当前内存块的大小(包含头部), 最高位用作分配标记 */
+    size_t xBlockSize; /* 当前内存块的大小(包含头部), 最高位用作分配标记 */
 } BlockLink_t;
 
 /* 内存块头部结构的大小 (已对齐) */
-static const size_t xHeapStructSize = (sizeof(BlockLink_t) + (HEAP_BYTE_ALIGNMENT - 1)) & ~((size_t) HEAP_BYTE_ALIGNMENT - 1);
+static const size_t xHeapStructSize = (sizeof(BlockLink_t) + (HEAP_BYTE_ALIGNMENT - 1)) & ~(
+                                          (size_t) HEAP_BYTE_ALIGNMENT - 1);
 /* 最小内存块大小，一个块必须能容纳分裂后的两个头部 */
 #define HEAP_MINIMUM_BLOCK_SIZE    (xHeapStructSize * 2)
 
@@ -89,24 +90,36 @@ static void prvInsertBlockIntoFreeList(BlockLink_t *pxBlockToInsert) {
     BlockLink_t *pxIterator;
     uint8_t *puc;
 
-    for (pxIterator = &xStart; pxIterator->pxNextFreeBlock < pxBlockToInsert; pxIterator = pxIterator->pxNextFreeBlock) {}
-
-    puc = (uint8_t *) pxIterator;
-    if ((puc + pxIterator->xBlockSize) == (uint8_t *) pxBlockToInsert) {
-        pxIterator->xBlockSize += pxBlockToInsert->xBlockSize;
-        pxBlockToInsert = pxIterator;
+    /* 遍历链表，找到可以插入新释放块的位置 (按地址排序) */
+    for (pxIterator = &xStart; pxIterator->pxNextFreeBlock < pxBlockToInsert;
+         pxIterator = pxIterator->pxNextFreeBlock) {
+        /* 什么都不用做，只是找到位置 */
     }
 
+    /* 看看新块是否与迭代器指向的块在物理上相邻 */
+    puc = (uint8_t *) pxIterator;
+    if ((puc + pxIterator->xBlockSize) == (uint8_t *) pxBlockToInsert) {
+        /* 相邻，合并它们 */
+        pxIterator->xBlockSize += pxBlockToInsert->xBlockSize;
+        /* 合并后，新块就是迭代器指向的块了 */
+        pxBlockToInsert = pxIterator;
+    } else {
+        /* 不相邻，将新块链接到迭代器后面 */
+        pxBlockToInsert->pxNextFreeBlock = pxIterator->pxNextFreeBlock;
+    }
+
+    /* 看看新块是否与后面的块相邻 */
     puc = (uint8_t *) pxBlockToInsert;
     if ((puc + pxBlockToInsert->xBlockSize) == (uint8_t *) pxIterator->pxNextFreeBlock) {
         if (pxIterator->pxNextFreeBlock != pxEnd) {
+            /* 相邻，合并它们 */
             pxBlockToInsert->xBlockSize += pxIterator->pxNextFreeBlock->xBlockSize;
             pxBlockToInsert->pxNextFreeBlock = pxIterator->pxNextFreeBlock->pxNextFreeBlock;
         }
     }
 
+    /* 如果第一步没有合并，那么迭代器的下一个节点需要指向新块 */
     if (pxIterator != pxBlockToInsert) {
-        pxBlockToInsert->pxNextFreeBlock = pxIterator->pxNextFreeBlock;
         pxIterator->pxNextFreeBlock = pxBlockToInsert;
     }
 }
@@ -117,8 +130,7 @@ void *rtos_malloc(size_t xWantedSize) {
     void *pvReturn = NULL;
     uint32_t primask_status;
 
-    MY_RTOS_ENTER_CRITICAL(primask_status);
-    {
+    MY_RTOS_ENTER_CRITICAL(primask_status); {
         if (pxEnd == NULL) {
             prvHeapInit();
         }
@@ -126,7 +138,7 @@ void *rtos_malloc(size_t xWantedSize) {
         if ((xWantedSize > 0) && ((xWantedSize & xBlockAllocatedBit) == 0)) {
             size_t xTotalSize = xHeapStructSize + xWantedSize;
             if ((xTotalSize & (HEAP_BYTE_ALIGNMENT - 1)) != 0) {
-                 xTotalSize += (HEAP_BYTE_ALIGNMENT - (xTotalSize & (HEAP_BYTE_ALIGNMENT - 1)));
+                xTotalSize += (HEAP_BYTE_ALIGNMENT - (xTotalSize & (HEAP_BYTE_ALIGNMENT - 1)));
             }
 
             if (xTotalSize <= xFreeBytesRemaining) {
@@ -173,8 +185,7 @@ void rtos_free(void *pv) {
 
     if (((pxLink->xBlockSize & xBlockAllocatedBit) != 0) && (pxLink->pxNextFreeBlock == NULL)) {
         pxLink->xBlockSize &= ~xBlockAllocatedBit;
-        MY_RTOS_ENTER_CRITICAL(primask_status);
-        {
+        MY_RTOS_ENTER_CRITICAL(primask_status); {
             xFreeBytesRemaining += pxLink->xBlockSize;
             prvInsertBlockIntoFreeList(pxLink);
         }
@@ -248,32 +259,32 @@ Task_t *Task_Create(void (*func)(void *), void *param) {
     t->stack_base = stack; // 保存栈基地址，用于后续释放
     t->next = NULL;
 
-    uint32_t *stack_top = stack + STACK_SIZE;
-    stack_top = (uint32_t *) ((uintptr_t) stack_top & ~0x7UL);
+    uint32_t *sp = stack + STACK_SIZE;
+    sp = (uint32_t *) (((uintptr_t) sp) & ~0x7u); // 8 字节对齐
 
-    /* --- 硬件自动保存的栈帧 (8 个 u32) --- */
-    stack_top -= 8;
-    stack_top[7] = 0x01000000; // xPSR (Thumb state)
-    stack_top[6] = ((uint32_t) func) | 1; // PC (Entry point)
-    stack_top[5] = 0; // LR (任务的返回地址，一般为空)
-    stack_top[4] = 0x12121212; // R12
-    stack_top[3] = 0x03030303; // R3
-    stack_top[2] = 0x02020202; // R2
-    stack_top[1] = 0x01010101; // R1
-    stack_top[0] = (uint32_t) param; // R0 (任务参数)
+    /* 先写硬件自动保存帧（硬件在 EXC_RETURN 时弹出） */
+    sp -= 8;
+    sp[0] = (uint32_t) param; // R0
+    sp[1] = 0x01010101; // R1
+    sp[2] = 0x02020202; // R2
+    sp[3] = 0x03030303; // R3
+    sp[4] = 0x12121212; // R12
+    sp[5] = 0x00000000; // LR (任务返回)
+    sp[6] = ((uint32_t) func) | 1u; // PC (Thumb)
+    sp[7] = 0x01000000; // xPSR (T bit)
 
-    /* --- 软件需要手动保存的栈帧 (8 个 u32) --- */
-    stack_top -= 8;
-    stack_top[7] = 0x0B0B0B0B; // R11
-    stack_top[6] = 0x0A0A0A0A; // R10
-    stack_top[5] = 0x09090909; // R9
-    stack_top[4] = 0x08080808; // R8
-    stack_top[3] = 0x07070707; // R7
-    stack_top[2] = 0x06060606; // R6
-    stack_top[1] = 0x05050505; // R5
-    stack_top[0] = 0x04040404; // R4
+    /* 再写软件保存区（PendSV/SVC 恢复 R4-R11） */
+    sp -= 8;
+    sp[0] = 0x04040404;
+    sp[1] = 0x05050505;
+    sp[2] = 0x06060606;
+    sp[3] = 0x07070707;
+    sp[4] = 0x08080808;
+    sp[5] = 0x09090909;
+    sp[6] = 0x0A0A0A0A;
+    sp[7] = 0x0B0B0B0B;
+    t->sp = sp;
 
-    t->sp = stack_top;
     uint32_t primask_status;
     MY_RTOS_ENTER_CRITICAL(primask_status);
     if (taskListHead == NULL) {
@@ -298,17 +309,17 @@ int Task_Delete(const Task_t *task_h) {
         return -1;
     }
     //需要修改任务 TCB 的内容，所以需要一个非 const 的指针
-    Task_t *task_to_delete = (Task_t *)task_h;
+    Task_t *task_to_delete = (Task_t *) task_h;
     uint32_t primask_status;
     int trigger_yield = 0; // 是否需要在函数末尾触发调度的标志
     MY_RTOS_ENTER_CRITICAL(primask_status);
     //自动释放任务持有的所有互斥锁，防止死锁
-    Mutex_t* p_mutex = task_to_delete->held_mutexes_head;
+    Mutex_t *p_mutex = task_to_delete->held_mutexes_head;
     while (p_mutex != NULL) {
-        Mutex_t* next_mutex = p_mutex->next_held_mutex;
+        Mutex_t *next_mutex = p_mutex->next_held_mutex;
         // 手动解锁
         p_mutex->locked = 0;
-        p_mutex->owner = (uint32_t)-1;
+        p_mutex->owner = (uint32_t) -1;
         p_mutex->owner_tcb = NULL;
         p_mutex->next_held_mutex = NULL;
         // 如果有其他任务在等待这个锁，唤醒
@@ -376,19 +387,21 @@ void Task_Delay(uint32_t tick) {
 
 __attribute__((naked)) void Start_First_Task(void) {
     __asm volatile (
-        "ldr r0, =currentTask          \n"
-        "ldr r0, [r0]                  \n"
-        "ldr r0, [r0]                  \n" // r0 = currentTask->sp
+        "ldr r0, =currentTask      \n"
+        "ldr r0, [r0]              \n" // r0 = currentTask
+        "ldr r0, [r0]              \n" // r0 = currentTask->sp  (指向软件保存区 R4-R11)
 
-        "ldmia r0!, {r4-r11}           \n" // 恢复 R4-R11
-        "msr psp, r0                   \n" // 更新 PSP
+        "ldmia r0!, {r4-r11}       \n" // 弹出 R4-R11，r0 指向硬件栈帧
+        "msr psp, r0               \n" // PSP = 硬件栈帧起始
+        "isb                       \n"
 
-        "mov r0, #0x02                 \n" // 切换到线程模式，使用PSP
-        "msr control, r0               \n"
-        "isb                           \n"
+        "movs r0, #2               \n" // Thread+PSP
+        "msr control, r0           \n"
+        "isb                       \n"
 
-        "mov r0, #0xFFFFFFFD           \n" // 加载异常返回代码
-        "bx r0                         \n" // 跳转以启动第一个任务
+        "ldr r0, =0xFFFFFFFD       \n" // EXC_RETURN: Thread, PSP, Return to Thumb
+        "mov lr, r0                \n"
+        "bx lr                     \n" // 只能 bx lr
     );
 }
 
@@ -406,8 +419,7 @@ void Task_StartScheduler(void) {
 
     //这里要设置PenSV和SysTick的中断优先级 不然会寄
     NVIC_SetPriority(PendSV_IRQn, 0xFF); // 最低优先级
-    NVIC_SetPriority(SysTick_IRQn, 0xFE); // 比PendSV高一级喵
-
+    NVIC_SetPriority(SysTick_IRQn, 0x00); // 比PendSV高一级喵
     if (SysTick_Config(SystemCoreClock / 1000)) {
         // 1ms 嫌不够自己改上面
         DBG_PRINTF("Error: SysTick_Config failed\n");
@@ -416,8 +428,16 @@ void Task_StartScheduler(void) {
     DBG_PRINTF("Idle task sp: %p\n", idleTask->sp);
     // 设置当前任务为Idle
     currentTask = idleTask;
-    // 调用启动函数，这个函数将不再返回
-    Start_First_Task();
+    /* 确保 MSP 指向向量表中的初始栈（参考 FreeRTOS 做法） */
+    __asm volatile(
+        "ldr r0, =0xE000ED08\n"
+        "ldr r0, [r0]\n"
+        "ldr r0, [r0]\n"
+        "msr msp, r0\n"
+    );
+    /* 触发 SVC 在异常中完成首次上下文恢复 */
+    __asm volatile("svc 0");
+    for (;;); /* 不会返回 */
     // 理论上不会执行到这里的哈 当然不排除什么宇宙射线导致内存发生比特反转. 这边建议您移步至服务器硬件使用ECC内存
     DBG_PRINTF("Error: Scheduler returned!\n");
     while (1);
@@ -464,6 +484,7 @@ found_task:
 
     return currentTask->sp;
 }
+
 //================= Task ================
 
 //=================== 信号量==================
@@ -494,13 +515,14 @@ void Task_Wait(void) {
     MY_RTOS_YIELD();
     __ISB();
 }
+
 //=================== 信号量==================
 
 
 //============== 互斥锁 =============
 void Mutex_Init(Mutex_t *mutex) {
     mutex->locked = 0;
-    mutex->owner = (uint32_t)-1;
+    mutex->owner = (uint32_t) -1;
     mutex->waiting_mask = 0;
     mutex->owner_tcb = NULL;
     mutex->next_held_mutex = NULL;
@@ -509,7 +531,8 @@ void Mutex_Init(Mutex_t *mutex) {
 void Mutex_Lock(Mutex_t *mutex) {
     uint32_t primask_status;
 
-    while (1) { // 使用无限循环以简化逻辑
+    while (1) {
+        // 使用无限循环以简化逻辑
         MY_RTOS_ENTER_CRITICAL(primask_status);
         if (!mutex->locked) {
             // 获取锁成功
@@ -544,7 +567,7 @@ void Mutex_Unlock(Mutex_t *mutex) {
             // 如果是头节点
             currentTask->held_mutexes_head = mutex->next_held_mutex;
         } else {
-            Mutex_t* p = currentTask->held_mutexes_head;
+            Mutex_t *p = currentTask->held_mutexes_head;
             while (p != NULL && p->next_held_mutex != mutex) {
                 p = p->next_held_mutex;
             }
@@ -555,7 +578,7 @@ void Mutex_Unlock(Mutex_t *mutex) {
         mutex->next_held_mutex = NULL; // 清理指针
         // 释放锁
         mutex->locked = 0;
-        mutex->owner = (uint32_t)-1;
+        mutex->owner = (uint32_t) -1;
         mutex->owner_tcb = NULL;
         // 唤醒等待的任务
         if (mutex->waiting_mask != 0) {
@@ -574,6 +597,7 @@ void Mutex_Unlock(Mutex_t *mutex) {
     }
     MY_RTOS_EXIT_CRITICAL(primask_status);
 }
+
 //============== 互斥锁 =============
 
 
@@ -601,44 +625,78 @@ void SysTick_Handler(void) {
 
 __attribute__((naked)) void PendSV_Handler(void) {
     __asm volatile (
-        "mrs r0, psp                   \n" // 获取当前任务栈指针
-        "stmdb r0!, {r4-r11}           \n" // 保存 R4-R11
-
-        "ldr r1, =currentTask          \n"
-        "ldr r3, [r1]                  \n"
-        "str r0, [r3]                  \n" // 保存新的栈顶到 currentTask->sp
-
-        "bl schedule_next_task         \n" // 调用调度器, 新任务的 SP 在 R0
-
-        "ldmia r0!, {r4-r11}           \n" // 恢复新任务的 R4-R11
-        "msr psp, r0                   \n" // 更新 PSP
-
-        "mov r0, #0xFFFFFFFD           \n" // 加载异常返回代码
-        "bx r0                         \n" // 触发异常返回，硬件恢复剩余寄存器 ,emmmmmm 逆天。。。
+        "ldr r2, =currentTask      \n"
+        "ldr r3, [r2]              \n"
+        "cbz r3, 1f                \n" // currentTask==NULL? 首次，不保存
+        "mrs r0, psp               \n"
+        "stmdb r0!, {r4-r11}       \n"
+        "str  r0, [r3]             \n" // currentTask->sp = 新栈顶
+        "1: \n"
+        "bl  schedule_next_task    \n" // r0 = next->sp（指向软件保存区底部）
+        "ldmia r0!, {r4-r11}       \n"
+        "msr psp, r0               \n"
+        "mov r0, #0xFFFFFFFD       \n"
+        "mov lr, r0                \n"
+        "bx  lr                    \n"
     );
 }
 
 void HardFault_Handler(void) {
-    __disable_irq(); //关掉中断
+    __disable_irq();
+
+    uint32_t stacked_pc = 0;
+    uint32_t sp = 0;
     uint32_t cfsr = SCB->CFSR;
     uint32_t hfsr = SCB->HFSR;
-    uint32_t sp;
-    __asm volatile ("mrs %0, psp" : "=r" (sp));
-    uint32_t stacked_pc = ((uint32_t *) sp)[6];
+
+    /* 判断异常返回使用哪条栈 (EXC_RETURN bit2) */
+    register uint32_t lr __asm("lr");
+
+    if (lr & 0x4) {
+        // 使用 PSP
+        sp = __get_PSP();
+    } else {
+        // 使用 MSP
+        sp = __get_MSP();
+    }
+
+    stacked_pc = ((uint32_t *) sp)[6]; // PC 存在硬件自动保存帧的第 6 个位置
+
     DBG_PRINTF("\n!!! Hard Fault !!!\n");
     DBG_PRINTF("CFSR: 0x%08lX, HFSR: 0x%08lX\n", cfsr, hfsr);
-    DBG_PRINTF("PSP: 0x%08lX, Stacked PC: 0x%08lX\n", sp, stacked_pc);
-    if (cfsr & SCB_CFSR_INVSTATE_Msk)
-        DBG_PRINTF("Fault: Invalid State\n");
-    if (cfsr & SCB_CFSR_UNDEFINSTR_Msk)
-        DBG_PRINTF("Fault: Undefined Instruction\n");
-    if (cfsr & SCB_CFSR_IBUSERR_Msk)
-        DBG_PRINTF("Fault: Instruction Bus Error\n");
-    if (cfsr & SCB_CFSR_PRECISERR_Msk)
-        DBG_PRINTF("Fault: Precise Data Bus Error\n");
+    DBG_PRINTF("LR: 0x%08lX, SP: 0x%08lX, Stacked PC: 0x%08lX\n", lr, sp, stacked_pc);
+
+    if (cfsr & SCB_CFSR_IACCVIOL_Msk) DBG_PRINTF("Fault: Instruction Access Violation\n");
+    if (cfsr & SCB_CFSR_DACCVIOL_Msk) DBG_PRINTF("Fault: Data Access Violation\n");
+    if (cfsr & SCB_CFSR_MUNSTKERR_Msk) DBG_PRINTF("Fault: Unstacking Error\n");
+    if (cfsr & SCB_CFSR_MSTKERR_Msk) DBG_PRINTF("Fault: Stacking Error\n");
+    if (cfsr & SCB_CFSR_INVSTATE_Msk) DBG_PRINTF("Fault: Invalid State\n");
+    if (cfsr & SCB_CFSR_UNDEFINSTR_Msk) DBG_PRINTF("Fault: Undefined Instruction\n");
+    if (cfsr & SCB_CFSR_IBUSERR_Msk) DBG_PRINTF("Fault: Instruction Bus Error\n");
+    if (cfsr & SCB_CFSR_PRECISERR_Msk) DBG_PRINTF("Fault: Precise Data Bus Error\n");
+
     while (1);
 }
+
+
+__attribute__((naked)) void SVC_Handler(void) {
+    __asm volatile (
+        "ldr r1, =currentTask      \n"
+        "ldr r1, [r1]              \n" /* r1 = currentTask */
+        "ldr r0, [r1]              \n" /* r0 = currentTask->sp (指向软件保存区底部) */
+
+        "ldmia r0!, {r4-r11}       \n" /* 恢复 R4-R11，r0 -> 硬件帧 */
+        "msr psp, r0               \n" /* PSP 指向硬件帧 */
+        "isb                       \n"
+
+        "movs r0, #2               \n" /* Thread mode, use PSP */
+        "msr control, r0           \n"
+        "isb                       \n"
+
+        "ldr r0, =0xFFFFFFFD       \n" /* EXC_RETURN: thread, return using PSP */
+        "mov lr, r0                \n"
+        "bx lr                     \n"
+    );
+}
+
 //=========== Handler ============
-
-
-

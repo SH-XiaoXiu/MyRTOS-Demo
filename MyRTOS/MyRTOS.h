@@ -9,7 +9,7 @@
 
 
 // 调试输出开关
-#define DEBUG_PRINT 1  // 设置为1开启调试输出,0关闭
+#define DEBUG_PRINT 0  // 设置为1开启调试输出,0关闭
 //调试输出函数
 #if DEBUG_PRINT
 #include <stdio.h>
