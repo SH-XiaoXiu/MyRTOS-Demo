@@ -5,7 +5,6 @@
 #include "gd32f4xx_rcu.h"
 #include "lib_usart0.h"
 #include "MyRTOS.h"
-#include "systick.h"
 
 #define A_TASK 0
 #define B_TASK 1
@@ -108,7 +107,6 @@ void d_task(void *param) {
 
 
 void sys_config() {
-    SystemInit();
     lib_usart0_init();
     Mutex_Init(&print_lock);
 }
@@ -134,7 +132,6 @@ int main(void) {
     printf("|  Version: 0.0             \n");
     printf("|  MCU: GD32                \n");
     printf("==================================\n");
-    MyRTOS_Init();
     d_task_h = Task_Create(d_task, NULL);
     a_task_h = Task_Create(a_task, NULL);
     b_task_h = Task_Create(b_task, NULL);
