@@ -11,24 +11,27 @@
 #define C_TASK 2
 
 Mutex_t print_lock;
+Mutex_t del_lock;
+Task_t *boot_h = NULL;
+Task_t *a_task_h = NULL;
+Task_t *b_task_h = NULL;
+Task_t *c_task_h = NULL;
+Task_t *d_task_h = NULL;
+Task_t *e_task_h = NULL;
 
-Task_t *a_task_h;
-Task_t *b_task_h;
-Task_t *c_task_h;
-Task_t *d_task_h;
 
 void a_task(void *param) {
     static uint8_t i = 0;
-    Mutex_Lock(&print_lock); //为了启动时打印混乱 加锁
+    Mutex_Lock(&print_lock);
     printf("任务 A 启动\n");
     Mutex_Unlock(&print_lock);
     while (1) {
         Task_Wait();
         while (1) {
+            i++;
             Mutex_Lock(&print_lock);
             printf("A 任务正在运行,第 %d 次\n", i);
             Mutex_Unlock(&print_lock);
-            i++;
             if (i == 5) {
                 i = 0;
                 Mutex_Lock(&print_lock);
@@ -72,27 +75,44 @@ void c_task(void *param) {
     uint32_t index = 0;
     Mutex_Lock(&print_lock);
     printf("任务 C 启动\n");
-    printf("任务 C 唤醒 任务 A\n");
     Mutex_Unlock(&print_lock);
-    Task_Notify(a_task_h->taskId);
     while (1) {
         index++;
         Mutex_Lock(&print_lock);
         printf("任务 C 正在运行,第 %d 次\n", index);
         Mutex_Unlock(&print_lock);
-        Task_Delay(2000);
-        if (index == 30) {
-            printf("任务 C 将删除 任务 B\n");
-            Task_Delete(b_task_h);
-        }
-        if (index == 60) {
-            printf("任务 C 将删除 任务 C\n");
+        if (index == 5) {
+            index = 0;
+            printf("任务 C 删除自己\n");
             Task_Delete(c_task_h);
         }
+        Task_Delay(1000);
     }
 }
 
 void d_task(void *param) {
+    uint32_t index = 0;
+    Mutex_Lock(&print_lock);
+    printf("任务 D 启动\n");
+    Mutex_Unlock(&print_lock);
+    while (1) {
+        if (c_task_h == NULL || c_task_h->state == TASK_STATE_UNUSED) {
+            index++;
+            if (index == 5) {
+                printf("任务 D 将创建任务 C\n");
+                c_task_h = Task_Create(c_task, NULL);
+                index = 0;
+            }
+        }
+        Mutex_Lock(&print_lock);
+        printf("任务 D 正在运行,第 %d 次\n", index);
+        Mutex_Unlock(&print_lock);
+        Task_Delay(1000);
+    }
+}
+
+void e_task(void *param) {
+    printf("任务 E 启动\n");
     rcu_periph_clock_enable(RCU_GPIOB);
     gpio_mode_set(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE,GPIO_PIN_2);
     gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ,GPIO_PIN_2);
@@ -105,10 +125,21 @@ void d_task(void *param) {
     }
 }
 
+void boot(void *param) {
+    a_task_h = Task_Create(a_task, NULL);
+    b_task_h = Task_Create(b_task, NULL);
+    d_task_h = Task_Create(d_task, NULL);
+    e_task_h = Task_Create(e_task, NULL);
+    Task_Delay(100);
+    Task_Notify(a_task_h->taskId);
+    Task_Delete(boot_h);
+}
+
 
 void sys_config() {
     lib_usart0_init();
     Mutex_Init(&print_lock);
+    Mutex_Init(&del_lock);
 }
 
 
@@ -132,12 +163,8 @@ int main(void) {
     printf("|  Version: 0.0             \n");
     printf("|  MCU: GD32                \n");
     printf("==================================\n");
-    d_task_h = Task_Create(d_task, NULL);
-    a_task_h = Task_Create(a_task, NULL);
-    b_task_h = Task_Create(b_task, NULL);
-    c_task_h = Task_Create(c_task, NULL);
+    boot_h = Task_Create(boot, NULL);
     printf("System Starting...\n");
-
     Task_StartScheduler();
     while (1) {
     };
