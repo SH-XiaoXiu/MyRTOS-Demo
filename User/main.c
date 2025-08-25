@@ -124,7 +124,7 @@ void d_task(void *param) {
                 Mutex_Lock(&print_lock);
                 printf("任务 D 将 创建 任务 C\n");
                 Mutex_Unlock(&print_lock);
-                c_task_h = Task_Create(c_task, NULL, COLLABORATION_TASKS_PRIO);
+                c_task_h = Task_Create(c_task, 256,NULL, COLLABORATION_TASKS_PRIO);
                 index = 0;
             }
         }
@@ -273,13 +273,13 @@ void inspector_task(void *param) {
 }
 
 void boot_task(void *param) {
-    a_task_h = Task_Create(a_task, NULL, COLLABORATION_TASKS_PRIO);
-    b_task_h = Task_Create(b_task, NULL, COLLABORATION_TASKS_PRIO);
-    d_task_h = Task_Create(d_task, NULL, COLLABORATION_TASKS_PRIO);
-    e_task_h = Task_Create(e_task, NULL, COLLABORATION_TASKS_PRIO);
-    background_task_h = Task_Create(background_blinky_task, NULL, BACKGROUND_TASK_PRIO);
-    high_prio_task_h = Task_Create(high_prio_task, NULL, HIGH_PRIO_TASK_PRIO);
-    interrupt_task_h = Task_Create(interrupt_handler_task, NULL, INTERRUPT_TASK_PRIO);
+    a_task_h = Task_Create(a_task, 256, NULL, COLLABORATION_TASKS_PRIO);
+    b_task_h = Task_Create(b_task, 256,NULL, COLLABORATION_TASKS_PRIO);
+    d_task_h = Task_Create(d_task, 256,NULL, COLLABORATION_TASKS_PRIO);
+    e_task_h = Task_Create(e_task, 256, NULL, COLLABORATION_TASKS_PRIO);
+    background_task_h = Task_Create(background_blinky_task, 256, NULL, BACKGROUND_TASK_PRIO);
+    high_prio_task_h = Task_Create(high_prio_task, 256,NULL, HIGH_PRIO_TASK_PRIO);
+    interrupt_task_h = Task_Create(interrupt_handler_task, 256,NULL, INTERRUPT_TASK_PRIO);
     Task_Delay(200);
     Task_Notify(a_task_h->taskId);
 
@@ -294,9 +294,9 @@ void boot_task(void *param) {
         Mutex_Unlock(&print_lock);
     }
     // 创建队列相关的任务
-    consumer_task_h = Task_Create(consumer_task, NULL, CONSUMER_PRIO);
-    producer_task_h = Task_Create(producer_task, NULL, PRODUCER_PRIO);
-    inspector_task_h = Task_Create(inspector_task, NULL, INSPECTOR_PRIO);
+    consumer_task_h = Task_Create(consumer_task, 256,NULL, CONSUMER_PRIO);
+    producer_task_h = Task_Create(producer_task, 256,NULL, PRODUCER_PRIO);
+    inspector_task_h = Task_Create(inspector_task, 256, NULL, INSPECTOR_PRIO);
     Mutex_Lock(&print_lock);
     printf("=============================================\n\n");
     Mutex_Unlock(&print_lock);
@@ -338,7 +338,7 @@ int main(void) {
     printf("|  Version: 1.0 (Priority-based)     \n");
     printf("|  MCU: GD32                         \n");
     printf("==========================================\n");
-    Task_Create(boot_task, NULL, 0);
+    Task_Create(boot_task, 64, NULL, 0);
     printf("System Starting...\n");
     Task_StartScheduler();
     while (1) {
