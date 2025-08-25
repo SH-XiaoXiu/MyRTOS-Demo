@@ -303,7 +303,7 @@ void MyRTOS_Idle_Task(void *pv) {
     }
 }
 
-Task_t *Task_Create(void (*func)(void *), uint16_t stack_size, void *param, uint8_t priority){
+Task_t *Task_Create(void (*func)(void *), uint16_t stack_size, void *param, uint8_t priority) {
     // 检查优先级是否有效
     if (priority >= MY_RTOS_MAX_PRIORITIES) {
         DBG_PRINTF("Error: Invalid task priority %u.\n", priority);
@@ -624,12 +624,8 @@ void Task_StartScheduler(void) {
 //================= Task ================
 
 //=================== 信号量==================
-int Task_Notify(uint32_t task_id) {
+int Task_Notify(Task_t *task_h) {
     // 查找任务可以在临界区之外进行，提高并发性
-    Task_t *task_to_notify = find_task_by_id(task_id);
-    if (task_to_notify == NULL) {
-        return -1; // 无效ID
-    }
 
     uint32_t primask_status;
     int trigger_yield = 0; // 是否需要抢占调度的标志
@@ -637,15 +633,15 @@ int Task_Notify(uint32_t task_id) {
     MY_RTOS_ENTER_CRITICAL(primask_status);
 
     // 检查任务是否确实在等待通知
-    if (task_to_notify->is_waiting_notification && task_to_notify->state == TASK_STATE_BLOCKED) {
+    if (task_h->is_waiting_notification && task_h->state == TASK_STATE_BLOCKED) {
         // 清除等待标志
-        task_to_notify->is_waiting_notification = 0;
+        task_h->is_waiting_notification = 0;
 
         //将任务重新添加到就绪列表中，使其可以被调度
-        addTaskToReadyList(task_to_notify);
+        addTaskToReadyList(task_h);
 
         //检查是否需要抢占：如果被唤醒的任务优先级高于当前任务
-        if (task_to_notify->priority > currentTask->priority) {
+        if (task_h->priority > currentTask->priority) {
             trigger_yield = 1;
         }
     }

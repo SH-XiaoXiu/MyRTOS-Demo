@@ -156,7 +156,7 @@ void Task_StartScheduler(void);
 
 void Task_Delay(uint32_t tick);
 
-int Task_Notify(uint32_t task_id);
+int Task_Notify(Task_t *task_h);
 
 void Task_Wait(void);
 
