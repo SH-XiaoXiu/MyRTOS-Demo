@@ -19,7 +19,6 @@ Task_t *b_task_h = NULL;
 Task_t *c_task_h = NULL; // ÓÉ d_task ´´½¨
 Task_t *d_task_h = NULL;
 Task_t *e_task_h = NULL;
-Task_t *boot_task_h = NULL;
 Task_t *high_prio_task_h = NULL;
 Task_t *interrupt_task_h = NULL;
 Task_t *background_task_h = NULL;
@@ -184,7 +183,7 @@ void boot_task(void *param) {
     interrupt_task_h = Task_Create(interrupt_handler_task, NULL, INTERRUPT_TASK_PRIO);
     Task_Delay(200);
     Task_Notify(a_task_h->taskId);
-    Task_Delete(boot_task_h);
+    Task_Delete(NULL);
 }
 
 
@@ -222,7 +221,7 @@ int main(void) {
     printf("|  Version: 1.0 (Priority-based)     \n");
     printf("|  MCU: GD32                         \n");
     printf("==========================================\n");
-    boot_task_h = Task_Create(boot_task, NULL, 0);
+    Task_Create(boot_task, NULL, 0);
     printf("System Starting...\n");
     Task_StartScheduler();
     while (1) {
