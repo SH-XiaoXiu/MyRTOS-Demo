@@ -3,13 +3,11 @@
 
 #include <stdint.h>
 
-#define MAX_TASKS   8
-#define STACK_SIZE  256
-#define IDLE_TASK_ID (MAX_TASKS-1)
 #define MY_RTOS_MAX_PRIORITIES    (16)
 
 // 调试输出开关
-#define DEBUG_PRINT 1  // 设置为1开启调试输出,0关闭
+// 设置为1开启调试输出,0关闭
+// #define DEBUG_PRINT 1
 //调试输出函数
 #if DEBUG_PRINT
 #include <stdio.h>
@@ -42,34 +40,35 @@ typedef struct Mutex_t {
 //为了保持汇编代码的兼容性 sp 必须是结构体的第一个成员
 typedef struct Task_t {
     uint32_t *sp;
-    void (*func)(void *);     // 任务函数
-    void *param;              // 任务参数
-    uint32_t delay;           // 延时
+
+    void (*func)(void *); // 任务函数
+    void *param; // 任务参数
+    uint32_t delay; // 延时
     volatile uint32_t notification;
     volatile uint8_t is_waiting_notification;
     volatile TaskState_t state; // 任务状态
-    uint32_t taskId;          // 任务ID
-    uint32_t *stack_base;     // 栈基地址,用于free
-    uint8_t priority;         //任务优先级
+    uint32_t taskId; // 任务ID
+    uint32_t *stack_base; // 栈基地址,用于free
+    uint8_t priority; //任务优先级
     struct Task_t *pNextTask; //用于所有任务链表
     struct Task_t *pNextReady; //用于就绪或延时链表
     struct Task_t *pPrevReady; //用于双向链表,方便删除 O(1)复杂度
     Mutex_t *held_mutexes_head;
-    void *eventObject;         // 指向正在等待的内核对象
-    void *eventData;           // 用于传递与事件相关的数据指针 (如消息的源/目的地址)
-    struct Task_t *pNextEvent;  // 用于构建内核对象的等待任务链表
+    void *eventObject; // 指向正在等待的内核对象
+    void *eventData; // 用于传递与事件相关的数据指针 (如消息的源/目的地址)
+    struct Task_t *pNextEvent; // 用于构建内核对象的等待任务链表
 } Task_t;
 
 
-typedef void* QueueHandle_t;
+typedef void *QueueHandle_t;
 
 typedef struct Queue_t {
-    uint8_t *storage;           // 指向队列存储区的指针
-    uint32_t length;            // 队列最大能容纳的消息数
-    uint32_t itemSize;          // 每个消息的大小
+    uint8_t *storage; // 指向队列存储区的指针
+    uint32_t length; // 队列最大能容纳的消息数
+    uint32_t itemSize; // 每个消息的大小
     volatile uint32_t waitingCount; // 当前队列中的消息数
-    uint8_t *writePtr;          // 下一个要写入数据的位置
-    uint8_t *readPtr;           // 下一个要读取数据的位置
+    uint8_t *writePtr; // 下一个要写入数据的位置
+    uint8_t *readPtr; // 下一个要读取数据的位置
     // 等待列表 (将按任务优先级排序)
     Task_t *sendWaitList;
     Task_t *receiveWaitList;
@@ -149,7 +148,7 @@ __ISB();                             \
 
 void MyRTOS_Init(void);
 
-Task_t *Task_Create(void (*func)(void *), void *param, uint8_t priority) ;
+Task_t *Task_Create(void (*func)(void *), uint16_t stack_size, void *param, uint8_t priority);
 
 int Task_Delete(const Task_t *task_h);
 

@@ -43,7 +43,7 @@ typedef struct BlockLink_t {
 
 /* 内存块头部结构的大小 (已对齐) */
 static const size_t heapStructSize = (sizeof(BlockLink_t) + (HEAP_BYTE_ALIGNMENT - 1)) & ~(
-                                          (size_t) HEAP_BYTE_ALIGNMENT - 1);
+                                         (size_t) HEAP_BYTE_ALIGNMENT - 1);
 /* 最小内存块大小，一个块必须能容纳分裂后的两个头部 */
 #define HEAP_MINIMUM_BLOCK_SIZE    (heapStructSize * 2)
 
@@ -303,7 +303,7 @@ void MyRTOS_Idle_Task(void *pv) {
     }
 }
 
-Task_t *Task_Create(void (*func)(void *), void *param, uint8_t priority) {
+Task_t *Task_Create(void (*func)(void *), uint16_t stack_size, void *param, uint8_t priority){
     // 检查优先级是否有效
     if (priority >= MY_RTOS_MAX_PRIORITIES) {
         DBG_PRINTF("Error: Invalid task priority %u.\n", priority);
@@ -318,7 +318,7 @@ Task_t *Task_Create(void (*func)(void *), void *param, uint8_t priority) {
     }
 
     //为任务栈分配内存
-    uint32_t stack_size_bytes = STACK_SIZE * sizeof(uint32_t);
+    uint32_t stack_size_bytes = stack_size * sizeof(uint32_t);
     uint32_t *stack = rtos_malloc(stack_size_bytes);
     if (stack == NULL) {
         DBG_PRINTF("Error: Failed to allocate memory for stack.\n");
@@ -340,33 +340,33 @@ Task_t *Task_Create(void (*func)(void *), void *param, uint8_t priority) {
     t->pPrevReady = NULL;
     t->priority = priority;
 
-    uint32_t *sp = stack + STACK_SIZE;
+    uint32_t *sp = stack + stack_size_bytes;
     sp = (uint32_t *) (((uintptr_t) sp) & ~0x7u);
     sp -= 16;
     // 可以用 memset(sp, 0, 16 * sizeof(uint32_t)) 来清零，但非必须
 
     /* 硬件自动保存的栈帧 (R0-R3, R12, LR, PC, xPSR) */
     sp -= 8;
-    sp[0] = (uint32_t) param;        // R0 (参数)
-    sp[1] = 0x01010101;              // R1
-    sp[2] = 0x02020202;              // R2
-    sp[3] = 0x03030303;              // R3
-    sp[4] = 0x12121212;              // R12
-    sp[5] = 0;                       // LR (任务返回地址，设为0或任务自杀函数)
-    sp[6] = ((uint32_t) func) | 1u;  // PC (入口点)
-    sp[7] = 0x01000000;              // xPSR (Thumb bit must be 1)
+    sp[0] = (uint32_t) param; // R0 (参数)
+    sp[1] = 0x01010101; // R1
+    sp[2] = 0x02020202; // R2
+    sp[3] = 0x03030303; // R3
+    sp[4] = 0x12121212; // R12
+    sp[5] = 0; // LR (任务返回地址，设为0或任务自杀函数)
+    sp[6] = ((uint32_t) func) | 1u; // PC (入口点)
+    sp[7] = 0x01000000; // xPSR (Thumb bit must be 1)
 
     /* 软件手动保存的通用寄存器 (R4 - R11) 和 EXC_RETURN */
     sp -= 9;
-    sp[0] = 0xFFFFFFFD;              // EXC_RETURN: 指示返回时恢复FPU上下文
-    sp[1] = 0x04040404;              // R4
-    sp[2] = 0x05050505;              // R5
-    sp[3] = 0x06060606;              // R6
-    sp[4] = 0x07070707;              // R7
-    sp[5] = 0x08080808;              // R8
-    sp[6] = 0x09090909;              // R9
-    sp[7] = 0x0A0A0A0A;              // R10
-    sp[8] = 0x0B0B0B0B;              // R11
+    sp[0] = 0xFFFFFFFD; // EXC_RETURN: 指示返回时恢复FPU上下文
+    sp[1] = 0x04040404; // R4
+    sp[2] = 0x05050505; // R5
+    sp[3] = 0x06060606; // R6
+    sp[4] = 0x07070707; // R7
+    sp[5] = 0x08080808; // R8
+    sp[6] = 0x09090909; // R9
+    sp[7] = 0x0A0A0A0A; // R10
+    sp[8] = 0x0B0B0B0B; // R11
 
     t->sp = sp;
 
@@ -389,7 +389,7 @@ Task_t *Task_Create(void (*func)(void *), void *param, uint8_t priority) {
     MY_RTOS_EXIT_CRITICAL(primask_status);
 
     DBG_PRINTF("Task %lu created with priority %u. Stack top: %p, Initial SP: %p\n", t->taskId, t->priority,
-               &stack[STACK_SIZE - 1], t->sp);
+               &stack[stack_size_bytes - 1], t->sp);
     return t;
 }
 
@@ -591,7 +591,7 @@ void *schedule_next_task(void) {
 
 void Task_StartScheduler(void) {
     // 创建空闲任务 优先级最低 (0)
-    idleTask = Task_Create(MyRTOS_Idle_Task, NULL, 0);
+    idleTask = Task_Create(MyRTOS_Idle_Task, 64,NULL, 0);
     if (idleTask == NULL) {
         DBG_PRINTF("Error: Failed to create Idle Task!\n");
         while (1);
@@ -798,7 +798,7 @@ QueueHandle_t Queue_Create(uint32_t length, uint32_t itemSize) {
         return NULL;
     }
 
-    queue->storage = (uint8_t *)rtos_malloc(length * itemSize);
+    queue->storage = (uint8_t *) rtos_malloc(length * itemSize);
     if (queue->storage == NULL) {
         rtos_free(queue);
         return NULL;
@@ -814,18 +814,18 @@ QueueHandle_t Queue_Create(uint32_t length, uint32_t itemSize) {
 }
 
 void Queue_Delete(QueueHandle_t delQueue) {
-    Queue_t* queue = delQueue;
+    Queue_t *queue = delQueue;
     if (queue == NULL) return;
     uint32_t primask_status;
     MY_RTOS_ENTER_CRITICAL(primask_status);
     // 唤醒所有等待的任务 (它们将从 Send/Receive 调用中失败返回)
-    while(queue->sendWaitList) {
-        Task_t* taskToWake = queue->sendWaitList;
+    while (queue->sendWaitList) {
+        Task_t *taskToWake = queue->sendWaitList;
         queue->sendWaitList = taskToWake->pNextEvent;
         addTaskToReadyList(taskToWake);
     }
-    while(queue->receiveWaitList) {
-        Task_t* taskToWake = queue->receiveWaitList;
+    while (queue->receiveWaitList) {
+        Task_t *taskToWake = queue->receiveWaitList;
         queue->receiveWaitList = taskToWake->pNextEvent;
         addTaskToReadyList(taskToWake);
     }
@@ -835,10 +835,11 @@ void Queue_Delete(QueueHandle_t delQueue) {
 }
 
 int Queue_Send(QueueHandle_t queue, const void *item, int block) {
-    Queue_t* pQueue = queue;
+    Queue_t *pQueue = queue;
     if (pQueue == NULL) return 0;
     uint32_t primask_status;
-    while(1) { // 循环用于阻塞后重试
+    while (1) {
+        // 循环用于阻塞后重试
         MY_RTOS_ENTER_CRITICAL(primask_status);
         // 优先级拦截：检查是否有高优先级任务在等待接收
         if (pQueue->receiveWaitList != NULL) {
@@ -885,10 +886,11 @@ int Queue_Send(QueueHandle_t queue, const void *item, int block) {
 }
 
 int Queue_Receive(QueueHandle_t queue, void *buffer, int block) {
-    Queue_t* pQueue = queue;
+    Queue_t *pQueue = queue;
     if (pQueue == NULL) return 0;
     uint32_t primask_status;
-    while(1) { // 循环用于阻塞后重试
+    while (1) {
+        // 循环用于阻塞后重试
         MY_RTOS_ENTER_CRITICAL(primask_status);
         if (pQueue->waitingCount > 0) {
             // 从队列缓冲区读取数据
@@ -936,14 +938,13 @@ int Queue_Receive(QueueHandle_t queue, void *buffer, int block) {
         // 被唤醒后，有两种可能：
         // 1. 被Queue_Send直接传递了数据 -> pEventObject会是NULL，任务完成
         // 2. 被Queue_Delete唤醒 -> pEventObject可能不是NULL，循环会失败
-        if(currentTask->eventObject == NULL) {
-             // 成功被 Queue_Send 唤醒并接收到数据
-             return 1;
+        if (currentTask->eventObject == NULL) {
+            // 成功被 Queue_Send 唤醒并接收到数据
+            return 1;
         }
         // 否则，回到循环顶部重试
     }
 }
-
 
 
 //=========== Handler ============
@@ -1049,14 +1050,22 @@ void HardFault_Handler(void) {
     DBG_PRINTF("CFSR: 0x%08lX, HFSR: 0x%08lX\n", cfsr, hfsr);
     DBG_PRINTF("LR: 0x%08lX, SP: 0x%08lX, Stacked PC: 0x%08lX\n", lr, sp, stacked_pc);
 
-    if (cfsr & SCB_CFSR_IACCVIOL_Msk) DBG_PRINTF("Fault: Instruction Access Violation\n");
-    if (cfsr & SCB_CFSR_DACCVIOL_Msk) DBG_PRINTF("Fault: Data Access Violation\n");
-    if (cfsr & SCB_CFSR_MUNSTKERR_Msk) DBG_PRINTF("Fault: Unstacking Error\n");
-    if (cfsr & SCB_CFSR_MSTKERR_Msk) DBG_PRINTF("Fault: Stacking Error\n");
-    if (cfsr & SCB_CFSR_INVSTATE_Msk) DBG_PRINTF("Fault: Invalid State\n");
-    if (cfsr & SCB_CFSR_UNDEFINSTR_Msk) DBG_PRINTF("Fault: Undefined Instruction\n");
-    if (cfsr & SCB_CFSR_IBUSERR_Msk) DBG_PRINTF("Fault: Instruction Bus Error\n");
-    if (cfsr & SCB_CFSR_PRECISERR_Msk) DBG_PRINTF("Fault: Precise Data Bus Error\n");
+    if (cfsr & SCB_CFSR_IACCVIOL_Msk)
+        DBG_PRINTF("Fault: Instruction Access Violation\n");
+    if (cfsr & SCB_CFSR_DACCVIOL_Msk)
+        DBG_PRINTF("Fault: Data Access Violation\n");
+    if (cfsr & SCB_CFSR_MUNSTKERR_Msk)
+        DBG_PRINTF("Fault: Unstacking Error\n");
+    if (cfsr & SCB_CFSR_MSTKERR_Msk)
+        DBG_PRINTF("Fault: Stacking Error\n");
+    if (cfsr & SCB_CFSR_INVSTATE_Msk)
+        DBG_PRINTF("Fault: Invalid State\n");
+    if (cfsr & SCB_CFSR_UNDEFINSTR_Msk)
+        DBG_PRINTF("Fault: Undefined Instruction\n");
+    if (cfsr & SCB_CFSR_IBUSERR_Msk)
+        DBG_PRINTF("Fault: Instruction Bus Error\n");
+    if (cfsr & SCB_CFSR_PRECISERR_Msk)
+        DBG_PRINTF("Fault: Precise Data Bus Error\n");
 
     while (1);
 }
