@@ -333,7 +333,7 @@ void sys_config() {
 int main(void) {
     sys_config();
     key_exti_init();
-    printf("=========   RTOS Priority Demo   =========\n");
+    printf("=========   RTOS Demo   =========\n");
     printf("|  Author: XiaoXiu                   \n");
     printf("|  Version: 1.0 (Priority-based)     \n");
     printf("|  MCU: GD32                         \n");
