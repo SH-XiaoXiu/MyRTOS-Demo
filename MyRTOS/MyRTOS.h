@@ -50,14 +50,62 @@ typedef struct Task_t {
     volatile TaskState_t state; // 任务状态
     uint32_t taskId;          // 任务ID
     uint32_t *stack_base;     // 栈基地址,用于free
-    // --- 调度相关的修改 ---
     uint8_t priority;         //任务优先级
     struct Task_t *pNextTask; //用于所有任务链表
     struct Task_t *pNextReady; //用于就绪或延时链表
     struct Task_t *pPrevReady; //用于双向链表,方便删除 O(1)复杂度
-    // --- 互斥锁相关的修改 ---
     Mutex_t *held_mutexes_head;
+    void *eventObject;         // 指向正在等待的内核对象
+    void *eventData;           // 用于传递与事件相关的数据指针 (如消息的源/目的地址)
+    struct Task_t *pNextEvent;  // 用于构建内核对象的等待任务链表
 } Task_t;
+
+
+typedef void* QueueHandle_t;
+
+typedef struct Queue_t {
+    uint8_t *storage;           // 指向队列存储区的指针
+    uint32_t length;            // 队列最大能容纳的消息数
+    uint32_t itemSize;          // 每个消息的大小
+    volatile uint32_t waitingCount; // 当前队列中的消息数
+    uint8_t *writePtr;          // 下一个要写入数据的位置
+    uint8_t *readPtr;           // 下一个要读取数据的位置
+    // 等待列表 (将按任务优先级排序)
+    Task_t *sendWaitList;
+    Task_t *receiveWaitList;
+} Queue_t;
+
+/**
+ * @brief 创建一个消息队列
+ * @param length 队列能够容纳的最大消息数量
+ * @param itemSize 每个消息的大小 (字节)
+ * @return 成功返回队列句柄，失败返回 NULL
+ */
+QueueHandle_t Queue_Create(uint32_t length, uint32_t itemSize);
+
+/**
+ * @brief 删除一个消息队列
+ * @param delQueue 要删除的队列句柄
+ */
+void Queue_Delete(QueueHandle_t delQueue);
+
+/**
+ * @brief 向队列发送一个消息
+ * @param queue 队列句柄
+ * @param item 指向要发送的消息的指针
+ * @param block 0: 不阻塞, 1: 永久阻塞直到发送成功
+ * @return 1 表示成功, 0 表示失败 (队列满且不阻塞)
+ */
+int Queue_Send(QueueHandle_t queue, const void *item, int block);
+
+/**
+ * @brief 从队列接收一个消息
+ * @param queue 队列句柄
+ * @param buffer 用于存放接收到的消息的缓冲区指针
+ * @param block 0: 不阻塞, 1: 永久阻塞直到接收到消息
+ * @return 1 表示成功, 0 表示失败 (队列空且不阻塞)
+ */
+int Queue_Receive(QueueHandle_t queue, void *buffer, int block);
 
 
 /**

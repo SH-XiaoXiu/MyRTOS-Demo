@@ -759,6 +759,181 @@ void Mutex_Unlock(Mutex_t *mutex) {
 //============== 互斥锁 =============
 
 
+//====================== 消息队列 ======================
+static void addTaskToPrioritySortedList(Task_t **listHead, Task_t *taskToInsert) {
+    if (*listHead == NULL || (*listHead)->priority <= taskToInsert->priority) {
+        // 插入到头部 (列表为空或新任务优先级更高或相等)
+        taskToInsert->pNextEvent = *listHead;
+        *listHead = taskToInsert;
+    } else {
+        // 遍历查找插入点
+        Task_t *iterator = *listHead;
+        while (iterator->pNextEvent != NULL && iterator->pNextEvent->priority > taskToInsert->priority) {
+            iterator = iterator->pNextEvent;
+        }
+        taskToInsert->pNextEvent = iterator->pNextEvent;
+        iterator->pNextEvent = taskToInsert;
+    }
+}
+
+QueueHandle_t Queue_Create(uint32_t length, uint32_t itemSize) {
+    if (length == 0 || itemSize == 0) {
+        return NULL;
+    }
+
+    Queue_t *queue = rtos_malloc(sizeof(Queue_t));
+    if (queue == NULL) {
+        return NULL;
+    }
+
+    queue->storage = (uint8_t *)rtos_malloc(length * itemSize);
+    if (queue->storage == NULL) {
+        rtos_free(queue);
+        return NULL;
+    }
+    queue->length = length;
+    queue->itemSize = itemSize;
+    queue->waitingCount = 0;
+    queue->writePtr = queue->storage;
+    queue->readPtr = queue->storage;
+    queue->sendWaitList = NULL;
+    queue->receiveWaitList = NULL;
+    return queue;
+}
+
+void Queue_Delete(QueueHandle_t delQueue) {
+    Queue_t* queue = delQueue;
+    if (queue == NULL) return;
+    uint32_t primask_status;
+    MY_RTOS_ENTER_CRITICAL(primask_status);
+    // 唤醒所有等待的任务 (它们将从 Send/Receive 调用中失败返回)
+    while(queue->sendWaitList) {
+        Task_t* taskToWake = queue->sendWaitList;
+        queue->sendWaitList = taskToWake->pNextEvent;
+        addTaskToReadyList(taskToWake);
+    }
+    while(queue->receiveWaitList) {
+        Task_t* taskToWake = queue->receiveWaitList;
+        queue->receiveWaitList = taskToWake->pNextEvent;
+        addTaskToReadyList(taskToWake);
+    }
+    rtos_free(queue->storage);
+    rtos_free(queue);
+    MY_RTOS_EXIT_CRITICAL(primask_status);
+}
+
+int Queue_Send(QueueHandle_t queue, const void *item, int block) {
+    Queue_t* pQueue = queue;
+    if (pQueue == NULL) return 0;
+    uint32_t primask_status;
+    while(1) { // 循环用于阻塞后重试
+        MY_RTOS_ENTER_CRITICAL(primask_status);
+        // 优先级拦截：检查是否有高优先级任务在等待接收
+        if (pQueue->receiveWaitList != NULL) {
+            // 直接将数据传递给等待的最高优先级任务，不经过队列存储区
+            Task_t *taskToWake = pQueue->receiveWaitList;
+            pQueue->receiveWaitList = taskToWake->pNextEvent; // 从等待列表移除
+            memcpy(taskToWake->eventData, item, pQueue->itemSize);
+            // 唤醒该任务
+            taskToWake->eventObject = NULL;
+            taskToWake->eventData = NULL;
+            addTaskToReadyList(taskToWake);
+            // 如果被唤醒的任务优先级更高，触发调度
+            if (taskToWake->priority > currentTask->priority) {
+                MY_RTOS_YIELD();
+            }
+            MY_RTOS_EXIT_CRITICAL(primask_status);
+            return 1; // 发送成功
+        }
+        // 没有任务在等待，尝试放入队列缓冲区
+        if (pQueue->waitingCount < pQueue->length) {
+            memcpy(pQueue->writePtr, item, pQueue->itemSize);
+            pQueue->writePtr += pQueue->itemSize;
+            if (pQueue->writePtr >= (pQueue->storage + (pQueue->length * pQueue->itemSize))) {
+                pQueue->writePtr = pQueue->storage;
+            }
+            pQueue->waitingCount++;
+            MY_RTOS_EXIT_CRITICAL(primask_status);
+            return 1; // 发送成功
+        }
+        // 队列已满
+        if (block == 0) {
+            MY_RTOS_EXIT_CRITICAL(primask_status);
+            return 0; // 不阻塞，直接返回失败
+        }
+        // 阻塞当前任务
+        currentTask->eventObject = pQueue;
+        addTaskToPrioritySortedList(&pQueue->sendWaitList, currentTask);
+        removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
+        currentTask->state = TASK_STATE_BLOCKED;
+        MY_RTOS_YIELD();
+        MY_RTOS_EXIT_CRITICAL(primask_status);
+        // 被唤醒后，将回到 while(1) 循环的开始，重新尝试发送
+    }
+}
+
+int Queue_Receive(QueueHandle_t queue, void *buffer, int block) {
+    Queue_t* pQueue = queue;
+    if (pQueue == NULL) return 0;
+    uint32_t primask_status;
+    while(1) { // 循环用于阻塞后重试
+        MY_RTOS_ENTER_CRITICAL(primask_status);
+        if (pQueue->waitingCount > 0) {
+            // 从队列缓冲区读取数据
+            memcpy(buffer, pQueue->readPtr, pQueue->itemSize);
+            pQueue->readPtr += pQueue->itemSize;
+            if (pQueue->readPtr >= (pQueue->storage + (pQueue->length * pQueue->itemSize))) {
+                pQueue->readPtr = pQueue->storage;
+            }
+            pQueue->waitingCount--;
+            // 检查是否有任务在等待发送 (唤醒最高优先级的)
+            if (pQueue->sendWaitList != NULL) {
+                Task_t *taskToWake = pQueue->sendWaitList;
+                pQueue->sendWaitList = taskToWake->pNextEvent;
+
+                // 唤醒它，让它自己去发送
+                taskToWake->eventObject = NULL;
+                addTaskToReadyList(taskToWake);
+
+                // 如果被唤醒的任务优先级更高，触发调度
+                if (taskToWake->priority > currentTask->priority) {
+                    MY_RTOS_YIELD();
+                }
+            }
+
+            MY_RTOS_EXIT_CRITICAL(primask_status);
+            return 1; // 接收成功
+        }
+
+        // 队列为空
+        if (block == 0) {
+            MY_RTOS_EXIT_CRITICAL(primask_status);
+            return 0; // 不阻塞，直接返回失败
+        }
+
+        // 阻塞当前任务
+        currentTask->eventObject = pQueue;
+        currentTask->eventData = buffer; // 保存接收缓冲区的地址！
+        addTaskToPrioritySortedList(&pQueue->receiveWaitList, currentTask);
+        removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
+        currentTask->state = TASK_STATE_BLOCKED;
+
+        MY_RTOS_YIELD();
+        MY_RTOS_EXIT_CRITICAL(primask_status);
+
+        // 被唤醒后，有两种可能：
+        // 1. 被Queue_Send直接传递了数据 -> pEventObject会是NULL，任务完成
+        // 2. 被Queue_Delete唤醒 -> pEventObject可能不是NULL，循环会失败
+        if(currentTask->eventObject == NULL) {
+             // 成功被 Queue_Send 唤醒并接收到数据
+             return 1;
+        }
+        // 否则，回到循环顶部重试
+    }
+}
+
+
+
 //=========== Handler ============
 
 void SysTick_Handler(void) {
