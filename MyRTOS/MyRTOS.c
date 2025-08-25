@@ -226,14 +226,6 @@ void MyRTOS_Init(void) {
     DBG_PRINTF("MyRTOS Initialized. Task list cleared and memory manager reset.\n");
 }
 
-static Task_t *find_task_by_id(uint32_t task_id) {
-    Task_t *p = allTaskListHead;
-    while (p != NULL) {
-        if (p->taskId == task_id) return p;
-        p = p->pNextTask;
-    }
-    return NULL;
-}
 
 static void addTaskToReadyList(Task_t *task) {
     if (task == NULL || task->priority >= MY_RTOS_MAX_PRIORITIES) {
