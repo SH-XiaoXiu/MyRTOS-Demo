@@ -12,29 +12,26 @@
 
 <h2>特性</h2>
   <ul>
-    <li>动态内存管理（内存池实现）</li>
+    <li>动态内存管理(内存池实现)</li>
+    <li>自定义任务栈大小</li>
     <li>支持优先级调度与时间片轮转</li>
     <li>基于 SysTick 的任务延时</li>
     <li>PendSV 上下文切换</li>
-    <li>任务创建与删除</li>
+    <li>任务动态创建与删除</li>
     <li>任务通知机制</li>
     <li>信号量与互斥锁支持</li>
-    <li>消息队列（任务间通信）</li>
-    <li>Idle 任务（低功耗 WFI）</li>
+    <li>消息队列(任务间通信)</li>
     <li>HardFault 基础调试输出</li>
   </ul>
 
 <h2>目录结构</h2>
   <pre>
 MyRTOS/
-├── core/          // 内核源码
-├── drivers/       // 硬件抽象与外设驱动
-├── examples/      // 示例任务
-├── include/       // 公共 API 头文件
-├── linker/        // 链接脚本
-├── lib_usart0.*   // 串口调试
-├── gd32f4xx_*     // 厂商库
-└── main.c         // 示例入口
+├── Firmware/      // 厂商库
+├── Libraries/     //外设库
+├── lib_usart0.c   //串口
+├── MyRTOS/        // RTOS源码文件
+└── main.c         // 示例代码
   </pre>
 
 <h2>快速开始</h2>
@@ -77,11 +74,6 @@ void a_task(void *param) {
     <li>调度器根据优先级选择最高优先 READY 任务；同优先级采用时间片轮询</li>
   </ol>
 
-<h2>限制</h2>
-  <ul>
-    <li>固定栈大小 <code>STACK_SIZE = 256</code></li>
-    <li>最大任务数取决于内存池大小</li>
-  </ul>
 
 <h2>示例输出</h2>
   <p><img src="https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/usart_log.png" alt="示例输出"></p>
