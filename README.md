@@ -6,13 +6,13 @@
 <h2>特性</h2>
 <ul>
   <li>动态内存管理 (简单内存池)</li>
-  <li>轮询调度（无优先级）</li>
+  <li>支持优先级调度</li>
   <li>基于 SysTick 的任务延时</li>
   <li>PendSV 上下文切换</li>
   <li>任务创建与删除</li>
   <li>任务通知机制</li>
   <li>互斥锁支持</li>
-  <li>Idle 任务（低功耗 WFI）</li>
+  <li>Idle 任务 (低功耗 WFI)</li>
   <li>HardFault 基础调试输出</li>
 </ul>
 
@@ -32,7 +32,7 @@ sys_config();
 Task_Create(A_TASK, a_task, NULL);
 Task_Create(B_TASK, b_task, NULL);
 Task_Create(C_TASK, c_task, NULL);
-Task_StartScheduler();  // 不会返回
+Task_StartScheduler(); 
 </code></pre>
 
 <h2>示例任务</h2>
@@ -68,8 +68,6 @@ void a_task(void *param) {
 <ul>
   <li>固定栈大小 <code>STACK_SIZE = 256</code></li>
   <li>最大任务数取决于内存池大小</li>
-  <li>无优先级调度</li>
-  <li>无时间片抢占</li>
 </ul>
 
 **<h2>示例输出</h2>**
