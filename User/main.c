@@ -57,7 +57,7 @@ void a_task(void *param) {
                 Mutex_Lock(&print_lock);
                 printf("任务 A 唤醒 任务 B, 并开始等待 任务 B 的唤醒\n");
                 Mutex_Unlock(&print_lock);
-                Task_Notify(b_task_h->taskId);
+                Task_Notify(b_task_h);
                 break;
             }
             Task_Delay(1000); //1s
@@ -82,7 +82,7 @@ void b_task(void *param) {
                 Mutex_Lock(&print_lock);
                 printf("任务 B 唤醒 任务 A, 并开始等待 任务 A 的唤醒\n");
                 Mutex_Unlock(&print_lock);
-                Task_Notify(a_task_h->taskId);
+                Task_Notify(a_task_h);
                 break;
             }
             Task_Delay(1000); //1s
@@ -281,7 +281,7 @@ void boot_task(void *param) {
     high_prio_task_h = Task_Create(high_prio_task, 256,NULL, HIGH_PRIO_TASK_PRIO);
     interrupt_task_h = Task_Create(interrupt_handler_task, 256,NULL, INTERRUPT_TASK_PRIO);
     Task_Delay(200);
-    Task_Notify(a_task_h->taskId);
+    Task_Notify(a_task_h);
 
     Mutex_Lock(&print_lock);
     printf("\n队列 启动\n");
@@ -318,7 +318,7 @@ void key_exti_init(void) {
 void EXTI0_IRQHandler(void) {
     if (exti_interrupt_flag_get(EXTI_0) != RESET) {
         if (interrupt_task_h != NULL) {
-            Task_Notify(interrupt_task_h->taskId);
+            Task_Notify(interrupt_task_h);
         }
         exti_interrupt_flag_clear(EXTI_0);
     }
