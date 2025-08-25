@@ -13,6 +13,22 @@
 #define HIGH_PRIO_TASK_PRIO        3  // 高优先级周期任务
 #define INTERRUPT_TASK_PRIO        4  // 中断响应任务 优先级最高
 
+
+#define PRODUCER_PRIO       2  // 生产者任务优先级 (与协作任务相同)
+#define CONSUMER_PRIO       1  // 消费者任务优先级 (与后台任务相同，较低)
+#define INSPECTOR_PRIO      4  // 质检员任务优先级 (与中断任务相同，很高)
+
+typedef struct {
+    uint32_t id;
+    uint32_t data;
+} Product_t;
+
+QueueHandle_t product_queue; // 消息队列句柄
+
+Task_t *producer_task_h = NULL;
+Task_t *consumer_task_h = NULL;
+Task_t *inspector_task_h = NULL;
+
 Mutex_t print_lock;
 Task_t *a_task_h = NULL;
 Task_t *b_task_h = NULL;
@@ -163,13 +179,96 @@ void high_prio_task(void *param) {
 
 void interrupt_handler_task(void *param) {
     Mutex_Lock(&print_lock);
-    printf("中断任务 (Prio %d) 启动, 等待按键...\n", INTERRUPT_TASK_PRIO);
+    printf("任务中断 (Prio %d) 启动, 等待按键...\n", INTERRUPT_TASK_PRIO);
     Mutex_Unlock(&print_lock);
     while (1) {
         Task_Wait();
         Mutex_Lock(&print_lock);
         printf("\n\n!!!!!!!!!! [中断紧急事件处理] !!!!!!!!!!\n\n");
         Mutex_Unlock(&print_lock);
+    }
+}
+
+
+void producer_task(void *param) {
+    Product_t product;
+    product.id = 0;
+    product.data = 100;
+    Mutex_Lock(&print_lock);
+    printf("生产者 启动 (Prio %d)", PRODUCER_PRIO);
+    Mutex_Unlock(&print_lock);
+    while (1) {
+        product.id++;
+        product.data += 10;
+        Mutex_Lock(&print_lock);
+        printf("生产者: 发送产品 ID %d\n", product.id);
+        Mutex_Unlock(&print_lock);
+        // 发送产品到队列，如果队列满了会阻塞等待
+        if (Queue_Send(product_queue, &product, 1)) {
+            Mutex_Lock(&print_lock);
+            printf("生产者: 成功发送产品 ID %d\n", product.id);
+            Mutex_Unlock(&print_lock);
+        } else {
+            Mutex_Lock(&print_lock);
+            printf("生产者: 队列已满, 放弃发送产品 ID %d\n", product.id);
+            Mutex_Unlock(&print_lock);
+        }
+        Task_Delay(2000); // 每 2 秒生产一个
+    }
+}
+
+/**
+ * @brief 消费者任务 (低优先级)
+ */
+void consumer_task(void *param) {
+    Product_t received_product;
+    Mutex_Lock(&print_lock);
+    printf("消费者 启动 (Prio %d)", CONSUMER_PRIO);
+    Mutex_Unlock(&print_lock);
+    while (1) {
+        Mutex_Lock(&print_lock);
+        printf("消费者: 等待接收产品...\n");
+        Mutex_Unlock(&print_lock);
+        // 从队列接收产品，如果队列为空会阻塞等待
+        if (Queue_Receive(product_queue, &received_product, 1)) {
+            Mutex_Lock(&print_lock);
+            printf("消费者: 接收到产品 ID %d\n", received_product.id);
+            Mutex_Unlock(&print_lock);
+        } else {
+            Mutex_Lock(&print_lock);
+            printf("消费者: 队列已空, 放弃接收产品\n");
+            Mutex_Unlock(&print_lock);
+        }
+        // 没有延时，处理完一个马上就去等下一个
+    }
+}
+
+/**
+ * @brief 质检员任务 (高优先级)
+ */
+void inspector_task(void *param) {
+    Product_t received_product;
+
+    Mutex_Lock(&print_lock);
+    printf("质检员 启动 (Prio %d)", INSPECTOR_PRIO);
+    Mutex_Unlock(&print_lock);
+
+    while (1) {
+        Mutex_Lock(&print_lock);
+        printf("质检员: 等待接收产品...\n");
+        Mutex_Unlock(&print_lock);
+        // 同样从队列接收，但因为优先级高，它会优先被唤醒
+        if (Queue_Receive(product_queue, &received_product, 1)) {
+            Mutex_Lock(&print_lock);
+            printf("质检员: 拦截 到产品 ID %d\n", received_product.id);
+            Mutex_Unlock(&print_lock);
+        } else {
+            Mutex_Lock(&print_lock);
+            printf("质检员: 队列已空, 放弃 拦截 产品\n");
+            Mutex_Unlock(&print_lock);
+        }
+        // 质检员检查完后，休息 5 秒，给消费者一些机会
+        Task_Delay(5000);
     }
 }
 
@@ -183,6 +282,24 @@ void boot_task(void *param) {
     interrupt_task_h = Task_Create(interrupt_handler_task, NULL, INTERRUPT_TASK_PRIO);
     Task_Delay(200);
     Task_Notify(a_task_h->taskId);
+
+    Mutex_Lock(&print_lock);
+    printf("\n队列 启动\n");
+    Mutex_Unlock(&print_lock);
+    // 创建一个能容纳 3 个 Product_t 的队列
+    product_queue = Queue_Create(3, sizeof(Product_t));
+    if (product_queue == NULL) {
+        Mutex_Lock(&print_lock);
+        printf("队列创建失败\n");
+        Mutex_Unlock(&print_lock);
+    }
+    // 创建队列相关的任务
+    consumer_task_h = Task_Create(consumer_task, NULL, CONSUMER_PRIO);
+    producer_task_h = Task_Create(producer_task, NULL, PRODUCER_PRIO);
+    inspector_task_h = Task_Create(inspector_task, NULL, INSPECTOR_PRIO);
+    Mutex_Lock(&print_lock);
+    printf("=============================================\n\n");
+    Mutex_Unlock(&print_lock);
     Task_Delete(NULL);
 }
 
