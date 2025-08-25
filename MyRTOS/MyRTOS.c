@@ -342,24 +342,32 @@ Task_t *Task_Create(void (*func)(void *), void *param, uint8_t priority) {
 
     uint32_t *sp = stack + STACK_SIZE;
     sp = (uint32_t *) (((uintptr_t) sp) & ~0x7u);
+    sp -= 16;
+    // 可以用 memset(sp, 0, 16 * sizeof(uint32_t)) 来清零，但非必须
+
+    /* 硬件自动保存的栈帧 (R0-R3, R12, LR, PC, xPSR) */
     sp -= 8;
-    sp[0] = (uint32_t) param;
-    sp[1] = 0x01010101;
-    sp[2] = 0x02020202;
-    sp[3] = 0x03030303;
-    sp[4] = 0x12121212;
-    sp[5] = 0x00000000;
-    sp[6] = ((uint32_t) func) | 1u;
-    sp[7] = 0x01000000;
-    sp -= 8;
-    sp[0] = 0x04040404;
-    sp[1] = 0x05050505;
-    sp[2] = 0x06060606;
-    sp[3] = 0x07070707;
-    sp[4] = 0x08080808;
-    sp[5] = 0x09090909;
-    sp[6] = 0x0A0A0A0A;
-    sp[7] = 0x0B0B0B0B;
+    sp[0] = (uint32_t) param;        // R0 (参数)
+    sp[1] = 0x01010101;              // R1
+    sp[2] = 0x02020202;              // R2
+    sp[3] = 0x03030303;              // R3
+    sp[4] = 0x12121212;              // R12
+    sp[5] = 0;                       // LR (任务返回地址，设为0或任务自杀函数)
+    sp[6] = ((uint32_t) func) | 1u;  // PC (入口点)
+    sp[7] = 0x01000000;              // xPSR (Thumb bit must be 1)
+
+    /* 软件手动保存的通用寄存器 (R4 - R11) 和 EXC_RETURN */
+    sp -= 9;
+    sp[0] = 0xFFFFFFFD;              // EXC_RETURN: 指示返回时恢复FPU上下文
+    sp[1] = 0x04040404;              // R4
+    sp[2] = 0x05050505;              // R5
+    sp[3] = 0x06060606;              // R6
+    sp[4] = 0x07070707;              // R7
+    sp[5] = 0x08080808;              // R8
+    sp[6] = 0x09090909;              // R9
+    sp[7] = 0x0A0A0A0A;              // R10
+    sp[8] = 0x0B0B0B0B;              // R11
+
     t->sp = sp;
 
     uint32_t primask_status;
@@ -518,21 +526,25 @@ void Task_Delay(uint32_t tick) {
 
 __attribute__((naked)) void Start_First_Task(void) {
     __asm volatile (
-        "ldr r0, =currentTask      \n"
-        "ldr r0, [r0]              \n" // r0 = currentTask
-        "ldr r0, [r0]              \n" // r0 = currentTask->sp  (指向软件保存区 R4-R11)
+        " ldr r0, =currentTask      \n"
+        " ldr r0, [r0]              \n" // r0 = currentTask
+        " ldr r0, [r0]              \n" // r0 = currentTask->sp
 
-        "ldmia r0!, {r4-r11}       \n" // 弹出 R4-R11，r0 指向硬件栈帧
-        "msr psp, r0               \n" // PSP = 硬件栈帧起始
-        "isb                       \n"
+        " ldmia r0!, {r1, r4-r11}   \n" // 恢复 EXC_RETURN 到 r1, 和 R4-R11
+        " mov lr, r1                \n" // 将 EXC_RETURN 写入 LR
 
-        "movs r0, #2               \n" // Thread+PSP
-        "msr control, r0           \n"
-        "isb                       \n"
+        " tst lr, #0x10             \n" // 检查是否需要恢复 FPU 上下文
+        " it eq                     \n"
+        " vldmiaeq r0!, {s16-s31}   \n" // 恢复 S16-S31
 
-        "ldr r0, =0xFFFFFFFD       \n" // EXC_RETURN: Thread, PSP, Return to Thumb
-        "mov lr, r0                \n"
-        "bx lr                     \n" // 只能 bx lr
+        " msr psp, r0               \n" // 恢复 PSP
+        " isb                       \n"
+
+        " movs r0, #2               \n" // Thread+PSP
+        " msr control, r0           \n"
+        " isb                       \n"
+
+        " bx lr                     \n" // 使用恢复的 EXC_RETURN 值返回
     );
 }
 
@@ -969,19 +981,46 @@ void SysTick_Handler(void) {
 
 __attribute__((naked)) void PendSV_Handler(void) {
     __asm volatile (
-        "ldr r2, =currentTask      \n"
-        "ldr r3, [r2]              \n"
-        "cbz r3, 1f                \n" // currentTask==NULL? 首次，不保存
-        "mrs r0, psp               \n"
-        "stmdb r0!, {r4-r11}       \n"
-        "str  r0, [r3]             \n" // currentTask->sp = 新栈顶
-        "1: \n"
-        "bl  schedule_next_task    \n" // r0 = next->sp（指向软件保存区底部）
-        "ldmia r0!, {r4-r11}       \n"
-        "msr psp, r0               \n"
-        "mov r0, #0xFFFFFFFD       \n"
-        "mov lr, r0                \n"
-        "bx  lr                    \n"
+        " mrs r0, psp                       \n"
+        " isb                               \n"
+
+        " ldr r2, =currentTask              \n" /* r2 = &currentTask */
+        " ldr r3, [r2]                      \n" /* r3 = currentTask */
+        " cbz r3, 1f                        \n" /* 如果 currentTask 为 NULL (首次调度)，则不保存 */
+
+        /* 保存 FPU 上下文 (S16-S31) */
+        " tst lr, #0x10                     \n" /* 测试 EXC_RETURN 的 bit 4, 0表示使用了FPU */
+        " it eq                             \n" /* 如果 bit 4 为0 */
+        " vstmdbeq r0!, {s16-s31}           \n" /* 保存 S16-S31 到栈上 */
+
+        /* 保存通用寄存器 (R4-R11) 和 EXC_RETURN */
+        " mov r1, lr                        \n" /* 将 EXC_RETURN 值存入 r1 */
+        " stmdb r0!, {r1, r4-r11}           \n" /* 保存 EXC_RETURN, R4-R11 */
+
+        " str r0, [r3]                      \n" /* 保存新的栈顶到 currentTask->sp */
+
+        "1:                                 \n"
+        " cpsid i                           \n" /* 关中断，保护 schedule_next_task */
+        " bl schedule_next_task             \n" /* r0 = nextTask->sp (schedule_next_task的返回值) */
+        " cpsie i                           \n" /* 开中断 */
+
+        " ldr r2, =currentTask              \n"
+        " ldr r2, [r2]                      \n" /* r2 = currentTask (新的) */
+        " ldr r0, [r2]                      \n" /* r0 = currentTask->sp (新的栈顶) */
+
+        /* 恢复通用寄存器 (R4-R11) 和 EXC_RETURN */
+        " ldmia r0!, {r1, r4-r11}           \n" /* 恢复 EXC_RETURN 到 r1, R4-R11 */
+        " mov lr, r1                        \n" /* 更新 LR 寄存器 */
+
+        /* 恢复 FPU 上下文 */
+        " tst lr, #0x10                     \n" /* 再次测试 EXC_RETURN 的 bit 4 */
+        " it eq                             \n"
+        " vldmiaeq r0!, {s16-s31}           \n" /* 恢复 S16-S31 */
+
+        " msr psp, r0                       \n"
+        " isb                               \n"
+
+        " bx lr                             \n"
     );
 }
 
@@ -1025,21 +1064,25 @@ void HardFault_Handler(void) {
 
 __attribute__((naked)) void SVC_Handler(void) {
     __asm volatile (
-        "ldr r1, =currentTask      \n"
-        "ldr r1, [r1]              \n" /* r1 = currentTask */
-        "ldr r0, [r1]              \n" /* r0 = currentTask->sp (指向软件保存区底部) */
+        " ldr r0, =currentTask      \n"
+        " ldr r0, [r0]              \n" // r0 = currentTask
+        " ldr r0, [r0]              \n" // r0 = currentTask->sp
 
-        "ldmia r0!, {r4-r11}       \n" /* 恢复 R4-R11，r0 -> 硬件帧 */
-        "msr psp, r0               \n" /* PSP 指向硬件帧 */
-        "isb                       \n"
+        " ldmia r0!, {r1, r4-r11}   \n" // 恢复 EXC_RETURN 到 r1, 和 R4-R11
+        " mov lr, r1                \n" // 将 EXC_RETURN 写入 LR
 
-        "movs r0, #2               \n" /* Thread mode, use PSP */
-        "msr control, r0           \n"
-        "isb                       \n"
+        " tst lr, #0x10             \n" // 检查是否需要恢复 FPU 上下文
+        " it eq                     \n"
+        " vldmiaeq r0!, {s16-s31}   \n" // 恢复 S16-S31
 
-        "ldr r0, =0xFFFFFFFD       \n" /* EXC_RETURN: thread, return using PSP */
-        "mov lr, r0                \n"
-        "bx lr                     \n"
+        " msr psp, r0               \n" // 恢复 PSP
+        " isb                       \n"
+
+        " movs r0, #2               \n" // Thread+PSP
+        " msr control, r0           \n"
+        " isb                       \n"
+
+        " bx lr                     \n" // 使用恢复的 EXC_RETURN 值返回
     );
 }
 
