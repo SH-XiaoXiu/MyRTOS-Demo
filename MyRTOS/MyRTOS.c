@@ -388,10 +388,13 @@ Task_t *Task_Create(void (*func)(void *), void *param, uint8_t priority) {
 // 删除任务
 int Task_Delete(const Task_t *task_h) {
     // 不允许删除 NULL 任务或空闲任务
-    if (task_h == NULL || task_h == idleTask) {
+    if (task_h == idleTask) {
         return -1;
     }
-
+    //删除当前任务
+    if (task_h == NULL) {
+        task_h = currentTask;
+    }
     // 需要修改任务 TCB 的内容，所以需要一个非 const 的指针
     Task_t *task_to_delete = (Task_t *) task_h;
     uint32_t primask_status;
