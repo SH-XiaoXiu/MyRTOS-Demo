@@ -33,13 +33,17 @@
 #define SCB_CFSR_INVPC_Msk        (1UL << 18)
 #endif
 
+typedef struct EventList_t {
+    volatile TaskHandle_t head; // 指向等待任务链表的头部
+} EventList_t;
+
 // 互斥锁结构体
 typedef struct Mutex_t {
     volatile int locked;
-    volatile uint32_t owner;
-    volatile uint32_t waiting_mask;
     struct Task_t *owner_tcb;
     struct Mutex_t *next_held_mutex;
+    EventList_t eventList;
+    volatile uint32_t recursion_count;
 } Mutex_t;
 
 // 任务控制块 (TCB)
@@ -47,22 +51,23 @@ typedef struct Mutex_t {
 typedef struct Task_t {
     uint32_t *sp;
 
-    void (*func)(void *); // 任务函数
-    void *param; // 任务参数
-    uint64_t delay; // 延时
-    volatile uint32_t notification;
+    void (*func)(void *); //任务函数
+    void *param; //任务参数
+    uint64_t delay; // 延时-绝对系统tick
+    volatile uint32_t notification; //保留字段
     volatile uint8_t is_waiting_notification;
-    volatile TaskState_t state; // 任务状态
-    uint32_t taskId; // 任务ID
+    volatile TaskState_t state; //状态
+    uint32_t taskId; // ID
     uint32_t *stack_base; // 栈基地址,用于free
-    uint8_t priority; //任务优先级
-    struct Task_t *pNextTask; //用于所有任务链表
-    struct Task_t *pNextReady; //用于就绪或延时链表
-    struct Task_t *pPrevReady; //用于双向链表,方便删除 O(1)复杂度
-    Mutex_t *held_mutexes_head;
-    void *eventObject; // 指向正在等待的内核对象
-    void *eventData; // 用于传递与事件相关的数据指针 (如消息的源/目的地址)
-    struct Task_t *pNextEvent; // 用于构建内核对象的等待任务链表
+    uint8_t priority; // 当前优先级
+    uint8_t basePriority; // 基础优先级 (创建时的,不应该变)
+    struct Task_t *pNextTask; // 全局任务链表
+    struct Task_t *pNextGeneric; // 用于就绪/延时双向链表
+    struct Task_t *pPrevGeneric; // 用于就绪/延时双向链表
+    struct Task_t *pNextEvent; //用于事件等待单向链表
+    EventList_t *pEventList; //指向正在等待的事件列表
+    Mutex_t *held_mutexes_head; //持有的互斥锁链表
+    void *eventData; //用于队列传递数据指针
 } Task_t;
 
 typedef struct Timer_t {
@@ -76,15 +81,14 @@ typedef struct Timer_t {
 } Timer_t;
 
 typedef struct Queue_t {
-    uint8_t *storage; // 指向队列存储区的指针
-    uint32_t length; // 队列最大能容纳的消息数
-    uint32_t itemSize; // 每个消息的大小
-    volatile uint32_t waitingCount; // 当前队列中的消息数
-    uint8_t *writePtr; // 下一个要写入数据的位置
-    uint8_t *readPtr; // 下一个要读取数据的位置
-    // 等待列表 (将按任务优先级排序)
-    Task_t *sendWaitList;
-    Task_t *receiveWaitList;
+    uint8_t *storage;
+    uint32_t length;
+    uint32_t itemSize;
+    volatile uint32_t waitingCount;
+    uint8_t *writePtr;
+    uint8_t *readPtr;
+    EventList_t sendEventList;
+    EventList_t receiveEventList;
 } Queue_t;
 
 
@@ -113,6 +117,16 @@ static uint32_t nextTaskId = 0;
 static TaskHandle_t readyTaskLists[MY_RTOS_MAX_PRIORITIES];
 static TaskHandle_t delayedTaskListHead = NULL;
 static volatile uint32_t topReadyPriority = 0;
+
+
+//================= Event Management ================
+static void eventListInit(EventList_t *pEventList);
+
+static void eventListInsert(EventList_t *pEventList, TaskHandle_t taskToInsert);
+
+static void eventListRemove(TaskHandle_t taskToRemove);
+
+//================= Event Management ================
 
 /*----- Timer -----*/
 typedef enum { TIMER_CMD_START, TIMER_CMD_STOP, TIMER_CMD_DELETE } TimerCommandType_t;
@@ -150,9 +164,7 @@ static void addTaskToReadyList(TaskHandle_t task);
 
 static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t pTaskToRemove);
 
-static void removeTaskFromEventList(Task_t **ppEventList, Task_t *pTaskToRemove);
-
-static void addTaskToPrioritySortedList(Task_t **listHead, Task_t *taskToInsert);
+static void task_set_priority(TaskHandle_t task, uint8_t newPriority);
 
 /*----- Timer Management -----*/
 static void TimerServiceTask(void *pv);
@@ -390,17 +402,17 @@ void *schedule_next_task(void) {
 
         // 实现同优先级任务的轮询 (Round-Robin)
         // 如果该优先级有多个任务，则将当前选中的任务移到链表尾部
-        if (nextTaskToRun != NULL && nextTaskToRun->pNextReady != NULL) {
-            readyTaskLists[highestPriority] = nextTaskToRun->pNextReady;
-            nextTaskToRun->pNextReady->pPrevReady = NULL;
+        if (nextTaskToRun != NULL && nextTaskToRun->pNextGeneric != NULL) {
+            readyTaskLists[highestPriority] = nextTaskToRun->pNextGeneric;
+            nextTaskToRun->pNextGeneric->pPrevGeneric = NULL;
 
             Task_t *pLast = readyTaskLists[highestPriority];
-            while (pLast->pNextReady != NULL) {
-                pLast = pLast->pNextReady;
+            while (pLast->pNextGeneric != NULL) {
+                pLast = pLast->pNextGeneric;
             }
-            pLast->pNextReady = nextTaskToRun;
-            nextTaskToRun->pPrevReady = pLast;
-            nextTaskToRun->pNextReady = NULL;
+            pLast->pNextGeneric = nextTaskToRun;
+            nextTaskToRun->pPrevGeneric = pLast;
+            nextTaskToRun->pNextGeneric = NULL;
         }
     }
 
@@ -423,6 +435,60 @@ static void MyRTOS_Idle_Task(void *pv) {
 }
 
 
+//================= Event Management ================
+
+// 初始化事件列表
+static void eventListInit(EventList_t *pEventList) {
+    pEventList->head = NULL;
+}
+
+// 将任务按优先级插入事件列表
+static void eventListInsert(EventList_t *pEventList, TaskHandle_t taskToInsert) {
+    taskToInsert->pEventList = pEventList; // 记录任务正在等待的列表
+
+    if (pEventList->head == NULL || pEventList->head->priority <= taskToInsert->priority) {
+        // 插入到头部 (列表为空或新任务优先级更高或相等)
+        taskToInsert->pNextEvent = pEventList->head;
+        pEventList->head = taskToInsert;
+    } else {
+        // 遍历查找插入点
+        Task_t *iterator = pEventList->head;
+        while (iterator->pNextEvent != NULL && iterator->pNextEvent->priority > taskToInsert->priority) {
+            iterator = iterator->pNextEvent;
+        }
+        taskToInsert->pNextEvent = iterator->pNextEvent;
+        iterator->pNextEvent = taskToInsert;
+    }
+}
+
+// 从事件列表中移除任务
+static void eventListRemove(TaskHandle_t taskToRemove) {
+    if (taskToRemove->pEventList == NULL) {
+        return; // 任务没有在等待任何事件
+    }
+
+    EventList_t *pEventList = taskToRemove->pEventList;
+
+    if (pEventList->head == taskToRemove) {
+        pEventList->head = taskToRemove->pNextEvent;
+    } else {
+        Task_t *iterator = pEventList->head;
+        while (iterator != NULL && iterator->pNextEvent != taskToRemove) {
+            iterator = iterator->pNextEvent;
+        }
+        if (iterator != NULL) {
+            iterator->pNextEvent = taskToRemove->pNextEvent;
+        }
+    }
+
+    // 清理任务的指针
+    taskToRemove->pNextEvent = NULL;
+    taskToRemove->pEventList = NULL;
+}
+
+//================= Event Management ================
+
+
 //================= Task Management ================
 
 // 找到并替换原来的 addTaskToSortedDelayList 函数
@@ -432,10 +498,10 @@ static void addTaskToSortedDelayList(TaskHandle_t task) {
 
     if (delayedTaskListHead == NULL || wakeUpTime < delayedTaskListHead->delay) {
         // 插入到头部 (链表为空或新任务比头任务更早唤醒)
-        task->pNextReady = delayedTaskListHead;
-        task->pPrevReady = NULL;
+        task->pNextGeneric = delayedTaskListHead;
+        task->pPrevGeneric = NULL;
         if (delayedTaskListHead != NULL) {
-            delayedTaskListHead->pPrevReady = task;
+            delayedTaskListHead->pPrevGeneric = task;
         }
         delayedTaskListHead = task;
     } else {
@@ -443,19 +509,19 @@ static void addTaskToSortedDelayList(TaskHandle_t task) {
         Task_t *iterator = delayedTaskListHead;
 
         // 使用 <= 确保了相同唤醒时间的任务是 FIFO (先进先出) 的
-        while (iterator->pNextReady != NULL && iterator->pNextReady->delay <= wakeUpTime) {
-            iterator = iterator->pNextReady;
+        while (iterator->pNextGeneric != NULL && iterator->pNextGeneric->delay <= wakeUpTime) {
+            iterator = iterator->pNextGeneric;
         }
 
-        // 此刻, 新任务应该被插入到 iterator 和 iterator->pNextReady 之间
+        // 此刻, 新任务应该被插入到 iterator 和 iterator->pNextGeneric 之间
 
         // 将新任务的 next 指向 iterator 的下一个节点
-        task->pNextReady = iterator->pNextReady;
-        if (iterator->pNextReady != NULL) {
-            iterator->pNextReady->pPrevReady = task;
+        task->pNextGeneric = iterator->pNextGeneric;
+        if (iterator->pNextGeneric != NULL) {
+            iterator->pNextGeneric->pPrevGeneric = task;
         }
-        iterator->pNextReady = task;
-        task->pPrevReady = iterator;
+        iterator->pNextGeneric = task;
+        task->pPrevGeneric = iterator;
     }
 }
 
@@ -471,19 +537,19 @@ static void addTaskToReadyList(TaskHandle_t task) {
     topReadyPriority |= (1UL << task->priority);
 
     // 将任务插入到对应优先级链表的尾部
-    task->pNextReady = NULL;
+    task->pNextGeneric = NULL;
     if (readyTaskLists[task->priority] == NULL) {
         // 这是该优先级的第一个任务
         readyTaskLists[task->priority] = task;
-        task->pPrevReady = NULL;
+        task->pPrevGeneric = NULL;
     } else {
         // 找到链表尾部并插入
         Task_t *pLast = readyTaskLists[task->priority];
-        while (pLast->pNextReady != NULL) {
-            pLast = pLast->pNextReady;
+        while (pLast->pNextGeneric != NULL) {
+            pLast = pLast->pNextGeneric;
         }
-        pLast->pNextReady = task;
-        task->pPrevReady = pLast;
+        pLast->pNextGeneric = task;
+        task->pPrevGeneric = pLast;
     }
     task->state = TASK_STATE_READY;
 
@@ -494,21 +560,21 @@ static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t pTaskToRem
     if (pTaskToRemove == NULL) return;
 
     // 更新前一个节点的 next 指针
-    if (pTaskToRemove->pPrevReady != NULL) {
-        pTaskToRemove->pPrevReady->pNextReady = pTaskToRemove->pNextReady;
+    if (pTaskToRemove->pPrevGeneric != NULL) {
+        pTaskToRemove->pPrevGeneric->pNextGeneric = pTaskToRemove->pNextGeneric;
     } else {
         // 移除的是头节点
-        *ppListHead = pTaskToRemove->pNextReady;
+        *ppListHead = pTaskToRemove->pNextGeneric;
     }
 
     // 更新后一个节点的 prev 指针
-    if (pTaskToRemove->pNextReady != NULL) {
-        pTaskToRemove->pNextReady->pPrevReady = pTaskToRemove->pPrevReady;
+    if (pTaskToRemove->pNextGeneric != NULL) {
+        pTaskToRemove->pNextGeneric->pPrevGeneric = pTaskToRemove->pPrevGeneric;
     }
 
     // 清理被移除节点的指针
-    pTaskToRemove->pNextReady = NULL;
-    pTaskToRemove->pPrevReady = NULL;
+    pTaskToRemove->pNextGeneric = NULL;
+    pTaskToRemove->pPrevGeneric = NULL;
 
     // 如果任务是从就绪列表中移除，还需要检查是否需要清除优先级位图
     if (pTaskToRemove->state == TASK_STATE_READY) {
@@ -518,37 +584,37 @@ static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t pTaskToRem
     }
 }
 
-static void removeTaskFromEventList(Task_t **ppEventList, Task_t *pTaskToRemove) {
-    if (*ppEventList == pTaskToRemove) {
-        *ppEventList = pTaskToRemove->pNextEvent;
-    } else {
-        Task_t *iterator = *ppEventList;
-        while (iterator != NULL && iterator->pNextEvent != pTaskToRemove) {
-            iterator = iterator->pNextEvent;
-        }
-        if (iterator != NULL) {
-            iterator->pNextEvent = pTaskToRemove->pNextEvent;
-        }
-    }
-    pTaskToRemove->pNextEvent = NULL; // 清理指针
-}
 
-static void addTaskToPrioritySortedList(Task_t **listHead, Task_t *taskToInsert) {
-    if (*listHead == NULL || (*listHead)->priority <= taskToInsert->priority) {
-        // 插入到头部 (列表为空或新任务优先级更高或相等)
-        taskToInsert->pNextEvent = *listHead;
-        *listHead = taskToInsert;
+
+
+
+static void task_set_priority(TaskHandle_t task, uint8_t newPriority) {
+    if (task->priority == newPriority) {
+        return;
+    }
+    // 如果任务在就绪列表中，需要将它移动到新的优先级对应的就绪列表
+    if (task->state == TASK_STATE_READY) {
+        // 从旧的就绪列表移除
+        removeTaskFromList(&readyTaskLists[task->priority], task);
+        // 更新优先级并添加到新的就绪列表
+        task->priority = newPriority;
+        addTaskToReadyList(task);
     } else {
-        // 遍历查找插入点
-        Task_t *iterator = *listHead;
-        while (iterator->pNextEvent != NULL && iterator->pNextEvent->priority > taskToInsert->priority) {
-            iterator = iterator->pNextEvent;
-        }
-        taskToInsert->pNextEvent = iterator->pNextEvent;
-        iterator->pNextEvent = taskToInsert;
+        // 如果任务是阻塞或延时的，直接更新优先级即可
+        // 当它被唤醒时，会自然地进入正确优先级的就绪列表
+        task->priority = newPriority;
     }
 }
 
+/**
+ * @brief 创建一个新任务
+ *
+ * @param func 任务函数指针
+ * @param stack_size 任务栈大小 (单位: uint32_t)
+ * @param param 传递给任务的参数
+ * @param priority 任务的初始优先级
+ * @return TaskHandle_t 任务句柄，失败则返回 NULL
+ */
 TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param, uint8_t priority) {
     // 检查优先级是否有效
     if (priority >= MY_RTOS_MAX_PRIORITIES) {
@@ -556,14 +622,14 @@ TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param,
         return NULL;
     }
 
-    //为任务控制块 TCB 分配内存
+    // 为任务控制块 TCB 分配内存
     Task_t *t = rtos_malloc(sizeof(Task_t));
     if (t == NULL) {
         DBG_PRINTF("Error: Failed to allocate memory for TCB.\n");
         return NULL;
     }
 
-    //为任务栈分配内存
+    // 为任务栈分配内存
     uint32_t stack_size_bytes = stack_size * sizeof(uint32_t);
     uint32_t *stack = rtos_malloc(stack_size_bytes);
     if (stack == NULL) {
@@ -572,7 +638,7 @@ TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param,
         return NULL;
     }
 
-    // 初始化TCB成员
+    // 初始化 TCB 成员
     t->func = func;
     t->param = param;
     t->delay = 0;
@@ -580,25 +646,27 @@ TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param,
     t->is_waiting_notification = 0;
     t->taskId = nextTaskId++;
     t->stack_base = stack;
-    t->pNextTask = NULL;
-    t->pNextReady = NULL;
-    t->pPrevReady = NULL;
+
     t->priority = priority;
-    t->held_mutexes_head = NULL;
-    t->eventObject = NULL;
-    t->eventData = NULL;
+    t->basePriority = priority;
+
+    t->pNextTask = NULL;
+    t->pNextGeneric = NULL;
+    t->pPrevGeneric = NULL;
     t->pNextEvent = NULL;
+    t->pEventList = NULL;
+    t->held_mutexes_head = NULL;
+    t->eventData = NULL;
 
-    uint32_t *sp = stack + stack_size; // stack_size is in words (uint32_t)
+    // ----- 栈帧初始化 (与之前保持一致) -----
+    uint32_t *sp = stack + stack_size;
     sp = (uint32_t *) (((uintptr_t) sp) & ~0x7u);
-
-    /* 硬件自动保存的栈帧 (R0-R3, R12, LR, PC, xPSR) */
     sp--;
-    *sp = 0x01000000; // xPSR (Thumb bit must be 1)
+    *sp = 0x01000000; // xPSR
     sp--;
-    *sp = ((uint32_t) func) | 1u; // PC (入口点)
+    *sp = ((uint32_t) func) | 1u; // PC
     sp--;
-    *sp = 0; // LR (任务返回地址，设为0或任务自杀函数)
+    *sp = 0; // LR
     sp--;
     *sp = 0x12121212; // R12
     sp--;
@@ -608,9 +676,7 @@ TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param,
     sp--;
     *sp = 0x01010101; // R1
     sp--;
-    *sp = (uint32_t) param; // R0 (参数)
-
-    /* 软件手动保存的通用寄存器 (R4 - R11) 和 EXC_RETURN */
+    *sp = (uint32_t) param; // R0
     sp--;
     *sp = 0x0B0B0B0B; // R11
     sp--;
@@ -628,24 +694,20 @@ TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param,
     sp--;
     *sp = 0x04040404; // R4
     sp--;
-    *sp = 0xFFFFFFFD; // EXC_RETURN: 指示返回时恢复FPU上下文
-
+    *sp = 0xFFFFFFFD; // EXC_RETURN
     t->sp = sp;
-
+    // ----- 栈帧初始化结束 -----
     uint32_t primask_status;
     MY_RTOS_ENTER_CRITICAL(primask_status);
-
     // 添加到所有任务链表
     if (allTaskListHead == NULL) {
         allTaskListHead = t;
     } else {
         Task_t *p = allTaskListHead;
-        while (p->pNextTask != NULL) {
-            p = p->pNextTask;
-        }
+        while (p->pNextTask != NULL) p = p->pNextTask;
         p->pNextTask = t;
     }
-
+    // 添加到就绪列表
     addTaskToReadyList(t);
 
     MY_RTOS_EXIT_CRITICAL(primask_status);
@@ -656,106 +718,90 @@ TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param,
 }
 
 int Task_Delete(TaskHandle_t task_h) {
-    // 不允许删除 NULL 任务或空闲任务
-    if (task_h == idleTask) {
-        return -1;
-    }
-    //删除当前任务
-    if (task_h == NULL) {
-        task_h = currentTask;
-    }
-    // 需要修改任务 TCB 的内容，所以需要一个非 const 的指针
-    Task_t *task_to_delete = (Task_t *) task_h;
+    Task_t *task_to_delete;
     uint32_t primask_status;
     int trigger_yield = 0; // 是否需要在函数末尾触发调度的标志
 
+    // 确定要删除的目标任务
+    if (task_h == NULL) {
+        task_to_delete = currentTask; // NULL 表示删除自己
+    } else {
+        task_to_delete = (Task_t *) task_h;
+    }
+
+    // 安全性检查：绝不允许删除空闲任务
+    if (task_to_delete == idleTask) {
+        return -1;
+    }
+
+    // 进入临界区，保护所有内核数据结构
     MY_RTOS_ENTER_CRITICAL(primask_status);
-    //根据任务当前状态，从对应的状态链表中移除
     if (task_to_delete->state == TASK_STATE_READY) {
         removeTaskFromList(&readyTaskLists[task_to_delete->priority], task_to_delete);
     } else {
+        // 对于非就绪任务，如果它在延时列表里，则移除。
+        // `removeTaskFromList` 足够健壮，即使任务不在列表中也不会出错。
         removeTaskFromList(&delayedTaskListHead, task_to_delete);
     }
-    //如果任务正在等待内核对象（如队列），则从对象的等待列表中移除。
-    if (task_to_delete->state == TASK_STATE_BLOCKED && task_to_delete->eventObject != NULL) {
-        // 这里我们只处理了队列，如果有信号量、事件组等，也需要在这里处理
-        Queue_t *pQueue = (Queue_t *) task_to_delete->eventObject;
-        // 它可能在发送等待列表或接收等待列表
-        removeTaskFromEventList(&pQueue->sendWaitList, task_to_delete);
-        removeTaskFromEventList(&pQueue->receiveWaitList, task_to_delete);
+
+    //从事件等待列表中移除
+    //无需知道任务在等什么，通用接口即可处理。
+    if (task_to_delete->pEventList != NULL) {
+        eventListRemove(task_to_delete);
     }
-    // 将任务状态标记为未使用，防止其他地方误操作
-    task_to_delete->state = TASK_STATE_UNUSED;
-    //自动释放任务持有的所有互斥锁，防止死锁
-    Mutex_t *p_mutex = task_to_delete->held_mutexes_head;
-    while (p_mutex != NULL) {
-        Mutex_t *next_mutex = p_mutex->next_held_mutex;
 
-        // 手动解锁
-        p_mutex->locked = 0;
-        p_mutex->owner = (uint32_t) -1;
-        p_mutex->owner_tcb = NULL;
-        p_mutex->next_held_mutex = NULL; // 从持有链中断开
-
-        // 如果有其他任务在等待这个锁，唤醒它们
-        if (p_mutex->waiting_mask != 0) {
-            Task_t *p_task = allTaskListHead; // 遍历所有任务来查找等待者
-            while (p_task != NULL) {
-                if (p_task->taskId < 32 && (p_mutex->waiting_mask & (1 << p_task->taskId))) {
-                    if (p_task->state == TASK_STATE_BLOCKED) {
-                        //唤醒任务
-                        p_mutex->waiting_mask &= ~(1UL << p_task->taskId); // 清除等待标志
-                        addTaskToReadyList(p_task); // 将任务放回就绪列表
-                        // 检查是否需要抢占
-                        if (p_task->priority > currentTask->priority) {
-                            trigger_yield = 1;
-                        }
-                    }
-                }
-                p_task = p_task->pNextTask;
+    // 自动释放任务持有的所有互斥锁
+    while (task_to_delete->held_mutexes_head != NULL) {
+        Mutex_t *mutex_to_release = task_to_delete->held_mutexes_head;
+        task_to_delete->held_mutexes_head = mutex_to_release->next_held_mutex;
+        mutex_to_release->locked = 0;
+        mutex_to_release->owner_tcb = NULL;
+        // 如果是递归锁 需重置 recursion_count
+        if (mutex_to_release->eventList.head != NULL) {
+            Task_t *taskToWake = mutex_to_release->eventList.head;
+            eventListRemove(taskToWake);
+            addTaskToReadyList(taskToWake);
+            if (taskToWake->priority > currentTask->priority) {
+                trigger_yield = 1;
             }
         }
-        p_mutex = next_mutex;
     }
-
+    task_to_delete->state = TASK_STATE_UNUSED;
+    //从全局任务管理链表中移除
     Task_t *prev = NULL;
     Task_t *curr = allTaskListHead;
     while (curr != NULL && curr != task_to_delete) {
         prev = curr;
-        curr = curr->pNextTask; // <<< 修改点: 使用 pNextTask 指针
+        curr = curr->pNextTask;
     }
 
-    if (curr == NULL) {
-        // 任务不在管理链表中，可能已损坏，直接返回
-        MY_RTOS_EXIT_CRITICAL(primask_status);
-        return -2;
+    if (curr != NULL) {
+        // 确保任务在列表中
+        if (prev == NULL) {
+            // 删除的是头节点
+            allTaskListHead = curr->pNextTask;
+        } else {
+            prev->pNextTask = curr->pNextTask;
+        }
     }
 
-    if (prev == NULL) {
-        allTaskListHead = curr->pNextTask;
-    } else {
-        prev->pNextTask = curr->pNextTask;
-    }
-
-    //如果删除的是当前正在运行的任务，必须立即触发调度
-    if (curr == currentTask) {
+    if (task_to_delete == currentTask) {
         trigger_yield = 1;
     }
+    // 必须在所有链表操作完成后才能释放内存
+    rtos_free(task_to_delete->stack_base);
+    rtos_free(task_to_delete);
 
-    rtos_free(curr->stack_base);
-    rtos_free(curr);
-
+    // 退出临界区
     MY_RTOS_EXIT_CRITICAL(primask_status);
 
     if (trigger_yield) {
         MY_RTOS_YIELD();
     }
-
-    DBG_PRINTF("Task %lu deleted and memory reclaimed.\n", task_h->taskId);
+    DBG_PRINTF("Task %d deleted and memory reclaimed.\n", task_to_delete->taskId);
     return 0;
 }
 
-// 找到并替换原来的 Task_Delay 函数
 void Task_Delay(uint32_t tick) {
     if (tick == 0) return;
     uint32_t primask_status;
@@ -773,21 +819,15 @@ void Task_Delay(uint32_t tick) {
 }
 
 int Task_Notify(TaskHandle_t task_h) {
-    // 查找任务可以在临界区之外进行，提高并发性
-
     uint32_t primask_status;
     int trigger_yield = 0; // 是否需要抢占调度的标志
-
     MY_RTOS_ENTER_CRITICAL(primask_status);
-
     // 检查任务是否确实在等待通知
     if (task_h->is_waiting_notification && task_h->state == TASK_STATE_BLOCKED) {
         // 清除等待标志
         task_h->is_waiting_notification = 0;
-
         //将任务重新添加到就绪列表中，使其可以被调度
         addTaskToReadyList(task_h);
-
         //检查是否需要抢占：如果被唤醒的任务优先级高于当前任务
         if (task_h->priority > currentTask->priority) {
             trigger_yield = 1;
@@ -816,7 +856,6 @@ void Task_Wait(void) {
 
     MY_RTOS_EXIT_CRITICAL(primask_status);
 
-    // __ISB 确保流水线被刷新
     __ISB();
 }
 
@@ -861,66 +900,66 @@ QueueHandle_t Queue_Create(uint32_t length, uint32_t itemSize) {
     queue->waitingCount = 0;
     queue->writePtr = queue->storage;
     queue->readPtr = queue->storage;
-    queue->sendWaitList = NULL;
-    queue->receiveWaitList = NULL;
+
+    eventListInit(&queue->sendEventList);
+    eventListInit(&queue->receiveEventList);
+
     return queue;
 }
 
 void Queue_Delete(QueueHandle_t delQueue) {
     Queue_t *queue = delQueue;
     if (queue == NULL) return;
+
     uint32_t primask_status;
     MY_RTOS_ENTER_CRITICAL(primask_status);
+
     // 唤醒所有等待的任务 (它们将从 Send/Receive 调用中失败返回)
-    while (queue->sendWaitList) {
-        Task_t *taskToWake = queue->sendWaitList;
-        queue->sendWaitList = taskToWake->pNextEvent;
+    while (queue->sendEventList.head != NULL) {
+        Task_t *taskToWake = queue->sendEventList.head;
+        eventListRemove(taskToWake);
         addTaskToReadyList(taskToWake);
     }
-    while (queue->receiveWaitList) {
-        Task_t *taskToWake = queue->receiveWaitList;
-        queue->receiveWaitList = taskToWake->pNextEvent;
+    while (queue->receiveEventList.head != NULL) {
+        Task_t *taskToWake = queue->receiveEventList.head;
+        eventListRemove(taskToWake);
         addTaskToReadyList(taskToWake);
     }
+
     rtos_free(queue->storage);
     rtos_free(queue);
+
     MY_RTOS_EXIT_CRITICAL(primask_status);
 }
 
 int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
     Queue_t *pQueue = queue;
-    if (pQueue == NULL) {
-        return 0; // 检查队列句柄是否有效
-    }
+    if (pQueue == NULL) return 0;
 
     uint32_t primask_status;
 
     while (1) {
-        // 使用 for 循环结构，以便在被唤醒后能重新评估队列状态
         MY_RTOS_ENTER_CRITICAL(primask_status);
 
-        //优先级拦截：检查是否有更高优先级的任务正在等待接收数据
-        if (pQueue->receiveWaitList != NULL) {
-            // 直接将数据传递给等待的最高优先级任务，不经过队列存储区
-            Task_t *taskToWake = pQueue->receiveWaitList;
+        // 优先级拦截：检查是否有更高优先级的任务正在等待接收数据
+        if (pQueue->receiveEventList.head != NULL) {
+            Task_t *taskToWake = pQueue->receiveEventList.head;
 
             // 将该任务从接收等待列表中移除
-            removeTaskFromEventList(&pQueue->receiveWaitList, taskToWake);
+            eventListRemove(taskToWake);
 
-            // 检查这个被唤醒的任务是否设置了超
+            // 如果任务设置了超时，需将其从延时列表中移除
             if (taskToWake->delay > 0) {
-                // 如果是说明它当初是带超时阻塞的，必须将它从延时列表中也移除
                 removeTaskFromList(&delayedTaskListHead, taskToWake);
-                taskToWake->delay = 0; // 清零，防止误判
+                taskToWake->delay = 0;
             }
-            // 将数据直接拷贝到接收任务提供的缓冲区
+
+            // 直接将数据拷贝到接收任务提供的缓冲区
             memcpy(taskToWake->eventData, item, pQueue->itemSize);
-            // 清理任务的事件标志，这是它醒来后判断成功与否的关键
-            taskToWake->eventObject = NULL;
-            taskToWake->eventData = NULL;
-            // 将任务放回就绪列表
+            taskToWake->eventData = NULL; // 清理
+
             addTaskToReadyList(taskToWake);
-            // 如果被唤醒的任务优先级更高，立即进行任务切换
+
             if (taskToWake->priority > currentTask->priority) {
                 MY_RTOS_YIELD();
             }
@@ -928,12 +967,10 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
             return 1; // 发送成功
         }
 
-        //尝试将数据放入队列缓冲区
+        // 尝试将数据放入队列缓冲区
         if (pQueue->waitingCount < pQueue->length) {
-            // 队列未满，正常存入数据
             memcpy(pQueue->writePtr, item, pQueue->itemSize);
             pQueue->writePtr += pQueue->itemSize;
-            // 处理写指针回绕
             if (pQueue->writePtr >= (pQueue->storage + (pQueue->length * pQueue->itemSize))) {
                 pQueue->writePtr = pQueue->storage;
             }
@@ -942,40 +979,37 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
             return 1; // 发送成功
         }
 
-        //队列已满 根据 block_ticks 决定是否阻塞
+        // 队列已满，根据 block_ticks 决定是否阻塞
         if (block_ticks == 0) {
             MY_RTOS_EXIT_CRITICAL(primask_status);
-            return 0;
+            return 0; // 不阻塞，直接返回失败
         }
-        // 准备阻塞当前发送任务
 
+        // 准备阻塞当前任务
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         currentTask->state = TASK_STATE_BLOCKED;
-        currentTask->eventObject = pQueue;
-        // 将当前任务加入到发送等待列表（按优先级排序）
-        addTaskToPrioritySortedList(&pQueue->sendWaitList, currentTask);
+
+        eventListInsert(&pQueue->sendEventList, currentTask);
+
         currentTask->delay = 0;
-        // 如果不是无限期阻塞，则将任务也加入到延时列表
         if (block_ticks != MY_RTOS_MAX_DELAY) {
             currentTask->delay = MyRTOS_GetTick() + block_ticks;
             addTaskToSortedDelayList(currentTask);
         }
-        MY_RTOS_YIELD();
-        MY_RTOS_EXIT_CRITICAL(primask_status);
 
-        //任务被唤醒后，将从这里继续执行
-        // 检查唤醒原因
-        if (currentTask->eventObject == NULL) {
-            // 被 Queue_Receive 正常唤醒，意味着队列现在有空间了。
+        MY_RTOS_EXIT_CRITICAL(primask_status);
+        MY_RTOS_YIELD(); // 触发调度
+
+        if (currentTask->pEventList == NULL) {
+            // 被 Queue_Receive 正常唤醒，队列现在有空间了，重新循环尝试发送
             continue;
         }
-        // 被 SysTick 超时唤醒，eventObject 仍然指向队列。
-        // 需要将自己从发送等待列表中清理掉。
+        // 被 SysTick 超时唤醒, pEventList 仍然指向队列的等待列表
+        // 需要将自己从等待列表中清理掉
         MY_RTOS_ENTER_CRITICAL(primask_status);
-        removeTaskFromEventList(&pQueue->sendWaitList, currentTask);
-        currentTask->eventObject = NULL; // 清理事件对象
+        eventListRemove(currentTask);
         MY_RTOS_EXIT_CRITICAL(primask_status);
-        return 0;
+        return 0; // 返回超时失败
     }
 }
 
@@ -986,8 +1020,9 @@ int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
     uint32_t primask_status;
     while (1) {
         MY_RTOS_ENTER_CRITICAL(primask_status);
+
+        // 检查队列是否有数据
         if (pQueue->waitingCount > 0) {
-            //检查队列是否有数据
             memcpy(buffer, pQueue->readPtr, pQueue->itemSize);
             pQueue->readPtr += pQueue->itemSize;
             if (pQueue->readPtr >= (pQueue->storage + (pQueue->length * pQueue->itemSize))) {
@@ -995,16 +1030,16 @@ int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
             }
             pQueue->waitingCount--;
 
-            if (pQueue->sendWaitList != NULL) {
-                Task_t *taskToWake = pQueue->sendWaitList;
-                removeTaskFromEventList(&pQueue->sendWaitList, taskToWake);
-                // 检查它是否也在延时列表中
+            // 检查是否有任务在等待发送（队列空出了位置）
+            if (pQueue->sendEventList.head != NULL) {
+                Task_t *taskToWake = pQueue->sendEventList.head;
+                eventListRemove(taskToWake);
+
                 if (taskToWake->delay > 0) {
                     removeTaskFromList(&delayedTaskListHead, taskToWake);
                     taskToWake->delay = 0;
                 }
-                // 唤醒它，让它自己去重试发送
-                taskToWake->eventObject = NULL;
+
                 addTaskToReadyList(taskToWake);
 
                 if (taskToWake->priority > currentTask->priority) {
@@ -1014,35 +1049,37 @@ int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
             MY_RTOS_EXIT_CRITICAL(primask_status);
             return 1; // 接收成功
         }
+
+        // 队列为空，根据 block_ticks 决定是否阻塞
         if (block_ticks == 0) {
             MY_RTOS_EXIT_CRITICAL(primask_status);
             return 0;
         }
-        //准备阻塞
+
+        // 准备阻塞
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         currentTask->state = TASK_STATE_BLOCKED;
-        //加入队列的等待列表
-        currentTask->eventObject = pQueue;
-        currentTask->eventData = buffer;
-        addTaskToPrioritySortedList(&pQueue->receiveWaitList, currentTask);
+        currentTask->eventData = buffer; // 记录数据要拷贝到的地方
+
+        eventListInsert(&pQueue->receiveEventList, currentTask);
+
         currentTask->delay = 0;
-        //根据 block_ticks 决定是否加入延时列表
         if (block_ticks != MY_RTOS_MAX_DELAY) {
             currentTask->delay = MyRTOS_GetTick() + block_ticks;
             addTaskToSortedDelayList(currentTask);
         }
-        //触发调度
-        MY_RTOS_YIELD();
-        MY_RTOS_EXIT_CRITICAL(primask_status);
 
-        // 如果是被 Queue_Send 正常唤醒，它的 eventObject 会被设为 NULL
-        if (currentTask->eventObject == NULL) {
+        MY_RTOS_EXIT_CRITICAL(primask_status);
+        MY_RTOS_YIELD();
+
+
+        if (currentTask->pEventList == NULL) {
             return 1; // 成功接收
         }
-        //SysTick 超时唤醒
+        // 被 SysTick 超时唤醒
         MY_RTOS_ENTER_CRITICAL(primask_status);
-        removeTaskFromEventList(&pQueue->receiveWaitList, currentTask);
-        currentTask->eventObject = NULL; // 清理
+        eventListRemove(currentTask);
+        currentTask->eventData = NULL; // 清理
         MY_RTOS_EXIT_CRITICAL(primask_status);
         return 0; // 返回超时
     }
@@ -1210,10 +1247,10 @@ MutexHandle_t Mutex_Create(void) {
     Mutex_t *mutex = rtos_malloc(sizeof(Mutex_t));
     if (mutex != NULL) {
         mutex->locked = 0;
-        mutex->owner = (uint32_t) -1;
-        mutex->waiting_mask = 0;
         mutex->owner_tcb = NULL;
         mutex->next_held_mutex = NULL;
+        mutex->recursion_count = 0;
+        eventListInit(&mutex->eventList); // 初始化事件列表
     }
     return mutex;
 }
@@ -1224,113 +1261,164 @@ void Mutex_Lock(MutexHandle_t mutex) {
     while (1) {
         MY_RTOS_ENTER_CRITICAL(primask_status);
         if (!mutex->locked) {
+            // 获取锁成功
             mutex->locked = 1;
-            mutex->owner = currentTask->taskId;
             mutex->owner_tcb = currentTask;
+            // 将锁加入到任务的持有列表
             mutex->next_held_mutex = currentTask->held_mutexes_head;
             currentTask->held_mutexes_head = mutex;
             MY_RTOS_EXIT_CRITICAL(primask_status);
             return;
         }
-        // 锁被占用,进入等待
-        if (currentTask->taskId < 32) {
-            mutex->waiting_mask |= (1 << currentTask->taskId);
+        TaskHandle_t owner_tcb = mutex->owner_tcb;
+        if (owner_tcb != NULL && currentTask->priority > owner_tcb->priority) {
+            // 当前任务的优先级 > 锁持有者的优先级，触发继承
+            // 将锁持有者的优先级提升到和当前任务一样
+            task_set_priority(owner_tcb, currentTask->priority);
         }
-        // 从就绪列表移除
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         currentTask->state = TASK_STATE_BLOCKED;
-
-        // 触发调度
-        MY_RTOS_YIELD();
+        eventListInsert(&mutex->eventList, currentTask);
         MY_RTOS_EXIT_CRITICAL(primask_status);
-        // 当任务被唤醒后，会从这里继续执行
+        // 必须立即调度，因为锁持有者的优先级可能已被提升
+        MY_RTOS_YIELD();
     }
 }
 
 void Mutex_Unlock(MutexHandle_t mutex) {
     uint32_t primask_status;
     int trigger_yield = 0;
-
     MY_RTOS_ENTER_CRITICAL(primask_status);
-    if (mutex->locked && mutex->owner == currentTask->taskId) {
-        if (currentTask->held_mutexes_head == mutex) {
-            currentTask->held_mutexes_head = mutex->next_held_mutex;
-        } else {
-            Mutex_t *p = currentTask->held_mutexes_head;
-            while (p != NULL && p->next_held_mutex != mutex) {
-                p = p->next_held_mutex;
-            }
-            if (p != NULL) {
-                p->next_held_mutex = mutex->next_held_mutex;
+    if (!mutex->locked || mutex->owner_tcb != currentTask) {
+        MY_RTOS_EXIT_CRITICAL(primask_status);
+        return;
+    }
+    //将锁从当前任务的已持有”链表中移除
+    if (currentTask->held_mutexes_head == mutex) {
+        //要解锁的锁是链表头
+        currentTask->held_mutexes_head = mutex->next_held_mutex;
+    } else {
+        // 要解锁的锁在链表中间或尾部
+        Mutex_t *p_iterator = currentTask->held_mutexes_head;
+        while (p_iterator != NULL && p_iterator->next_held_mutex != mutex) {
+            p_iterator = p_iterator->next_held_mutex;
+        }
+        if (p_iterator != NULL) {
+            // 找到了前一个节点，进行移除
+            p_iterator->next_held_mutex = mutex->next_held_mutex;
+        }
+    }
+    mutex->next_held_mutex = NULL; // 清理指针，好习惯
+    // 首先，假设任务将恢复到其基础优先级
+    uint8_t new_priority = currentTask->basePriority;
+    Mutex_t *p_held_mutex = currentTask->held_mutexes_head;
+    while (p_held_mutex != NULL) {
+        // 检查这个仍然被持有的锁，是否有任务在等待它
+        if (p_held_mutex->eventList.head != NULL) {
+            // 如果有，那么当前任务的优先级不能低于等待者中的最高优先级
+            if (p_held_mutex->eventList.head->priority > new_priority) {
+                new_priority = p_held_mutex->eventList.head->priority;
             }
         }
-        mutex->next_held_mutex = NULL;
+        p_held_mutex = p_held_mutex->next_held_mutex;
+    }
+    // 更新当前任务的优先级
+    task_set_priority(currentTask, new_priority);
 
-        // 释放锁
-        mutex->locked = 0;
-        mutex->owner = (uint32_t) -1;
-        mutex->owner_tcb = NULL;
+    // 释放锁并唤醒等待者
+    mutex->locked = 0;
+    mutex->owner_tcb = NULL;
 
-        // 唤醒等待的任务
-        if (mutex->waiting_mask != 0) {
-            Task_t *p_task = allTaskListHead; // <<< 遍历所有任务
-            while (p_task != NULL) {
-                if (p_task->taskId < 32 && (mutex->waiting_mask & (1 << p_task->taskId))) {
-                    if (p_task->state == TASK_STATE_BLOCKED) {
-                        // 清除等待标志
-                        mutex->waiting_mask &= ~(1 << p_task->taskId);
-                        // 添加回就绪列表
-                        addTaskToReadyList(p_task);
-                        // 如果被唤醒任务的优先级高于当前任务，则需要调度
-                        if (p_task->priority > currentTask->priority) {
-                            trigger_yield = 1;
-                        }
-                    }
-                }
-                p_task = p_task->pNextTask;
-            }
-        }
+    // 检查是否有任务正在等待这个刚刚被释放的锁
+    if (mutex->eventList.head != NULL) {
+        // 获取等待队列中的第一个任务 (即最高优先级的任务)
+        Task_t *taskToWake = mutex->eventList.head;
 
-        if (trigger_yield) {
-            MY_RTOS_YIELD();
+        // 将该任务从锁的等待列表中移除
+        eventListRemove(taskToWake);
+
+        addTaskToReadyList(taskToWake);
+        if (taskToWake->priority > currentTask->priority) {
+            trigger_yield = 1;
         }
     }
     MY_RTOS_EXIT_CRITICAL(primask_status);
+    if (trigger_yield) {
+        MY_RTOS_YIELD();
+    }
+}
+
+
+void Mutex_Lock_Recursive(MutexHandle_t mutex) {
+    uint32_t primask_status;
+
+    // 检查是否是锁持有者重入
+    MY_RTOS_ENTER_CRITICAL(primask_status);
+    if (mutex->locked && mutex->owner_tcb == currentTask) {
+        mutex->recursion_count++;
+        MY_RTOS_EXIT_CRITICAL(primask_status);
+        return; // 直接返回，无需等待
+    }
+    MY_RTOS_EXIT_CRITICAL(primask_status);
+
+    // 如果不是重入，则执行标准的 Mutex_Lock 逻辑
+    Mutex_Lock(mutex);
+
+    // 成功获取锁后，初始化递归计数
+    MY_RTOS_ENTER_CRITICAL(primask_status);
+    if (mutex->owner_tcb == currentTask) {
+        // 再次确认
+        mutex->recursion_count = 1;
+    }
+    MY_RTOS_EXIT_CRITICAL(primask_status);
+}
+
+void Mutex_Unlock_Recursive(MutexHandle_t mutex) {
+    uint32_t primask_status;
+
+    MY_RTOS_ENTER_CRITICAL(primask_status);
+    if (mutex->locked && mutex->owner_tcb == currentTask) {
+        mutex->recursion_count--;
+        if (mutex->recursion_count == 0) {
+            // 只有当计数器归零时，才真正释放锁
+            MY_RTOS_EXIT_CRITICAL(primask_status); // 先退出临界区，让 Unlock 内部自己处理
+            Mutex_Unlock(mutex);
+        } else {
+            MY_RTOS_EXIT_CRITICAL(primask_status);
+        }
+    } else {
+        MY_RTOS_EXIT_CRITICAL(primask_status);
+    }
 }
 
 
 //=========== Interrupt Handlers ============
 
-// 找到并替换原来的 SysTick_Handler 函数
 void SysTick_Handler(void) {
     uint32_t primask_status;
-    systemTickCount++;
+
     MY_RTOS_ENTER_CRITICAL(primask_status);
-    // 获取当前时间戳
+
+    //增加tick
+    systemTickCount++;
+
     const uint64_t current_tick = systemTickCount;
-    // 循环唤醒所有到期的任务
+
     while (delayedTaskListHead != NULL && delayedTaskListHead->delay <= current_tick) {
         Task_t *taskToWake = delayedTaskListHead;
-        //从延时链表中移除 (总是移除头部)
-        delayedTaskListHead = taskToWake->pNextReady;
+
+        delayedTaskListHead = taskToWake->pNextGeneric;
         if (delayedTaskListHead != NULL) {
-            delayedTaskListHead->pPrevReady = NULL;
+            delayedTaskListHead->pPrevGeneric = NULL;
         }
-        taskToWake->pNextReady = NULL;
-        taskToWake->pPrevReady = NULL;
-        //如果是超时阻塞的任务，还需要从事件等待列表移除
-        if (taskToWake->state == TASK_STATE_BLOCKED && taskToWake->eventObject != NULL) {
-            Queue_t *pQueue = (Queue_t *) taskToWake->eventObject;
-            removeTaskFromEventList(&pQueue->sendWaitList, taskToWake);
-            removeTaskFromEventList(&pQueue->receiveWaitList, taskToWake);
-        }
-        //将任务移回就绪列表
+        // 清理被移除任务的指针，防止悬挂
+        taskToWake->pNextGeneric = NULL;
+        taskToWake->pPrevGeneric = NULL;
+        taskToWake->delay = 0; // 清除唤醒时间
         addTaskToReadyList(taskToWake);
     }
-
     MY_RTOS_YIELD();
-
-
+    // 退出临界区
     MY_RTOS_EXIT_CRITICAL(primask_status);
 }
 

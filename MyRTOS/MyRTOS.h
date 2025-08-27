@@ -217,4 +217,18 @@ void Mutex_Lock(MutexHandle_t mutex);
  */
 void Mutex_Unlock(MutexHandle_t mutex);
 
+
+/**
+ * @brief µÝ¹é»ñÈ¡»¥³âËø
+ * @param mutex »¥³âËø¾ä±ú
+ */
+void Mutex_Lock_Recursive(MutexHandle_t mutex);
+
+/**
+ * @brief µÝ¹éÊÍ·Å»¥³âËø
+ * @param mutex »¥³âËø¾ä±ú
+ */
+void Mutex_Unlock_Recursive(MutexHandle_t mutex);
+
+
 #endif // MYRTOS_H
