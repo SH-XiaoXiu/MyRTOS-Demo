@@ -41,6 +41,9 @@ TaskHandle_t background_task_h = NULL;
 TimerHandle_t perio_timer_h = NULL;
 TimerHandle_t single_timer_h = NULL;
 
+MutexHandle_t recursive_lock; // 测试递归锁
+TaskHandle_t recursive_task_h = NULL; // 测试递归锁的任务
+
 
 void perio_timer_cb(TimerHandle_t timer) {
     Mutex_Lock(print_lock);
@@ -64,8 +67,21 @@ void a_task(void *param) {
         while (1) {
             i++;
             Mutex_Lock(print_lock);
+            printf("任务 A: 尝试获取递归锁...\n");
+            Mutex_Unlock(print_lock);
+
+            Mutex_Lock_Recursive(recursive_lock); // 使用普通 Lock 也行，这里为了统一
+
+            Mutex_Lock(print_lock);
+            printf("任务 A: 成功获取递归锁！运行一次, 然后释放。\n");
+            Mutex_Unlock(print_lock);
+
+            Mutex_Unlock_Recursive(recursive_lock);
+
+            Mutex_Lock(print_lock);
             printf("任务 A 正在运行,第 %d 次\n", i);
             Mutex_Unlock(print_lock);
+
             if (i == 5) {
                 i = 0;
                 Mutex_Lock(print_lock);
@@ -286,7 +302,71 @@ void inspector_task(void *param) {
     }
 }
 
+
+void sub_function_needs_lock(int level) {
+    Mutex_Lock(print_lock);
+    printf(">> [递归任务] 进入子函数 level %d, 尝试获取递归锁...\n", level);
+    Mutex_Unlock(print_lock);
+    // 尝试获取递归锁
+    Mutex_Lock_Recursive(recursive_lock);
+    Mutex_Lock(print_lock);
+    printf(">> [递归任务] 在 level %d 成功获取递归锁。\n", level);
+    Mutex_Unlock(print_lock);
+    // 模拟一些工作
+    Task_Delay(500);
+    Mutex_Lock(print_lock);
+    printf("<< [递归任务] 在 level %d 准备释放递归锁...\n", level);
+    Mutex_Unlock(print_lock);
+    // 释放递归锁
+    Mutex_Unlock_Recursive(recursive_lock);
+}
+
+void recursive_test_task(void *param) {
+    Mutex_Lock(print_lock);
+    printf("\n--- [递归锁测试任务启动 (Prio %d)] ---\n", COLLABORATION_TASKS_PRIO);
+    Mutex_Unlock(print_lock);
+    while (1) {
+        Mutex_Lock(print_lock);
+        printf("\n[递归任务] 准备进行第一轮递归加锁 (3层)...\n");
+        Mutex_Unlock(print_lock);
+
+        // --- 第一次递归加锁 ---
+        Mutex_Lock(print_lock);
+        printf("[递归任务] 主循环, 尝试获取递归锁 (第1次)...\n");
+        Mutex_Unlock(print_lock);
+
+        Mutex_Lock_Recursive(recursive_lock);
+        Mutex_Lock(print_lock);
+        printf("[递归任务] 主循环, 成功获取递归锁 (第1次)。\n");
+        Mutex_Unlock(print_lock);
+
+        // 调用子函数，子函数内部会再次加锁
+        sub_function_needs_lock(2);
+        sub_function_needs_lock(3);
+
+        Mutex_Lock(print_lock);
+        printf("[递归任务] 所有子函数返回, 准备在主循环释放递归锁 (第1次)...\n");
+        Mutex_Unlock(print_lock);
+
+        Mutex_Unlock_Recursive(recursive_lock);
+
+        Mutex_Lock(print_lock);
+        printf("[递归任务] 锁已完全释放！现在延时3秒，给其他任务机会尝试获取锁。\n");
+        printf("--- (在此期间，任务A应该能够运行并打印信息) ---\n");
+        Mutex_Unlock(print_lock);
+        // 延时，让其他任务运行。如果递归锁没有完全释放，其他任务将无法获得锁。
+        // 特意选择一个等待此锁的任务（任务A）来验证
+        Task_Delay(3000);
+        Mutex_Lock(print_lock);
+        printf("\n[递归任务] 延时结束，准备进行第二轮测试...\n\n");
+        Mutex_Unlock(print_lock);
+        Task_Delay(2000);
+    }
+}
+
+
 void boot_task(void *param) {
+    Task_Create(recursive_test_task, 512, NULL, COLLABORATION_TASKS_PRIO);
     a_task_h = Task_Create(a_task, 256, NULL, COLLABORATION_TASKS_PRIO);
     b_task_h = Task_Create(b_task, 256,NULL, COLLABORATION_TASKS_PRIO);
     d_task_h = Task_Create(d_task, 256,NULL, COLLABORATION_TASKS_PRIO);
@@ -323,6 +403,7 @@ void boot_task(void *param) {
     Timer_Start(single_timer_h);
 
 
+
     Mutex_Lock(print_lock);
     printf("=============================================\n\n");
     Mutex_Unlock(print_lock);
@@ -353,6 +434,12 @@ void EXTI0_IRQHandler(void) {
 void sys_config() {
     lib_usart0_init();
     print_lock = Mutex_Create();
+    recursive_lock = Mutex_Create();
+    if (recursive_lock == NULL) {
+        Mutex_Lock(print_lock);
+        printf("递归锁创建失败!\n");
+        Mutex_Unlock(print_lock);
+    }
 }
 
 
