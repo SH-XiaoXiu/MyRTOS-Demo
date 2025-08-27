@@ -195,6 +195,19 @@ void rtos_free(void *pv) {
 
 //====================== 动态内存管理 ======================
 
+//==========================System====================================
+static volatile uint64_t systemTickCount = 0;
+
+
+uint64_t MyRTOS_GetTick(void) {
+    uint64_t primask_status;
+    MY_RTOS_ENTER_CRITICAL(primask_status);
+    const uint64_t tick_value = systemTickCount;
+    MY_RTOS_EXIT_CRITICAL(primask_status);
+    return tick_value;
+}
+
+//==========================System====================================
 
 //================= Task ================
 
@@ -594,7 +607,7 @@ void Task_StartScheduler(void) {
 
     NVIC_SetPriority(PendSV_IRQn, 0xFF);
     NVIC_SetPriority(SysTick_IRQn, 0x00);
-    if (SysTick_Config(SystemCoreClock / 1000)) {
+    if (SysTick_Config(SystemCoreClock / MY_RTOS_TICK_RATE_HZ)) {
         DBG_PRINTF("Error: SysTick_Config failed\n");
         while (1);
     }
@@ -938,6 +951,7 @@ int Queue_Receive(QueueHandle_t queue, void *buffer, int block) {
 //=========== Handler ============
 
 void SysTick_Handler(void) {
+    systemTickCount++;
     uint32_t primask_status;
     MY_RTOS_ENTER_CRITICAL(primask_status);
 

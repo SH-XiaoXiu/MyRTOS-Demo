@@ -5,6 +5,12 @@
 
 #define MY_RTOS_MAX_PRIORITIES    (16)
 
+#define MY_RTOS_TICK_RATE_HZ    (1000)
+
+#define MS_TO_TICKS(ms)         (((uint64_t)(ms) * MY_RTOS_TICK_RATE_HZ) / 1000)
+
+#define TICK_TO_MS(tick)         (((uint64_t)(tick) * 1000) / MY_RTOS_TICK_RATE_HZ)
+
 // 调试输出开关
 // 设置为1开启调试输出,0关闭
 // #define DEBUG_PRINT 1
@@ -159,6 +165,12 @@ void Task_Delay(uint32_t tick);
 int Task_Notify(Task_t *task_h);
 
 void Task_Wait(void);
+
+/**
+ * @brief 获取系统从启动开始经过的tick数.
+ * @return 当前的系统 tick 计数.
+ */
+uint64_t MyRTOS_GetTick(void);
 
 void Mutex_Init(Mutex_t *mutex);
 
