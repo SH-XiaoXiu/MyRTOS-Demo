@@ -2,21 +2,20 @@
 #define MYRTOS_H
 
 #include <stdint.h>
+#include "gd32f4xx.h" // 包含芯片相关的头文件以使用 CMSIS 核心函数
 
-#define MY_RTOS_MAX_PRIORITIES    (16)
+//RTOS Config
+#define MY_RTOS_MAX_PRIORITIES    (16)      // 最大支持的优先级数量
+#define MY_RTOS_TICK_RATE_HZ    (1000)    // 系统Tick频率 (Hz)
+#define MY_RTOS_MAX_DELAY       (0xFFFFFFFFU) // 最大延时ticks
 
-#define MY_RTOS_TICK_RATE_HZ    (1000)
+//Memory Management
+#define RTOS_MEMORY_POOL_SIZE   (16 * 1024) // 内核使用的静态内存池大小 (bytes)
+#define HEAP_BYTE_ALIGNMENT     (8)         // 内存对齐字节数
 
-#define MY_RTOS_MAX_DELAY    (0xFFFFFFFFU)
+// 调试输出开关 (设置为1开启, 0关闭)
+#define DEBUG_PRINT 1
 
-#define MS_TO_TICKS(ms)         (((uint64_t)(ms) * MY_RTOS_TICK_RATE_HZ) / 1000)
-
-#define TICK_TO_MS(tick)         (((uint64_t)(tick) * 1000) / MY_RTOS_TICK_RATE_HZ)
-
-// 调试输出开关
-// 设置为1开启调试输出,0关闭
-// #define DEBUG_PRINT 1
-//调试输出函数
 #if DEBUG_PRINT
 #include <stdio.h>
 #define DBG_PRINTF(...) printf(__VA_ARGS__)
@@ -24,199 +23,197 @@
 #define DBG_PRINTF(...)
 #endif
 
-// 定义任务状态
-typedef enum {
-    TASK_STATE_UNUSED = 0, // 未使用
-    TASK_STATE_READY, //就绪，可以运行
-    TASK_STATE_DELAYED, //正在延时
-    TASK_STATE_BLOCKED // 任务因等待资源（如互斥锁、通知）而阻塞
-} TaskState_t;
-
+// 时间转换宏
+// 毫秒转ticks
+#define MS_TO_TICKS(ms)         (((uint64_t)(ms) * MY_RTOS_TICK_RATE_HZ) / 1000)
+// ticks转毫秒
+#define TICK_TO_MS(tick)        (((uint64_t)(tick) * 1000) / MY_RTOS_TICK_RATE_HZ)
 
 struct Task_t;
+struct Mutex_t;
 struct Timer_t;
+struct Queue_t;
 
 
+// 任务状态枚举
+typedef enum {
+    TASK_STATE_UNUSED = 0, // 任务控制块未使用
+    TASK_STATE_READY,      // 任务就绪，可以运行
+    TASK_STATE_DELAYED,    // 任务正在延时
+    TASK_STATE_BLOCKED     // 任务因等待事件(如互斥锁、队列)而阻塞
+} TaskState_t;
 
-// 互斥锁结构体
-typedef struct Mutex_t {
-    volatile int locked;
-    volatile uint32_t owner;
-    volatile uint32_t waiting_mask;
-    struct Task_t *owner_tcb;
-    struct Mutex_t *next_held_mutex;
-} Mutex_t;
+// 核心对象句柄
+typedef struct Task_t*      TaskHandle_t;
+typedef struct Mutex_t*     MutexHandle_t;
+typedef struct Timer_t*     TimerHandle_t;
+typedef void*               QueueHandle_t;
 
-// 任务控制块 (TCB)
-//为了保持汇编代码的兼容性 sp 必须是结构体的第一个成员
-typedef struct Task_t {
-    uint32_t *sp;
-
-    void (*func)(void *); // 任务函数
-    void *param; // 任务参数
-    uint32_t delay; // 延时
-    volatile uint32_t notification;
-    volatile uint8_t is_waiting_notification;
-    volatile TaskState_t state; // 任务状态
-    uint32_t taskId; // 任务ID
-    uint32_t *stack_base; // 栈基地址,用于free
-    uint8_t priority; //任务优先级
-    struct Task_t *pNextTask; //用于所有任务链表
-    struct Task_t *pNextReady; //用于就绪或延时链表
-    struct Task_t *pPrevReady; //用于双向链表,方便删除 O(1)复杂度
-    Mutex_t *held_mutexes_head;
-    void *eventObject; // 指向正在等待的内核对象
-    void *eventData; // 用于传递与事件相关的数据指针 (如消息的源/目的地址)
-    struct Task_t *pNextEvent; // 用于构建内核对象的等待任务链表
-} Task_t;
-
-
-typedef struct Timer_t* TimerHandle_t;
-/**
- * @brief 定时器回调函数指针类型
- * @param timer 触发该回调的定时器的句柄
- */
+// 定时器回调函数指针类型
 typedef void (*TimerCallback_t)(TimerHandle_t timer);
 
-typedef struct Timer_t {
-    TimerCallback_t callback;     // 定时器到期时执行的回调函数
-    void* arg;                    // 传递给回调函数的额外参数
-    uint32_t initialDelay;        // 首次触发延时 (in ticks)
-    uint32_t period;              // 周期 (in ticks), 如果为0则是单次定时器
-    volatile uint32_t expiryTime; // 下一次到期时的绝对系统tick
-    struct Timer_t *pNext;        // 用于构建活动定时器链表
-    volatile uint8_t active;      // 定时器是否处于活动状态 (0:inactive, 1:active)
-} Timer_t;
+#define MY_RTOS_ENTER_CRITICAL(status_var)   do { (status_var) = __get_PRIMASK(); __disable_irq(); } while(0)
+#define MY_RTOS_EXIT_CRITICAL(status_var)    do { __set_PRIMASK(status_var); } while(0)
+#define MY_RTOS_YIELD()                      do { SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; __ISB(); } while(0)
 
 
-typedef void *QueueHandle_t;
-
-typedef struct Queue_t {
-    uint8_t *storage; // 指向队列存储区的指针
-    uint32_t length; // 队列最大能容纳的消息数
-    uint32_t itemSize; // 每个消息的大小
-    volatile uint32_t waitingCount; // 当前队列中的消息数
-    uint8_t *writePtr; // 下一个要写入数据的位置
-    uint8_t *readPtr; // 下一个要读取数据的位置
-    // 等待列表 (将按任务优先级排序)
-    Task_t *sendWaitList;
-    Task_t *receiveWaitList;
-} Queue_t;
+/*----- System Core -----*/
+/**
+ * @brief 初始化系统核心
+ */
+void MyRTOS_Init(void);
 
 /**
- * @brief 创建一个消息队列
- * @param length 队列能够容纳的最大消息数量
- * @param itemSize 每个消息的大小 (字节)
- * @return 成功返回队列句柄，失败返回 NULL
+ * @brief 启动任务调度器
+ */
+void Task_StartScheduler(void);
+
+/**
+ * @brief 获取系统时间
+ * @return 当前系统时间 (ticks)
+ */
+uint64_t MyRTOS_GetTick(void);
+
+/*----- Task Management -----*/
+/**
+ * @brief 创建任务
+ * @param func 任务函数
+ * @param stack_size 任务栈大小 (bytes)
+ * @param param 任务参数
+ * @param priority 任务优先级
+ * @return
+ */
+TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param, uint8_t priority);
+
+/**
+ *
+ * @param task_h 任务句柄
+ * @return 0 成功，-1 失败
+ */
+int Task_Delete(TaskHandle_t task_h);
+
+/**
+ * @brief 延时
+ * @param tick 延时时间 (ticks)
+ */
+void Task_Delay(uint32_t tick);
+
+/**
+ * @brief 通知任务
+ * @param task_h 任务句柄
+ * @return 0 成功，-1 失败
+ */
+int Task_Notify(TaskHandle_t task_h);
+
+/**
+ * @brief 等待任务通知
+ */
+void Task_Wait(void);
+
+
+/**
+ * @brief 获取指定任务的状态。
+ * @param task_h 要查询的任务句柄。
+ * @return 任务的当前状态 (TaskState_t)。
+ */
+TaskState_t Task_GetState(TaskHandle_t task_h);
+
+/**
+ * @brief 获取指定任务的优先级。
+ * @param task_h 要查询的任务句柄。
+ * @return 任务的优先级。
+ */
+uint8_t Task_GetPriority(TaskHandle_t task_h);
+
+/**
+ * @brief 获取当前正在运行的任务的句柄。
+ * @return 当前任务的句柄。
+ */
+TaskHandle_t Task_GetCurrentTaskHandle(void);
+
+/*----- Queue Management -----*/
+/**
+ * @brief 创建队列
+ * @param length 队列长度
+ * @param itemSize 数据项大小
+ * @return 队列句柄
  */
 QueueHandle_t Queue_Create(uint32_t length, uint32_t itemSize);
 
 /**
- * @brief 删除一个消息队列
+ * @brief 删除队列
  * @param delQueue 要删除的队列句柄
  */
 void Queue_Delete(QueueHandle_t delQueue);
 
 /**
- * @brief 向队列发送一个消息
+ * @brief 向队列发送数据
  * @param queue 队列句柄
- * @param item 指向要发送的消息的指针
- * @param block_ticks 0: 不阻塞, MY_RTOS_MAX_DELAY: 永久阻塞
- * @return 1 表示成功, 0 表示失败 (队列满且不阻塞)
+ * @param item  要发送的数据项
+ * @param block_ticks 阻塞时间 (ticks) 0表示不阻塞，MY_RTOS_MAX_DELAY表示无限等待
+ * @return 0 成功，-1 失败
  */
 int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks);
 
 /**
- * @brief 从队列接收一个消息
+ * @brief 从队列接收数据
  * @param queue 队列句柄
- * @param buffer 用于存放接收到的消息的缓冲区指针
- * @param block_ticks 0: 不阻塞, MY_RTOS_MAX_DELAY: 永久阻塞
- * @return 1 表示成功, 0 表示失败 (队列空且不阻塞)
+ * @param buffer 接收数据的缓冲区
+ * @param block_ticks 阻塞时间 (ticks) 0表示不阻塞，MY_RTOS_MAX_DELAY表示无限等待
+ * @return 0 成功，-1 失败
  */
 int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks);
 
-
+/*----- Timer Management -----*/
 /**
- * @brief 进入临界区
- *
- * 该宏会保存当前的中断状态（PRIMASK寄存器），然后禁用所有可屏蔽中断。
- * 必须与 MY_RTOS_EXIT_CRITICAL 成对使用。
- *
- * @param status_var 一个 uint32_t 类型的局部变量，用于保存中断状态。
+ * @brief 创建定时器
+ * @param delay 启动延时（ticks）
+ * @param period 定时周期（ticks）0表示一次性定时器
+ * @param callback 定时器回调函数
+ * @param arg 回调函数参数
+ * @return 定时器句柄
  */
-#define MY_RTOS_ENTER_CRITICAL(status_var)   \
-do {                                     \
-(status_var) = __get_PRIMASK();      \
-__disable_irq();                     \
-} while(0)
-
-/**
- * @brief 退出临界区
- *
- * 该宏会恢复由 MY_RTOS_ENTER_CRITICAL 保存的中断状态。
- *
- * @param status_var 之前用于保存中断状态的同一个变量。
- */
-#define MY_RTOS_EXIT_CRITICAL(status_var)       \
-do {                                            \
-__set_PRIMASK(status_var);                      \
-} while(0)
-
-
-/**
- * @brief 手动触发任务调度
- *
- * 该宏会挂起 PendSV 中断，请求调度器在适当的时候（通常是所有其他中断处理完毕后）
- * 进行一次任务上下文切换, j就是任务让步
- */
-#define MY_RTOS_YIELD()                      \
-do {                                     \
-SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; \
-__ISB();                             \
-} while(0)
-
-void MyRTOS_Init(void);
-
-Task_t *Task_Create(void (*func)(void *), uint16_t stack_size, void *param, uint8_t priority);
-
-int Task_Delete(const Task_t *task_h);
-
-void Task_StartScheduler(void);
-
-void Task_Delay(uint32_t tick);
-
-int Task_Notify(Task_t *task_h);
-
-void Task_Wait(void);
-
-/**
- * @brief 获取系统从启动开始经过的tick数.
- * @return 当前的系统 tick 计数.
- */
-uint64_t MyRTOS_GetTick(void);
-
-
 TimerHandle_t Timer_Create(uint32_t delay, uint32_t period, TimerCallback_t callback, void* arg);
 
-int Timer_Start(TimerHandle_t timer);
 /**
- * @brief 停止一个定时器。
- * @param timer 要停止的定时器句柄。
- * @return 0 表示成功将停止命令发送给定时器任务，-1 表示失败。
+ * @brief 启动定时器
+ * @param timer 定时器句柄
+ * @return 0 成功，-1 失败
+ */
+int Timer_Start(TimerHandle_t timer);
+
+/**
+ * @brief 停止定时器
+ * @param timer 定时器句柄
+ * @return 0 成功，-1 失败
  */
 int Timer_Stop(TimerHandle_t timer);
 
 /**
- * @brief 删除一个定时器，释放其占用的内存。
- * @note 必须删除已创建的定时器以避免内存泄漏。
- * @param timer 要删除的定时器句柄。
- * @return 0 表示成功将删除命令发送给定时器任务，-1 表示失败。
+ * @brief 删除定时器
+ * @param timer 定时器句柄
+ * @return 0 成功，-1 失败
  */
 int Timer_Delete(TimerHandle_t timer);
 
-void Mutex_Init(Mutex_t *mutex);
 
-void Mutex_Lock(Mutex_t *mutex);
 
-void Mutex_Unlock(Mutex_t *mutex);
-#endif //MYRTOS_H
+/**
+ * @brief 创建一个互斥锁.
+ * @return 成功则返回互斥锁句柄, 失败(如内存不足)则返回 NULL.
+ */
+MutexHandle_t Mutex_Create(void);
+
+/**
+ * @brief 获取互斥锁
+ * @param mutex 互斥锁句柄
+ */
+void Mutex_Lock(MutexHandle_t mutex);
+
+/**
+ * @brief 释放互斥锁
+ * @param mutex 互斥锁句柄
+ */
+void Mutex_Unlock(MutexHandle_t mutex);
+
+#endif // MYRTOS_H
