@@ -29,6 +29,7 @@
 // ticks转毫秒
 #define TICK_TO_MS(tick)        (((uint64_t)(tick) * 1000) / MY_RTOS_TICK_RATE_HZ)
 
+// 前置声明
 struct Task_t;
 struct Mutex_t;
 struct Timer_t;
@@ -52,6 +53,7 @@ typedef void*               QueueHandle_t;
 // 定时器回调函数指针类型
 typedef void (*TimerCallback_t)(TimerHandle_t timer);
 
+// 核心宏
 #define MY_RTOS_ENTER_CRITICAL(status_var)   do { (status_var) = __get_PRIMASK(); __disable_irq(); } while(0)
 #define MY_RTOS_EXIT_CRITICAL(status_var)    do { __set_PRIMASK(status_var); } while(0)
 #define MY_RTOS_YIELD()                      do { SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; __ISB(); } while(0)
@@ -78,16 +80,16 @@ uint64_t MyRTOS_GetTick(void);
 /**
  * @brief 创建任务
  * @param func 任务函数
- * @param stack_size 任务栈大小 (bytes)
+ * @param stack_size 任务栈大小 (words, e.g., 128 for 128*4 bytes)
  * @param param 任务参数
  * @param priority 任务优先级
- * @return
+ * @return 任务句柄
  */
 TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param, uint8_t priority);
 
 /**
- *
- * @param task_h 任务句柄
+ * @brief 删除任务
+ * @param task_h 任务句柄. 如果为 NULL, 则删除当前任务.
  * @return 0 成功，-1 失败
  */
 int Task_Delete(TaskHandle_t task_h);
@@ -151,7 +153,7 @@ void Queue_Delete(QueueHandle_t delQueue);
  * @param queue 队列句柄
  * @param item  要发送的数据项
  * @param block_ticks 阻塞时间 (ticks) 0表示不阻塞，MY_RTOS_MAX_DELAY表示无限等待
- * @return 0 成功，-1 失败
+ * @return 1 表示成功, 0 表示失败
  */
 int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks);
 
@@ -160,7 +162,7 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks);
  * @param queue 队列句柄
  * @param buffer 接收数据的缓冲区
  * @param block_ticks 阻塞时间 (ticks) 0表示不阻塞，MY_RTOS_MAX_DELAY表示无限等待
- * @return 0 成功，-1 失败
+ * @return 1 表示成功, 0 表示失败
  */
 int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks);
 
@@ -196,8 +198,7 @@ int Timer_Stop(TimerHandle_t timer);
  */
 int Timer_Delete(TimerHandle_t timer);
 
-
-
+/*----- Mutex Management -----*/
 /**
  * @brief 创建一个互斥锁.
  * @return 成功则返回互斥锁句柄, 失败(如内存不足)则返回 NULL.
