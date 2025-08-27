@@ -38,7 +38,21 @@ TaskHandle_t e_task_h = NULL;
 TaskHandle_t high_prio_task_h = NULL;
 TaskHandle_t interrupt_task_h = NULL;
 TaskHandle_t background_task_h = NULL;
+TimerHandle_t perio_timer_h = NULL;
+TimerHandle_t single_timer_h = NULL;
 
+
+void perio_timer_cb(TimerHandle_t timer) {
+    Mutex_Lock(print_lock);
+    printf("周期性 定时器 执行: %llu\n", MyRTOS_GetTick());
+    Mutex_Unlock(print_lock);
+}
+
+void single_timer_cb(TimerHandle_t timer) {
+    Mutex_Lock(print_lock);
+    printf("单次 定时器 执行: %llu\n", MyRTOS_GetTick());
+    Mutex_Unlock(print_lock);
+}
 
 void a_task(void *param) {
     static uint8_t i = 0;
@@ -297,6 +311,18 @@ void boot_task(void *param) {
     consumer_task_h = Task_Create(consumer_task, 256,NULL, CONSUMER_PRIO);
     producer_task_h = Task_Create(producer_task, 256,NULL, PRODUCER_PRIO);
     inspector_task_h = Task_Create(inspector_task, 256, NULL, INSPECTOR_PRIO);
+    //创建定时器
+    perio_timer_h = Timer_Create(10000, 10000, perio_timer_cb, NULL);
+    single_timer_h = Timer_Create(5000, 0, single_timer_cb, NULL);
+
+    Mutex_Lock(print_lock);
+    printf("定时器 启动\n");
+    Mutex_Unlock(print_lock);
+
+    Timer_Start(perio_timer_h);
+    Timer_Start(single_timer_h);
+
+
     Mutex_Lock(print_lock);
     printf("=============================================\n\n");
     Mutex_Unlock(print_lock);
@@ -338,7 +364,7 @@ int main(void) {
     printf("|  Version: 1.0 (Priority-based)     \n");
     printf("|  MCU: GD32                         \n");
     printf("==========================================\n");
-    Task_Create(boot_task, 64, NULL, 0);
+    Task_Create(boot_task, 256, NULL, 0);
     printf("System Starting...\n");
     Task_StartScheduler();
     while (1) {
