@@ -198,6 +198,22 @@ void rtos_free(void *pv) {
 //==========================System====================================
 static volatile uint64_t systemTickCount = 0;
 
+typedef enum {
+    TIMER_CMD_START,
+    TIMER_CMD_STOP,
+    TIMER_CMD_DELETE
+} TimerCommandType_t;
+
+typedef struct {
+    TimerCommandType_t command;
+    TimerHandle_t timer;
+} TimerCommand_t;
+
+static Task_t *timerServiceTaskHandle = NULL; // 定时器服务任务的句柄
+static QueueHandle_t timerCommandQueue = NULL; // 用于向定时器服务任务发送命令的队列
+static Timer_t *activeTimerListHead = NULL; // 按到期时间升序排列的活动定时器链表
+static void TimerServiceTask(void *pv);
+
 
 uint64_t MyRTOS_GetTick(void) {
     uint64_t primask_status;
@@ -602,6 +618,18 @@ void Task_StartScheduler(void) {
         while (1);
     }
 
+    //创建一个队列，用于向定时器服务任务发送命令 长度10差不多
+    timerCommandQueue = Queue_Create(10, sizeof(TimerCommand_t));
+    if (timerCommandQueue == NULL) {
+        DBG_PRINTF("Error: Failed to create Timer Command Queue!\n");
+        while (1);
+    }
+    // MY_RTOS_MAX_PRIORITIES - 1 是最高优先级
+    timerServiceTaskHandle = Task_Create(TimerServiceTask, 256, NULL, MY_RTOS_MAX_PRIORITIES - 1);
+    if (timerServiceTaskHandle == NULL) {
+        DBG_PRINTF("Error: Failed to create Timer Service Task!\n");
+        while (1);
+    }
     SCB->VTOR = (uint32_t) 0x08000000;
     DBG_PRINTF("Starting scheduler...\n");
 
@@ -679,6 +707,179 @@ void Task_Wait(void) {
 
 //=================== 信号量==================
 
+
+//=======================Soft Timer==============================
+
+/**
+ * @brief 将一个定时器按到期时间升序插入到活动链表中
+ * @note 此函数应在定时器服务任务的上下文中被调用，或在临界区内。
+ */
+static void insertTimerIntoActiveList(Timer_t *timerToInsert) {
+    if (activeTimerListHead == NULL || timerToInsert->expiryTime < activeTimerListHead->expiryTime) {
+        timerToInsert->pNext = activeTimerListHead;
+        activeTimerListHead = timerToInsert;
+    } else {
+        Timer_t *iterator = activeTimerListHead;
+        while (iterator->pNext != NULL && iterator->pNext->expiryTime < timerToInsert->expiryTime) {
+            iterator = iterator->pNext;
+        }
+        timerToInsert->pNext = iterator->pNext;
+        iterator->pNext = timerToInsert;
+    }
+}
+
+/**
+ * @brief 从活动定时器链表中移除一个定时器
+ */
+static void removeTimerFromActiveList(Timer_t *timerToRemove) {
+    if (activeTimerListHead == timerToRemove) {
+        // 移除的是头节点
+        activeTimerListHead = timerToRemove->pNext;
+    } else {
+        Timer_t *iterator = activeTimerListHead;
+        while (iterator != NULL && iterator->pNext != timerToRemove) {
+            iterator = iterator->pNext;
+        }
+        if (iterator != NULL) {
+            iterator->pNext = timerToRemove->pNext;
+        }
+    }
+    // 清理指针并标记为非活动
+    timerToRemove->pNext = NULL;
+    timerToRemove->active = 0;
+}
+
+/**
+ * @brief 处理所有已经到期的定时器
+ * @note 此函数由定时器服务任务调用。
+ */
+static void processExpiredTimers(void) {
+    uint32_t currentTime = MyRTOS_GetTick();
+
+    // 循环处理所有到期的定时器
+    while (activeTimerListHead != NULL && activeTimerListHead->expiryTime <= currentTime) {
+        Timer_t *expiredTimer = activeTimerListHead;
+
+        //先从活动链表中移除，这样回调函数无法影响链表状态
+        activeTimerListHead = expiredTimer->pNext;
+        expiredTimer->pNext = NULL;
+
+        // 标记为非活动，因为无论是单次还是周期性的，它当前这一轮都已结束
+        expiredTimer->active = 0;
+
+        // 执行回调
+        // 此时 expiredTimer 指针是安全的，即使回调函数里调用了 Timer_Delete
+        if (expiredTimer->callback) {
+            const TimerCallback_t cb = expiredTimer->callback;
+            cb(expiredTimer);
+        }
+        //检查定时器在回调后是否仍然存在且是周期性的
+        //检查 active 标志，如果 Timer_Delete 被调用 则会清理 timer
+        //如果它是周期性的，并且没有在回调中被删除,我们则重新激活它。
+        if (expiredTimer->period > 0) {
+            // 只有在回调没有删除它的情况下才重新计算和插入
+            // 默认回调函数不自己释放Timer,而是应该通过API
+            expiredTimer->expiryTime += expiredTimer->period;
+            insertTimerIntoActiveList(expiredTimer);
+            expiredTimer->active = 1;
+        }
+    }
+}
+
+
+/**
+ * @brief 定时器服务任务的主体
+ * @note 这是整个软定时器功能的引擎。
+ */
+static void TimerServiceTask(void *pv) {
+    TimerCommand_t command;
+    uint32_t ticksToWait;
+    while (1) {
+        //计算需要阻塞等待的时间
+        if (activeTimerListHead == NULL) {
+            // 没有活动的定时器，无限期等待命令
+            ticksToWait = 1; // 使用一个很大的值代表无限等待
+        } else {
+            uint64_t nextExpiryTime = activeTimerListHead->expiryTime;
+            uint64_t currentTime = MyRTOS_GetTick();
+            if (nextExpiryTime <= currentTime) {
+                ticksToWait = 0; // 已经过期，立即处理，不等待
+            } else {
+                ticksToWait = nextExpiryTime - currentTime;
+            }
+        }
+        //阻塞等待命令队列，超时时间为 ticksToWait
+        if (Queue_Receive(timerCommandQueue, &command, ticksToWait)) {
+            if (command.timer == NULL) continue;
+            // A. 收到了新命令，处理命令
+            switch (command.command) {
+                case TIMER_CMD_START:
+                    // 如果定时器已在活动列表，先移除再重新计算
+                    if (command.timer->active) {
+                        removeTimerFromActiveList(command.timer);
+                    }
+                    command.timer->active = 1;
+                    command.timer->expiryTime = MyRTOS_GetTick() + command.timer->initialDelay;
+                    insertTimerIntoActiveList(command.timer);
+                    break;
+
+                case TIMER_CMD_STOP:
+                    if (command.timer->active) {
+                        removeTimerFromActiveList(command.timer);
+                    }
+                    break;
+
+                case TIMER_CMD_DELETE:
+                    if (command.timer->active) {
+                        removeTimerFromActiveList(command.timer);
+                    }
+                    rtos_free(command.timer); // 释放定时器控制块内存
+                    break;
+            }
+        } else {
+            // B. 等待超时，意味着有定时器到期了
+            DBG_PRINTF("Timer Service Task: Timer expired\n");
+            processExpiredTimers();
+        }
+    }
+}
+
+TimerHandle_t Timer_Create(uint32_t delay, uint32_t period, TimerCallback_t callback, void* arg) {
+    TimerHandle_t timer = rtos_malloc(sizeof(Timer_t));
+    if (timer) {
+        timer->callback = callback;
+        timer->arg = arg;
+        timer->initialDelay = delay;
+        timer->period = period;
+        timer->active = 0; // 初始为非活动状态
+        timer->pNext = NULL;
+    }
+    return timer;
+}
+
+static int sendCommandToTimerTask(const TimerHandle_t timer, const TimerCommandType_t cmd, const int block) {
+    if (timerCommandQueue == NULL || timer == NULL) return -1;
+    TimerCommand_t command = {.command = cmd, .timer = timer};
+    // 发送命令给队列，通常不阻塞
+    if (Queue_Send(timerCommandQueue, &command, block)) {
+        return 0; // 发送成功
+    }
+    return -1; // 队列满，发送失败
+}
+
+int Timer_Start(const TimerHandle_t timer) {
+    return sendCommandToTimerTask(timer, TIMER_CMD_START, 0); // 0表示不阻塞
+}
+
+int Timer_Stop(const TimerHandle_t timer) {
+    return sendCommandToTimerTask(timer, TIMER_CMD_STOP, 0);
+}
+
+int Timer_Delete(const TimerHandle_t timer) {
+    return sendCommandToTimerTask(timer, TIMER_CMD_DELETE, 0);
+}
+
+//=======================Soft Timer==============================
 
 //============== 互斥锁 =============
 void Mutex_Init(Mutex_t *mutex) {
@@ -1034,6 +1235,7 @@ void HardFault_Handler(void) {
     uint32_t sp = 0;
     uint32_t cfsr = SCB->CFSR;
     uint32_t hfsr = SCB->HFSR;
+    uint32_t bfar = SCB->BFAR;
 
     /* 判断异常返回使用哪条栈 (EXC_RETURN bit2) */
     register uint32_t lr __asm("lr");
@@ -1050,6 +1252,11 @@ void HardFault_Handler(void) {
 
     DBG_PRINTF("\n!!! Hard Fault !!!\n");
     DBG_PRINTF("CFSR: 0x%08lX, HFSR: 0x%08lX\n", cfsr, hfsr);
+
+    if (cfsr & (1UL << 15)) {
+        DBG_PRINTF("Bus Fault Address: 0x%08lX\n", bfar);
+    }
+
     DBG_PRINTF("LR: 0x%08lX, SP: 0x%08lX, Stacked PC: 0x%08lX\n", lr, sp, stacked_pc);
 
     if (cfsr & SCB_CFSR_IACCVIOL_Msk)

@@ -32,6 +32,9 @@ typedef enum {
 
 
 struct Task_t;
+struct Timer_t;
+
+
 
 // 互斥锁结构体
 typedef struct Mutex_t {
@@ -64,6 +67,24 @@ typedef struct Task_t {
     void *eventData; // 用于传递与事件相关的数据指针 (如消息的源/目的地址)
     struct Task_t *pNextEvent; // 用于构建内核对象的等待任务链表
 } Task_t;
+
+
+typedef struct Timer_t* TimerHandle_t;
+/**
+ * @brief 定时器回调函数指针类型
+ * @param timer 触发该回调的定时器的句柄
+ */
+typedef void (*TimerCallback_t)(TimerHandle_t timer);
+
+typedef struct Timer_t {
+    TimerCallback_t callback;     // 定时器到期时执行的回调函数
+    void* arg;                    // 传递给回调函数的额外参数
+    uint32_t initialDelay;        // 首次触发延时 (in ticks)
+    uint32_t period;              // 周期 (in ticks), 如果为0则是单次定时器
+    volatile uint32_t expiryTime; // 下一次到期时的绝对系统tick
+    struct Timer_t *pNext;        // 用于构建活动定时器链表
+    volatile uint8_t active;      // 定时器是否处于活动状态 (0:inactive, 1:active)
+} Timer_t;
 
 
 typedef void *QueueHandle_t;
@@ -171,6 +192,25 @@ void Task_Wait(void);
  * @return 当前的系统 tick 计数.
  */
 uint64_t MyRTOS_GetTick(void);
+
+
+TimerHandle_t Timer_Create(uint32_t delay, uint32_t period, TimerCallback_t callback, void* arg);
+
+int Timer_Start(TimerHandle_t timer);
+/**
+ * @brief 停止一个定时器。
+ * @param timer 要停止的定时器句柄。
+ * @return 0 表示成功将停止命令发送给定时器任务，-1 表示失败。
+ */
+int Timer_Stop(TimerHandle_t timer);
+
+/**
+ * @brief 删除一个定时器，释放其占用的内存。
+ * @note 必须删除已创建的定时器以避免内存泄漏。
+ * @param timer 要删除的定时器句柄。
+ * @return 0 表示成功将删除命令发送给定时器任务，-1 表示失败。
+ */
+int Timer_Delete(TimerHandle_t timer);
 
 void Mutex_Init(Mutex_t *mutex);
 
