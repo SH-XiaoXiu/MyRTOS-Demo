@@ -49,7 +49,7 @@ typedef struct Task_t {
 
     void (*func)(void *); // 任务函数
     void *param; // 任务参数
-    uint32_t delay; // 延时
+    uint64_t delay; // 延时
     volatile uint32_t notification;
     volatile uint8_t is_waiting_notification;
     volatile TaskState_t state; // 任务状态
@@ -144,6 +144,8 @@ void *schedule_next_task(void);
 static void MyRTOS_Idle_Task(void *pv);
 
 /*----- Task Management -----*/
+static void addTaskToSortedDelayList(TaskHandle_t task);
+
 static void addTaskToReadyList(TaskHandle_t task);
 
 static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t pTaskToRemove);
@@ -423,6 +425,40 @@ static void MyRTOS_Idle_Task(void *pv) {
 
 //================= Task Management ================
 
+// 找到并替换原来的 addTaskToSortedDelayList 函数
+static void addTaskToSortedDelayList(TaskHandle_t task) {
+    // delay 是唤醒的绝对时间
+    const uint64_t wakeUpTime = task->delay;
+
+    if (delayedTaskListHead == NULL || wakeUpTime < delayedTaskListHead->delay) {
+        // 插入到头部 (链表为空或新任务比头任务更早唤醒)
+        task->pNextReady = delayedTaskListHead;
+        task->pPrevReady = NULL;
+        if (delayedTaskListHead != NULL) {
+            delayedTaskListHead->pPrevReady = task;
+        }
+        delayedTaskListHead = task;
+    } else {
+        // 遍历查找插入点， 找到一个 iterator，使得新任务应该被插入在它后面
+        Task_t *iterator = delayedTaskListHead;
+
+        // 使用 <= 确保了相同唤醒时间的任务是 FIFO (先进先出) 的
+        while (iterator->pNextReady != NULL && iterator->pNextReady->delay <= wakeUpTime) {
+            iterator = iterator->pNextReady;
+        }
+
+        // 此刻, 新任务应该被插入到 iterator 和 iterator->pNextReady 之间
+
+        // 将新任务的 next 指向 iterator 的下一个节点
+        task->pNextReady = iterator->pNextReady;
+        if (iterator->pNextReady != NULL) {
+            iterator->pNextReady->pPrevReady = task;
+        }
+        iterator->pNextReady = task;
+        task->pPrevReady = iterator;
+    }
+}
+
 static void addTaskToReadyList(TaskHandle_t task) {
     if (task == NULL || task->priority >= MY_RTOS_MAX_PRIORITIES) {
         return;
@@ -542,7 +578,6 @@ TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param,
     t->delay = 0;
     t->notification = 0;
     t->is_waiting_notification = 0;
-    // t->state 在 prvAddTaskToReadyList 中设置
     t->taskId = nextTaskId++;
     t->stack_base = stack;
     t->pNextTask = NULL;
@@ -635,26 +670,22 @@ int Task_Delete(TaskHandle_t task_h) {
     int trigger_yield = 0; // 是否需要在函数末尾触发调度的标志
 
     MY_RTOS_ENTER_CRITICAL(primask_status);
-
     //根据任务当前状态，从对应的状态链表中移除
-    switch (task_to_delete->state) {
-        case TASK_STATE_READY:
-            removeTaskFromList(&readyTaskLists[task_to_delete->priority], task_to_delete);
-            break;
-        case TASK_STATE_DELAYED:
-            removeTaskFromList(&delayedTaskListHead, task_to_delete);
-            break;
-        case TASK_STATE_BLOCKED:
-            // 阻塞状态的任务不在任何活动列表中，无需操作
-            break;
-        default:
-            // 其他状态或无效状态
-            break;
+    if (task_to_delete->state == TASK_STATE_READY) {
+        removeTaskFromList(&readyTaskLists[task_to_delete->priority], task_to_delete);
+    } else {
+        removeTaskFromList(&delayedTaskListHead, task_to_delete);
     }
-
+    //如果任务正在等待内核对象（如队列），则从对象的等待列表中移除。
+    if (task_to_delete->state == TASK_STATE_BLOCKED && task_to_delete->eventObject != NULL) {
+        // 这里我们只处理了队列，如果有信号量、事件组等，也需要在这里处理
+        Queue_t *pQueue = (Queue_t *) task_to_delete->eventObject;
+        // 它可能在发送等待列表或接收等待列表
+        removeTaskFromEventList(&pQueue->sendWaitList, task_to_delete);
+        removeTaskFromEventList(&pQueue->receiveWaitList, task_to_delete);
+    }
     // 将任务状态标记为未使用，防止其他地方误操作
     task_to_delete->state = TASK_STATE_UNUSED;
-
     //自动释放任务持有的所有互斥锁，防止死锁
     Mutex_t *p_mutex = task_to_delete->held_mutexes_head;
     while (p_mutex != NULL) {
@@ -724,26 +755,17 @@ int Task_Delete(TaskHandle_t task_h) {
     return 0;
 }
 
+// 找到并替换原来的 Task_Delay 函数
 void Task_Delay(uint32_t tick) {
     if (tick == 0) return;
-
     uint32_t primask_status;
     MY_RTOS_ENTER_CRITICAL(primask_status);
-
     //从就绪列表中移除当前任务
     removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
-
-    currentTask->delay = tick;
+    currentTask->delay = MyRTOS_GetTick() + tick;
     currentTask->state = TASK_STATE_DELAYED;
-
-    //简化: 头插法
-    currentTask->pNextReady = delayedTaskListHead;
-    currentTask->pPrevReady = NULL;
-    if (delayedTaskListHead != NULL) {
-        delayedTaskListHead->pPrevReady = currentTask;
-    }
-    delayedTaskListHead = currentTask;
-
+    //将任务插入到有序的延时链表
+    addTaskToSortedDelayList(currentTask);
     MY_RTOS_EXIT_CRITICAL(primask_status);
 
     MY_RTOS_YIELD();
@@ -926,23 +948,18 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
             return 0;
         }
         // 准备阻塞当前发送任务
+
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         currentTask->state = TASK_STATE_BLOCKED;
         currentTask->eventObject = pQueue;
         // 将当前任务加入到发送等待列表（按优先级排序）
         addTaskToPrioritySortedList(&pQueue->sendWaitList, currentTask);
+        currentTask->delay = 0;
         // 如果不是无限期阻塞，则将任务也加入到延时列表
         if (block_ticks != MY_RTOS_MAX_DELAY) {
-            currentTask->delay = block_ticks;
-            // 使用与 Task_Delay 相同的逻辑加入 delayedTaskListHead
-            currentTask->pNextReady = delayedTaskListHead;
-            currentTask->pPrevReady = NULL;
-            if (delayedTaskListHead != NULL) {
-                delayedTaskListHead->pPrevReady = currentTask;
-            }
-            delayedTaskListHead = currentTask;
+            currentTask->delay = MyRTOS_GetTick() + block_ticks;
+            addTaskToSortedDelayList(currentTask);
         }
-
         MY_RTOS_YIELD();
         MY_RTOS_EXIT_CRITICAL(primask_status);
 
@@ -1008,16 +1025,11 @@ int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
         currentTask->eventObject = pQueue;
         currentTask->eventData = buffer;
         addTaskToPrioritySortedList(&pQueue->receiveWaitList, currentTask);
+        currentTask->delay = 0;
         //根据 block_ticks 决定是否加入延时列表
         if (block_ticks != MY_RTOS_MAX_DELAY) {
-            currentTask->delay = block_ticks;
-            // 使用与 Task_Delay 相同的逻辑加入 delayedTaskListHead
-            currentTask->pNextReady = delayedTaskListHead;
-            currentTask->pPrevReady = NULL;
-            if (delayedTaskListHead != NULL) {
-                delayedTaskListHead->pPrevReady = currentTask;
-            }
-            delayedTaskListHead = currentTask;
+            currentTask->delay = MyRTOS_GetTick() + block_ticks;
+            addTaskToSortedDelayList(currentTask);
         }
         //触发调度
         MY_RTOS_YIELD();
@@ -1162,30 +1174,30 @@ static void removeTimerFromActiveList(Timer_t *timerToRemove) {
 static void processExpiredTimers(void) {
     uint64_t currentTime = MyRTOS_GetTick();
 
-    // 循环处理所有到期的定时器
     while (activeTimerListHead != NULL && activeTimerListHead->expiryTime <= currentTime) {
         Timer_t *expiredTimer = activeTimerListHead;
 
-        //先从活动链表中移除，这样回调函数无法影响链表状态
         activeTimerListHead = expiredTimer->pNext;
         expiredTimer->pNext = NULL;
-
-        // 标记为非活动，因为无论是单次还是周期性的，它当前这一轮都已结束
         expiredTimer->active = 0;
 
-        // 执行回调
-        // 此时 expiredTimer 指针是安全的，即使回调函数里调用了 Timer_Delete
         if (expiredTimer->callback) {
-            const TimerCallback_t cb = expiredTimer->callback;
-            cb(expiredTimer);
+            expiredTimer->callback(expiredTimer);
         }
-        //检查定时器在回调后是否仍然存在且是周期性的
-        //检查 active 标志，如果 Timer_Delete 被调用 则会清理 timer
-        //如果它是周期性的，并且没有在回调中被删除,我们则重新激活它。
+
         if (expiredTimer->period > 0) {
-            // 只有在回调没有删除它的情况下才重新计算和插入
-            // 默认回调函数不自己释放Timer,而是应该通过API
-            expiredTimer->expiryTime += expiredTimer->period;
+            // 这种计算方式可以处理任务被长时间阻塞导致错过多个周期的情况。
+            // 它会确保下一次唤醒时间总是未来的某个时刻，而不会连续触发。
+            uint64_t newExpiryTime = expiredTimer->expiryTime + expiredTimer->period;
+            // 如果计算出的新时间仍然在过去，说明系统延迟非常严重，
+            // 错过了不止一个周期。我们需要将唤醒时间 追赶
+            if (newExpiryTime <= currentTime) {
+                // 计算错过了多少个周期
+                uint64_t missed_periods = (currentTime - expiredTimer->expiryTime) / expiredTimer->period;
+                // 将唤醒时间直接推进到未来
+                newExpiryTime = expiredTimer->expiryTime + (missed_periods + 1) * expiredTimer->period;
+            }
+            expiredTimer->expiryTime = newExpiryTime;
             insertTimerIntoActiveList(expiredTimer);
             expiredTimer->active = 1;
         }
@@ -1289,42 +1301,35 @@ void Mutex_Unlock(MutexHandle_t mutex) {
 
 //=========== Interrupt Handlers ============
 
+// 找到并替换原来的 SysTick_Handler 函数
 void SysTick_Handler(void) {
-    systemTickCount++;
     uint32_t primask_status;
+    systemTickCount++;
     MY_RTOS_ENTER_CRITICAL(primask_status);
-
-    Task_t *p = delayedTaskListHead;
-    Task_t *pNext = NULL;
-
-    // 遍历延时链表
-    while (p != NULL) {
-        pNext = p->pNextReady; // 先保存下一个节点，因为当前节点可能被移除
-
-        if (p->delay > 0) {
-            p->delay--;
+    // 获取当前时间戳
+    const uint64_t current_tick = systemTickCount;
+    // 循环唤醒所有到期的任务
+    while (delayedTaskListHead != NULL && delayedTaskListHead->delay <= current_tick) {
+        Task_t *taskToWake = delayedTaskListHead;
+        //从延时链表中移除 (总是移除头部)
+        delayedTaskListHead = taskToWake->pNextReady;
+        if (delayedTaskListHead != NULL) {
+            delayedTaskListHead->pPrevReady = NULL;
         }
-
-        if (p->delay == 0) {
-            // 延时结束，将任务移回就绪列表
-            removeTaskFromList(&delayedTaskListHead, p);
-
-            // 如果是超时阻塞的任务，还需要从事件等待列表移除
-            if (p->state == TASK_STATE_BLOCKED && p->eventObject != NULL) {
-                Queue_t *pQueue = (Queue_t *) p->eventObject;
-                // 假设只有队列会超时阻塞
-                removeTaskFromEventList(&pQueue->sendWaitList, p);
-                removeTaskFromEventList(&pQueue->receiveWaitList, p);
-                // eventObject 保持不变，任务醒来后检查它来判断是否超时
-            }
-
-            addTaskToReadyList(p);
+        taskToWake->pNextReady = NULL;
+        taskToWake->pPrevReady = NULL;
+        //如果是超时阻塞的任务，还需要从事件等待列表移除
+        if (taskToWake->state == TASK_STATE_BLOCKED && taskToWake->eventObject != NULL) {
+            Queue_t *pQueue = (Queue_t *) taskToWake->eventObject;
+            removeTaskFromEventList(&pQueue->sendWaitList, taskToWake);
+            removeTaskFromEventList(&pQueue->receiveWaitList, taskToWake);
         }
-        p = pNext;
+        //将任务移回就绪列表
+        addTaskToReadyList(taskToWake);
     }
 
-    // 简化 每次SysTick都请求调度
     MY_RTOS_YIELD();
+
 
     MY_RTOS_EXIT_CRITICAL(primask_status);
 }
