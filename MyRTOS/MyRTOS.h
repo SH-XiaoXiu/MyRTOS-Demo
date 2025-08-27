@@ -7,6 +7,8 @@
 
 #define MY_RTOS_TICK_RATE_HZ    (1000)
 
+#define MY_RTOS_MAX_DELAY    (0xFFFFFFFFU)
+
 #define MS_TO_TICKS(ms)         (((uint64_t)(ms) * MY_RTOS_TICK_RATE_HZ) / 1000)
 
 #define TICK_TO_MS(tick)         (((uint64_t)(tick) * 1000) / MY_RTOS_TICK_RATE_HZ)
@@ -119,19 +121,19 @@ void Queue_Delete(QueueHandle_t delQueue);
  * @brief 向队列发送一个消息
  * @param queue 队列句柄
  * @param item 指向要发送的消息的指针
- * @param block 0: 不阻塞, 1: 永久阻塞直到发送成功
+ * @param block_ticks 0: 不阻塞, MY_RTOS_MAX_DELAY: 永久阻塞
  * @return 1 表示成功, 0 表示失败 (队列满且不阻塞)
  */
-int Queue_Send(QueueHandle_t queue, const void *item, int block);
+int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks);
 
 /**
  * @brief 从队列接收一个消息
  * @param queue 队列句柄
  * @param buffer 用于存放接收到的消息的缓冲区指针
- * @param block 0: 不阻塞, 1: 永久阻塞直到接收到消息
+ * @param block_ticks 0: 不阻塞, MY_RTOS_MAX_DELAY: 永久阻塞
  * @return 1 表示成功, 0 表示失败 (队列空且不阻塞)
  */
-int Queue_Receive(QueueHandle_t queue, void *buffer, int block);
+int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks);
 
 
 /**

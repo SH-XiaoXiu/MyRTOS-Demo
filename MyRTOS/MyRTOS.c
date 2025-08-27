@@ -798,7 +798,7 @@ static void TimerServiceTask(void *pv) {
         //计算需要阻塞等待的时间
         if (activeTimerListHead == NULL) {
             // 没有活动的定时器，无限期等待命令
-            ticksToWait = 1; // 使用一个很大的值代表无限等待
+            ticksToWait = MY_RTOS_MAX_DELAY;
         } else {
             uint64_t nextExpiryTime = activeTimerListHead->expiryTime;
             uint64_t currentTime = MyRTOS_GetTick();
@@ -844,7 +844,7 @@ static void TimerServiceTask(void *pv) {
     }
 }
 
-TimerHandle_t Timer_Create(uint32_t delay, uint32_t period, TimerCallback_t callback, void* arg) {
+TimerHandle_t Timer_Create(uint32_t delay, uint32_t period, TimerCallback_t callback, void *arg) {
     TimerHandle_t timer = rtos_malloc(sizeof(Timer_t));
     if (timer) {
         timer->callback = callback;
@@ -974,6 +974,22 @@ void Mutex_Unlock(Mutex_t *mutex) {
 
 
 //====================== 消息队列 ======================
+
+static void removeTaskFromEventList(Task_t **ppEventList, Task_t *pTaskToRemove) {
+    if (*ppEventList == pTaskToRemove) {
+        *ppEventList = pTaskToRemove->pNextEvent;
+    } else {
+        Task_t *iterator = *ppEventList;
+        while (iterator != NULL && iterator->pNextEvent != pTaskToRemove) {
+            iterator = iterator->pNextEvent;
+        }
+        if (iterator != NULL) {
+            iterator->pNextEvent = pTaskToRemove->pNextEvent;
+        }
+    }
+    pTaskToRemove->pNextEvent = NULL; // 清理指针
+}
+
 static void addTaskToPrioritySortedList(Task_t **listHead, Task_t *taskToInsert) {
     if (*listHead == NULL || (*listHead)->priority <= taskToInsert->priority) {
         // 插入到头部 (列表为空或新任务优先级更高或相等)
@@ -1036,34 +1052,52 @@ void Queue_Delete(QueueHandle_t delQueue) {
     MY_RTOS_EXIT_CRITICAL(primask_status);
 }
 
-int Queue_Send(QueueHandle_t queue, const void *item, int block) {
+int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
     Queue_t *pQueue = queue;
-    if (pQueue == NULL) return 0;
+    if (pQueue == NULL) {
+        return 0; // 检查队列句柄是否有效
+    }
+
     uint32_t primask_status;
-    while (1) {
-        // 循环用于阻塞后重试
+
+    while (1) { // 使用 for 循环结构，以便在被唤醒后能重新评估队列状态
         MY_RTOS_ENTER_CRITICAL(primask_status);
-        // 优先级拦截：检查是否有高优先级任务在等待接收
+
+        //优先级拦截：检查是否有更高优先级的任务正在等待接收数据
         if (pQueue->receiveWaitList != NULL) {
             // 直接将数据传递给等待的最高优先级任务，不经过队列存储区
             Task_t *taskToWake = pQueue->receiveWaitList;
-            pQueue->receiveWaitList = taskToWake->pNextEvent; // 从等待列表移除
+
+            // 将该任务从接收等待列表中移除
+            removeTaskFromEventList(&pQueue->receiveWaitList, taskToWake);
+
+            // 检查这个被唤醒的任务是否设置了超
+            if (taskToWake->delay > 0) {
+                // 如果是说明它当初是带超时阻塞的，必须将它从延时列表中也移除
+                removeTaskFromList(&delayedTaskListHead, taskToWake);
+                taskToWake->delay = 0; // 清零，防止误判
+            }
+            // 将数据直接拷贝到接收任务提供的缓冲区
             memcpy(taskToWake->eventData, item, pQueue->itemSize);
-            // 唤醒该任务
+            // 清理任务的事件标志，这是它醒来后判断成功与否的关键
             taskToWake->eventObject = NULL;
             taskToWake->eventData = NULL;
+            // 将任务放回就绪列表
             addTaskToReadyList(taskToWake);
-            // 如果被唤醒的任务优先级更高，触发调度
+            // 如果被唤醒的任务优先级更高，立即进行任务切换
             if (taskToWake->priority > currentTask->priority) {
                 MY_RTOS_YIELD();
             }
             MY_RTOS_EXIT_CRITICAL(primask_status);
             return 1; // 发送成功
         }
-        // 没有任务在等待，尝试放入队列缓冲区
+
+        //尝试将数据放入队列缓冲区
         if (pQueue->waitingCount < pQueue->length) {
+            // 队列未满，正常存入数据
             memcpy(pQueue->writePtr, item, pQueue->itemSize);
             pQueue->writePtr += pQueue->itemSize;
+            // 处理写指针回绕
             if (pQueue->writePtr >= (pQueue->storage + (pQueue->length * pQueue->itemSize))) {
                 pQueue->writePtr = pQueue->storage;
             }
@@ -1071,80 +1105,120 @@ int Queue_Send(QueueHandle_t queue, const void *item, int block) {
             MY_RTOS_EXIT_CRITICAL(primask_status);
             return 1; // 发送成功
         }
-        // 队列已满
-        if (block == 0) {
+
+        //队列已满 根据 block_ticks 决定是否阻塞
+        if (block_ticks == 0) {
             MY_RTOS_EXIT_CRITICAL(primask_status);
-            return 0; // 不阻塞，直接返回失败
+            return 0;
         }
-        // 阻塞当前任务
-        currentTask->eventObject = pQueue;
-        addTaskToPrioritySortedList(&pQueue->sendWaitList, currentTask);
+        // 准备阻塞当前发送任务
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         currentTask->state = TASK_STATE_BLOCKED;
+        currentTask->eventObject = pQueue;
+        // 将当前任务加入到发送等待列表（按优先级排序）
+        addTaskToPrioritySortedList(&pQueue->sendWaitList, currentTask);
+        // 如果不是无限期阻塞，则将任务也加入到延时列表
+        if (block_ticks != MY_RTOS_MAX_DELAY) {
+            currentTask->delay = block_ticks;
+            // 使用与 Task_Delay 相同的逻辑加入 delayedTaskListHead
+            currentTask->pNextReady = delayedTaskListHead;
+            currentTask->pPrevReady = NULL;
+            if (delayedTaskListHead != NULL) {
+                delayedTaskListHead->pPrevReady = currentTask;
+            }
+            delayedTaskListHead = currentTask;
+        }
+
         MY_RTOS_YIELD();
         MY_RTOS_EXIT_CRITICAL(primask_status);
-        // 被唤醒后，将回到 while(1) 循环的开始，重新尝试发送
+
+        //任务被唤醒后，将从这里继续执行
+        // 检查唤醒原因
+        if (currentTask->eventObject == NULL) {
+            // 被 Queue_Receive 正常唤醒，意味着队列现在有空间了。
+            continue;
+        }
+        // 被 SysTick 超时唤醒，eventObject 仍然指向队列。
+        // 需要将自己从发送等待列表中清理掉。
+        MY_RTOS_ENTER_CRITICAL(primask_status);
+        removeTaskFromEventList(&pQueue->sendWaitList, currentTask);
+        currentTask->eventObject = NULL; // 清理事件对象
+        MY_RTOS_EXIT_CRITICAL(primask_status);
+        return 0;
     }
 }
 
-int Queue_Receive(QueueHandle_t queue, void *buffer, int block) {
+int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
     Queue_t *pQueue = queue;
     if (pQueue == NULL) return 0;
+
     uint32_t primask_status;
     while (1) {
-        // 循环用于阻塞后重试
         MY_RTOS_ENTER_CRITICAL(primask_status);
         if (pQueue->waitingCount > 0) {
-            // 从队列缓冲区读取数据
+            //检查队列是否有数据
             memcpy(buffer, pQueue->readPtr, pQueue->itemSize);
             pQueue->readPtr += pQueue->itemSize;
             if (pQueue->readPtr >= (pQueue->storage + (pQueue->length * pQueue->itemSize))) {
                 pQueue->readPtr = pQueue->storage;
             }
             pQueue->waitingCount--;
-            // 检查是否有任务在等待发送 (唤醒最高优先级的)
+
             if (pQueue->sendWaitList != NULL) {
                 Task_t *taskToWake = pQueue->sendWaitList;
-                pQueue->sendWaitList = taskToWake->pNextEvent;
-
-                // 唤醒它，让它自己去发送
+                removeTaskFromEventList(&pQueue->sendWaitList, taskToWake);
+                // 检查它是否也在延时列表中
+                if (taskToWake->delay > 0) {
+                    removeTaskFromList(&delayedTaskListHead, taskToWake);
+                    taskToWake->delay = 0;
+                }
+                // 唤醒它，让它自己去重试发送
                 taskToWake->eventObject = NULL;
                 addTaskToReadyList(taskToWake);
 
-                // 如果被唤醒的任务优先级更高，触发调度
                 if (taskToWake->priority > currentTask->priority) {
                     MY_RTOS_YIELD();
                 }
             }
-
             MY_RTOS_EXIT_CRITICAL(primask_status);
             return 1; // 接收成功
         }
-
-        // 队列为空
-        if (block == 0) {
+        if (block_ticks == 0) {
             MY_RTOS_EXIT_CRITICAL(primask_status);
-            return 0; // 不阻塞，直接返回失败
+            return 0;
         }
-
-        // 阻塞当前任务
-        currentTask->eventObject = pQueue;
-        currentTask->eventData = buffer; // 保存接收缓冲区的地址！
-        addTaskToPrioritySortedList(&pQueue->receiveWaitList, currentTask);
+        //准备阻塞
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         currentTask->state = TASK_STATE_BLOCKED;
-
+        //加入队列的等待列表
+        currentTask->eventObject = pQueue;
+        currentTask->eventData = buffer;
+        addTaskToPrioritySortedList(&pQueue->receiveWaitList, currentTask);
+        //根据 block_ticks 决定是否加入延时列表
+        if (block_ticks != MY_RTOS_MAX_DELAY) {
+            currentTask->delay = block_ticks;
+            // 使用与 Task_Delay 相同的逻辑加入 delayedTaskListHead
+            currentTask->pNextReady = delayedTaskListHead;
+            currentTask->pPrevReady = NULL;
+            if (delayedTaskListHead != NULL) {
+                delayedTaskListHead->pPrevReady = currentTask;
+            }
+            delayedTaskListHead = currentTask;
+        }
+        //触发调度
         MY_RTOS_YIELD();
         MY_RTOS_EXIT_CRITICAL(primask_status);
 
-        // 被唤醒后，有两种可能：
-        // 1. 被Queue_Send直接传递了数据 -> pEventObject会是NULL，任务完成
-        // 2. 被Queue_Delete唤醒 -> pEventObject可能不是NULL，循环会失败
+        // 如果是被 Queue_Send 正常唤醒，它的 eventObject 会被设为 NULL
         if (currentTask->eventObject == NULL) {
-            // 成功被 Queue_Send 唤醒并接收到数据
-            return 1;
+            return 1; // 成功接收
         }
-        // 否则，回到循环顶部重试
+        //SysTick 超时唤醒
+        MY_RTOS_ENTER_CRITICAL(primask_status);
+        removeTaskFromEventList(&pQueue->receiveWaitList, currentTask);
+        currentTask->eventObject = NULL; // 清理
+        MY_RTOS_EXIT_CRITICAL(primask_status);
+        return 0; // 返回超时
     }
 }
 
