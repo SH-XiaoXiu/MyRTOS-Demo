@@ -25,19 +25,19 @@ typedef struct {
 
 QueueHandle_t product_queue; // 消息队列句柄
 
-TaskHandle_t *producer_task_h = NULL;
-TaskHandle_t *consumer_task_h = NULL;
-TaskHandle_t *inspector_task_h = NULL;
+TaskHandle_t producer_task_h = NULL;
+TaskHandle_t consumer_task_h = NULL;
+TaskHandle_t inspector_task_h = NULL;
 
 MutexHandle_t print_lock;
-TaskHandle_t *a_task_h = NULL;
-TaskHandle_t *b_task_h = NULL;
-TaskHandle_t *c_task_h = NULL; // 由 d_task 创建
-TaskHandle_t *d_task_h = NULL;
-TaskHandle_t *e_task_h = NULL;
-TaskHandle_t *high_prio_task_h = NULL;
-TaskHandle_t *interrupt_task_h = NULL;
-TaskHandle_t *background_task_h = NULL;
+TaskHandle_t a_task_h = NULL;
+TaskHandle_t b_task_h = NULL;
+TaskHandle_t c_task_h = NULL; // 由 d_task 创建
+TaskHandle_t d_task_h = NULL;
+TaskHandle_t e_task_h = NULL;
+TaskHandle_t high_prio_task_h = NULL;
+TaskHandle_t interrupt_task_h = NULL;
+TaskHandle_t background_task_h = NULL;
 
 
 void a_task(void *param) {
