@@ -10,6 +10,8 @@ MyRTOS README
 功能
 =============
 *   > 重构整个代码抽象架构.
+* **日志框架**：统一了日志输出，支持不同等级的日志输出，如 DEBUG、INFO、WARN、ERROR 等。
+* **系统监视器**：提供系统运行状态信息,调度情况, 如任务状态、CPU 使用率、内存使用情况等。
 * **多任务调度**：支持基于优先级的抢占调度以及同优先级时间片轮转，确保高优先级任务及时执行。
 * **可重入互斥锁（Recursive Mutex）**：支持递归锁和普通互斥锁，解决共享资源访问冲突.
 *   > 解决了优先级反转问题.
@@ -436,6 +438,8 @@ MyRTOS 的调度机制核心基于 Cortex-M4 的 SysTick 与 PendSV 中断，实
 ## 示例输出
 
 ![示例输出](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/usart_log.png)
+![示例输出2](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/usart_log2.png)
+![示例输出3](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/usart_log3.png)
 
 ## 参考
 
