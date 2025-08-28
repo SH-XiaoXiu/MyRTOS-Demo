@@ -3,6 +3,7 @@
 //
 
 #include "MyRTOS.h"
+#include "MyRTOS_Log.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -59,6 +60,9 @@ typedef struct Task_t {
     volatile TaskState_t state; //状态
     uint32_t taskId; // ID
     uint32_t *stack_base; // 栈基地址,用于free
+#if (MY_RTOS_GENERATE_RUN_TIME_STATS == 1)
+    uint16_t stackSizeInWords; //运行时统计需要
+#endif
     uint8_t priority; // 当前优先级
     uint8_t basePriority; // 基础优先级 (创建时的,不应该变)
     struct Task_t *pNextTask; // 全局任务链表
@@ -68,6 +72,12 @@ typedef struct Task_t {
     EventList_t *pEventList; //指向正在等待的事件列表
     Mutex_t *held_mutexes_head; //持有的互斥锁链表
     void *eventData; //用于队列传递数据指针
+#if (MY_RTOS_TASK_NAME_MAX_LEN > 0)
+    char taskName[MY_RTOS_TASK_NAME_MAX_LEN];
+#endif
+#if (MY_RTOS_GENERATE_RUN_TIME_STATS == 1)
+    volatile uint64_t runTimeCounter; //运行时统计需要
+#endif
 } Task_t;
 
 typedef struct Timer_t {
@@ -107,8 +117,13 @@ static uint8_t rtos_memory_pool[RTOS_MEMORY_POOL_SIZE] __attribute__((aligned(HE
 static BlockLink_t start, *blockLinkEnd = NULL;
 static size_t freeBytesRemaining = 0U;
 static size_t blockAllocatedBit = 0;
+#if (MY_RTOS_GENERATE_RUN_TIME_STATS == 1)
+static size_t minimumEverFreeBytesRemaining = 0U; //历史最小剩余堆
+#endif
+
 
 /*----- System & Task -----*/
+static volatile uint8_t systemIsInitialized = 0;
 static volatile uint64_t systemTickCount = 0;
 static TaskHandle_t allTaskListHead = NULL;
 static TaskHandle_t currentTask = NULL;
@@ -208,6 +223,9 @@ static void heapInit(void) {
     firstFreeBlock->nextFreeBlock = blockLinkEnd;
 
     freeBytesRemaining = firstFreeBlock->blockSize;
+#if (MY_RTOS_GENERATE_RUN_TIME_STATS == 1)
+    minimumEverFreeBytesRemaining = freeBytesRemaining;
+#endif
     blockAllocatedBit = ((size_t) 1) << ((sizeof(size_t) * 8) - 1);
 }
 
@@ -287,6 +305,11 @@ static void *rtos_malloc(const size_t wantedSize) {
                     }
 
                     freeBytesRemaining -= block->blockSize;
+#if (MY_RTOS_GENERATE_RUN_TIME_STATS == 1)
+                    if (freeBytesRemaining < minimumEverFreeBytesRemaining) {
+                        minimumEverFreeBytesRemaining = freeBytesRemaining;
+                    }
+#endif
                     block->blockSize |= blockAllocatedBit;
                     block->nextFreeBlock = NULL;
                 }
@@ -331,7 +354,11 @@ void MyRTOS_Init(void) {
     }
     delayedTaskListHead = NULL;
     topReadyPriority = 0;
-    DBG_PRINTF("MyRTOS Initialized. Task list cleared and memory manager reset.\n");
+#if MY_RTOS_USE_LOG
+    MyRTOS_Log_Init();
+#endif
+    systemIsInitialized = 1;
+    SYS_LOGD("MyRTOS Initialized..\n");
 }
 
 uint64_t MyRTOS_GetTick(void) {
@@ -343,32 +370,36 @@ uint64_t MyRTOS_GetTick(void) {
 }
 
 void Task_StartScheduler(void) {
+    if (!systemIsInitialized) {
+        MyRTOS_Init();
+    }
     // 创建空闲任务 优先级最低 (0)
-    idleTask = Task_Create(MyRTOS_Idle_Task, 64,NULL, 0);
+    idleTask = Task_Create(MyRTOS_Idle_Task, "IDLE", 64,NULL, 0);
     if (idleTask == NULL) {
-        DBG_PRINTF("Error: Failed to create Idle Task!\n");
+        SYS_LOGE("Failed to create Idle Task!.\n.\n");
         while (1);
     }
 
     //创建一个队列，用于向定时器服务任务发送命令 长度10差不多
     timerCommandQueue = Queue_Create(10, sizeof(TimerCommand_t));
     if (timerCommandQueue == NULL) {
-        DBG_PRINTF("Error: Failed to create Timer Command Queue!\n");
+        SYS_LOGE("Failed to create Timer Command Queue!.\n.\n");
         while (1);
     }
     // MY_RTOS_MAX_PRIORITIES - 1 是最高优先级
-    timerServiceTaskHandle = Task_Create(TimerServiceTask, 256, NULL, MY_RTOS_MAX_PRIORITIES - 1);
+    timerServiceTaskHandle = Task_Create(TimerServiceTask, "TIM", 256, NULL, MY_RTOS_MAX_PRIORITIES - 1);
     if (timerServiceTaskHandle == NULL) {
-        DBG_PRINTF("Error: Failed to create Timer Service Task!\n");
+        SYS_LOGE("Failed to create Timer Service Task!.\n.\n");
         while (1);
     }
-    SCB->VTOR = (uint32_t) 0x08000000;
-    DBG_PRINTF("Starting scheduler...\n");
 
+    SYS_LOGD("Starting scheduler....\n");
+
+    SCB->VTOR = (uint32_t) 0x08000000;
     NVIC_SetPriority(PendSV_IRQn, 0xFF);
     NVIC_SetPriority(SysTick_IRQn, 0x00);
     if (SysTick_Config(SystemCoreClock / MY_RTOS_TICK_RATE_HZ)) {
-        DBG_PRINTF("Error: SysTick_Config failed\n");
+        SYS_LOGE("SysTick_Config failed.\n.\n");
         while (1);
     }
 
@@ -393,7 +424,7 @@ void *schedule_next_task(void) {
         // 没有就绪任务，只能运行空闲任务
         nextTaskToRun = idleTask;
     } else {
-        // AI给的魔法操作: 使用 CLZ (Count Leading Zeros) 指令快速找到最高的置位
+        // 使用 CLZ (Count Leading Zeros) 指令快速找到最高的置位
         // 31 - __CLZ(topReadyPriority) 能直接得到最高位的索引
         uint32_t highestPriority = 31 - __CLZ(topReadyPriority);
 
@@ -419,7 +450,7 @@ void *schedule_next_task(void) {
     currentTask = nextTaskToRun;
 
     if (currentTask == NULL) {
-        // 不应该哈
+        // This should not happen
         return NULL;
     }
 
@@ -427,9 +458,8 @@ void *schedule_next_task(void) {
 }
 
 static void MyRTOS_Idle_Task(void *pv) {
-    DBG_PRINTF("Idle Task starting\n");
+    SYS_LOGD("Idle Task starting..\n");
     while (1) {
-        // DBG_PRINTF("Idle task running...\n");
         __WFI(); // 进入低功耗模式，等待中断
     }
 }
@@ -491,7 +521,6 @@ static void eventListRemove(TaskHandle_t taskToRemove) {
 
 //================= Task Management ================
 
-// 找到并替换原来的 addTaskToSortedDelayList 函数
 static void addTaskToSortedDelayList(TaskHandle_t task) {
     // delay 是唤醒的绝对时间
     const uint64_t wakeUpTime = task->delay;
@@ -584,10 +613,6 @@ static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t pTaskToRem
     }
 }
 
-
-
-
-
 static void task_set_priority(TaskHandle_t task, uint8_t newPriority) {
     if (task->priority == newPriority) {
         return;
@@ -606,26 +631,24 @@ static void task_set_priority(TaskHandle_t task, uint8_t newPriority) {
     }
 }
 
-/**
- * @brief 创建一个新任务
- *
- * @param func 任务函数指针
- * @param stack_size 任务栈大小 (单位: uint32_t)
- * @param param 传递给任务的参数
- * @param priority 任务的初始优先级
- * @return TaskHandle_t 任务句柄，失败则返回 NULL
- */
-TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param, uint8_t priority) {
+TaskHandle_t Task_Create(void (*func)(void *),
+                         const char *taskName,
+                         uint16_t stack_size,
+                         void *param,
+                         uint8_t priority) {
+    if (!systemIsInitialized) {
+        MyRTOS_Init();
+    }
     // 检查优先级是否有效
     if (priority >= MY_RTOS_MAX_PRIORITIES) {
-        DBG_PRINTF("Error: Invalid task priority %u.\n", priority);
+        SYS_LOGE("Invalid task priority %u.", priority);
         return NULL;
     }
 
     // 为任务控制块 TCB 分配内存
     Task_t *t = rtos_malloc(sizeof(Task_t));
     if (t == NULL) {
-        DBG_PRINTF("Error: Failed to allocate memory for TCB.\n");
+        SYS_LOGE("Failed to allocate memory for TCB..\n.\n");
         return NULL;
     }
 
@@ -633,10 +656,15 @@ TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param,
     uint32_t stack_size_bytes = stack_size * sizeof(uint32_t);
     uint32_t *stack = rtos_malloc(stack_size_bytes);
     if (stack == NULL) {
-        DBG_PRINTF("Error: Failed to allocate memory for stack.\n");
+        SYS_LOGE("Failed to allocate memory for stack..\n.\n");
         rtos_free(t);
         return NULL;
     }
+
+#if (MY_RTOS_GENERATE_RUN_TIME_STATS == 1)
+    // 用魔法值填充整个栈，为计算 High Water Mark 做准备
+    memset(stack, 0xA5, stack_size_bytes);
+#endif
 
     // 初始化 TCB 成员
     t->func = func;
@@ -645,11 +673,22 @@ TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param,
     t->notification = 0;
     t->is_waiting_notification = 0;
     t->taskId = nextTaskId++;
+#if (MY_RTOS_TASK_NAME_MAX_LEN > 0)
+    if (taskName != NULL) {
+        strncpy(t->taskName, taskName, MY_RTOS_TASK_NAME_MAX_LEN - 1);
+        t->taskName[MY_RTOS_TASK_NAME_MAX_LEN - 1] = '\0';
+    } else {
+        // 如果传入 NULL，给一个默认名
+        snprintf(t->taskName, MY_RTOS_TASK_NAME_MAX_LEN, "Task%lu", t->taskId);
+    }
+#endif
     t->stack_base = stack;
-
+#if (MY_RTOS_GENERATE_RUN_TIME_STATS == 1)
+    t->stackSizeInWords = stack_size;
+    t->runTimeCounter = 0;
+#endif
     t->priority = priority;
     t->basePriority = priority;
-
     t->pNextTask = NULL;
     t->pNextGeneric = NULL;
     t->pPrevGeneric = NULL;
@@ -658,7 +697,7 @@ TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param,
     t->held_mutexes_head = NULL;
     t->eventData = NULL;
 
-    // ----- 栈帧初始化 (与之前保持一致) -----
+    // ----- 栈帧初始化 -----
     uint32_t *sp = stack + stack_size;
     sp = (uint32_t *) (((uintptr_t) sp) & ~0x7u);
     sp--;
@@ -712,8 +751,7 @@ TaskHandle_t Task_Create(void (*func)(void *), uint16_t stack_size, void *param,
 
     MY_RTOS_EXIT_CRITICAL(primask_status);
 
-    DBG_PRINTF("Task %lu created with priority %u. Stack top: %p, Initial SP: %p\n", t->taskId, t->priority,
-               &stack[stack_size - 1], t->sp);
+    SYS_LOGD("Task %lu created with priority %u.", t->taskId, t->priority);
     return t;
 }
 
@@ -740,12 +778,10 @@ int Task_Delete(TaskHandle_t task_h) {
         removeTaskFromList(&readyTaskLists[task_to_delete->priority], task_to_delete);
     } else {
         // 对于非就绪任务，如果它在延时列表里，则移除。
-        // `removeTaskFromList` 足够健壮，即使任务不在列表中也不会出错。
         removeTaskFromList(&delayedTaskListHead, task_to_delete);
     }
 
     //从事件等待列表中移除
-    //无需知道任务在等什么，通用接口即可处理。
     if (task_to_delete->pEventList != NULL) {
         eventListRemove(task_to_delete);
     }
@@ -788,6 +824,9 @@ int Task_Delete(TaskHandle_t task_h) {
     if (task_to_delete == currentTask) {
         trigger_yield = 1;
     }
+
+    uint32_t deleted_task_id = task_to_delete->taskId;
+
     // 必须在所有链表操作完成后才能释放内存
     rtos_free(task_to_delete->stack_base);
     rtos_free(task_to_delete);
@@ -798,7 +837,7 @@ int Task_Delete(TaskHandle_t task_h) {
     if (trigger_yield) {
         MY_RTOS_YIELD();
     }
-    DBG_PRINTF("Task %d deleted and memory reclaimed.\n", task_to_delete->taskId);
+    SYS_LOGD("Task %lu deleted.", deleted_task_id);
     return 0;
 }
 
@@ -1170,7 +1209,6 @@ static void TimerServiceTask(void *pv) {
             }
         } else {
             // B. 等待超时，意味着有定时器到期了
-            // DBG_PRINTF("Timer Service Task: Timer expired\n");
             processExpiredTimers();
         }
     }
@@ -1224,10 +1262,8 @@ static void processExpiredTimers(void) {
 
         if (expiredTimer->period > 0) {
             // 这种计算方式可以处理任务被长时间阻塞导致错过多个周期的情况。
-            // 它会确保下一次唤醒时间总是未来的某个时刻，而不会连续触发。
             uint64_t newExpiryTime = expiredTimer->expiryTime + expiredTimer->period;
-            // 如果计算出的新时间仍然在过去，说明系统延迟非常严重，
-            // 错过了不止一个周期。我们需要将唤醒时间 追赶
+            // 如果计算出的新时间仍然在过去，说明系统延迟非常严重
             if (newExpiryTime <= currentTime) {
                 // 计算错过了多少个周期
                 uint64_t missed_periods = (currentTime - expiredTimer->expiryTime) / expiredTimer->period;
@@ -1255,7 +1291,7 @@ MutexHandle_t Mutex_Create(void) {
     return mutex;
 }
 
-void Mutex_Lock(MutexHandle_t mutex) {
+int Mutex_Lock_Timeout(MutexHandle_t mutex, uint32_t block_ticks) {
     uint32_t primask_status;
 
     while (1) {
@@ -1264,25 +1300,54 @@ void Mutex_Lock(MutexHandle_t mutex) {
             // 获取锁成功
             mutex->locked = 1;
             mutex->owner_tcb = currentTask;
-            // 将锁加入到任务的持有列表
             mutex->next_held_mutex = currentTask->held_mutexes_head;
             currentTask->held_mutexes_head = mutex;
             MY_RTOS_EXIT_CRITICAL(primask_status);
-            return;
+            return 1; // 成功
         }
+
+        if (block_ticks == 0) {
+            MY_RTOS_EXIT_CRITICAL(primask_status);
+            return 0; // 不阻塞，直接失败
+        }
+
+        // 优先级继承
         TaskHandle_t owner_tcb = mutex->owner_tcb;
         if (owner_tcb != NULL && currentTask->priority > owner_tcb->priority) {
-            // 当前任务的优先级 > 锁持有者的优先级，触发继承
-            // 将锁持有者的优先级提升到和当前任务一样
             task_set_priority(owner_tcb, currentTask->priority);
         }
+
+        // 准备阻塞
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         currentTask->state = TASK_STATE_BLOCKED;
         eventListInsert(&mutex->eventList, currentTask);
+
+        currentTask->delay = 0;
+        if (block_ticks != MY_RTOS_MAX_DELAY) {
+            currentTask->delay = MyRTOS_GetTick() + block_ticks;
+            addTaskToSortedDelayList(currentTask);
+        }
+
         MY_RTOS_EXIT_CRITICAL(primask_status);
-        // 必须立即调度，因为锁持有者的优先级可能已被提升
         MY_RTOS_YIELD();
+
+        // 任务被唤醒后，检查是否是自己拿到了锁
+        if (mutex->owner_tcb == currentTask) {
+            return 1; // 成功获取锁
+        }
+        // 如果不是，检查是否是由于超时醒来
+        // 任务超时后，它仍然在事件等待列表中，需要清理
+        if (currentTask->pEventList != NULL) {
+            MY_RTOS_ENTER_CRITICAL(primask_status);
+            eventListRemove(currentTask);
+            MY_RTOS_EXIT_CRITICAL(primask_status);
+            return 0; // 超时失败
+        }
     }
+}
+
+void Mutex_Lock(MutexHandle_t mutex) {
+    Mutex_Lock_Timeout(mutex, MY_RTOS_MAX_DELAY);
 }
 
 void Mutex_Unlock(MutexHandle_t mutex) {
@@ -1334,8 +1399,11 @@ void Mutex_Unlock(MutexHandle_t mutex) {
         // 获取等待队列中的第一个任务 (即最高优先级的任务)
         Task_t *taskToWake = mutex->eventList.head;
 
-        // 将该任务从锁的等待列表中移除
+        // 将该任务从锁的等待列表中移除，并标记锁的新主人
         eventListRemove(taskToWake);
+        mutex->locked = 1;
+        mutex->owner_tcb = taskToWake;
+        taskToWake->held_mutexes_head = mutex;
 
         addTaskToReadyList(taskToWake);
         if (taskToWake->priority > currentTask->priority) {
@@ -1398,6 +1466,12 @@ void SysTick_Handler(void) {
     uint32_t primask_status;
 
     MY_RTOS_ENTER_CRITICAL(primask_status);
+
+#if (MY_RTOS_GENERATE_RUN_TIME_STATS == 1)
+    if (currentTask != NULL) {
+        currentTask->runTimeCounter++;
+    }
+#endif
 
     //增加tick
     systemTickCount++;
@@ -1489,31 +1563,32 @@ void HardFault_Handler(void) {
 
     stacked_pc = ((uint32_t *) sp)[6]; // PC 存在硬件自动保存帧的第 6 个位置
 
-    DBG_PRINTF("\n!!! Hard Fault !!!\n");
-    DBG_PRINTF("CFSR: 0x%08lX, HFSR: 0x%08lX\n", cfsr, hfsr);
+    SYS_LOGE("\n!!! Hard Fault !!!.\n.\n");
+    SYS_LOGE("CFSR: 0x%08lX, HFSR: 0x%08lX", cfsr, hfsr);
 
     if (cfsr & (1UL << 15)) {
-        DBG_PRINTF("Bus Fault Address: 0x%08lX\n", bfar);
+        // BFARVALID
+        SYS_LOGE("Bus Fault Address: 0x%08lX", bfar);
     }
 
-    DBG_PRINTF("LR: 0x%08lX, SP: 0x%08lX, Stacked PC: 0x%08lX\n", lr, sp, stacked_pc);
+    SYS_LOGE("LR: 0x%08lX, SP: 0x%08lX, Stacked PC: 0x%08lX", lr, sp, stacked_pc);
 
     if (cfsr & SCB_CFSR_IACCVIOL_Msk)
-        DBG_PRINTF("Fault: Instruction Access Violation\n");
+        SYS_LOGE("Fault: Instruction Access Violation.\n.\n");
     if (cfsr & SCB_CFSR_DACCVIOL_Msk)
-        DBG_PRINTF("Fault: Data Access Violation\n");
+        SYS_LOGE("Fault: Data Access Violation.\n.\n");
     if (cfsr & SCB_CFSR_MUNSTKERR_Msk)
-        DBG_PRINTF("Fault: Unstacking Error\n");
+        SYS_LOGE("Fault: Unstacking Error.\n.\n");
     if (cfsr & SCB_CFSR_MSTKERR_Msk)
-        DBG_PRINTF("Fault: Stacking Error\n");
+        SYS_LOGE("Fault: Stacking Error.\n.\n");
     if (cfsr & SCB_CFSR_INVSTATE_Msk)
-        DBG_PRINTF("Fault: Invalid State\n");
+        SYS_LOGE("Fault: Invalid State.\n.\n");
     if (cfsr & SCB_CFSR_UNDEFINSTR_Msk)
-        DBG_PRINTF("Fault: Undefined Instruction\n");
+        SYS_LOGE("Fault: Undefined Instruction.\n.\n");
     if (cfsr & SCB_CFSR_IBUSERR_Msk)
-        DBG_PRINTF("Fault: Instruction Bus Error\n");
+        SYS_LOGE("Fault: Instruction Bus Error.\n.\n");
     if (cfsr & SCB_CFSR_PRECISERR_Msk)
-        DBG_PRINTF("Fault: Precise Data Bus Error\n");
+        SYS_LOGE("Fault: Precise Data Bus Error.\n.\n");
 
     while (1);
 }
@@ -1542,3 +1617,61 @@ __attribute__((naked)) void SVC_Handler(void) {
         " bx lr                     \n" // 使用恢复的 EXC_RETURN 值返回
     );
 }
+
+// ==================运行时统计==================
+#if (MY_RTOS_GENERATE_RUN_TIME_STATS == 1)
+
+static uint32_t prvCalculateStackHighWaterMark(TaskHandle_t task) {
+    if (task == NULL || task->stack_base == NULL) {
+        return 0;
+    }
+    const uint32_t *stack_ptr = task->stack_base;
+    uint32_t free_words = 0;
+    while ((stack_ptr < (task->stack_base + task->stackSizeInWords)) && (*stack_ptr == 0xA5A5A5A5)) {
+        stack_ptr++;
+        free_words++;
+    }
+    return free_words * sizeof(uint32_t);
+}
+
+void Task_GetInfo(TaskHandle_t taskHandle, TaskStats_t *pTaskStats) {
+    if (taskHandle == NULL || pTaskStats == NULL) return;
+    uint32_t primask_status;
+    MY_RTOS_ENTER_CRITICAL(primask_status);
+    pTaskStats->taskId = taskHandle->taskId;
+#if (MY_RTOS_TASK_NAME_MAX_LEN > 0)
+    strncpy(pTaskStats->taskName, taskHandle->taskName, MY_RTOS_TASK_NAME_MAX_LEN);
+#endif
+    pTaskStats->state = taskHandle->state;
+    pTaskStats->currentPriority = taskHandle->priority;
+    pTaskStats->basePriority = taskHandle->basePriority;
+    pTaskStats->runTimeCounter = taskHandle->runTimeCounter;
+    pTaskStats->stackSize = taskHandle->stackSizeInWords * sizeof(uint32_t);
+    pTaskStats->stackHighWaterMark = prvCalculateStackHighWaterMark(taskHandle);
+    MY_RTOS_EXIT_CRITICAL(primask_status);
+}
+
+TaskHandle_t Task_GetNextTaskHandle(TaskHandle_t lastTaskHandle) {
+    uint32_t primask_status;
+    TaskHandle_t nextTask = NULL;
+    MY_RTOS_ENTER_CRITICAL(primask_status);
+    if (lastTaskHandle == NULL) {
+        nextTask = allTaskListHead;
+    } else {
+        nextTask = lastTaskHandle->pNextTask;
+    }
+    MY_RTOS_EXIT_CRITICAL(primask_status);
+    return nextTask;
+}
+
+void Heap_GetStats(HeapStats_t *pHeapStats) {
+    if (pHeapStats == NULL) return;
+    uint32_t primask_status;
+    MY_RTOS_ENTER_CRITICAL(primask_status);
+    pHeapStats->totalHeapSize = RTOS_MEMORY_POOL_SIZE;
+    pHeapStats->freeBytesRemaining = freeBytesRemaining;
+    pHeapStats->minimumEverFreeBytesRemaining = minimumEverFreeBytesRemaining;
+    MY_RTOS_EXIT_CRITICAL(primask_status);
+}
+
+#endif // MY_RTOS_GENERATE_RUN_TIME_STATS
