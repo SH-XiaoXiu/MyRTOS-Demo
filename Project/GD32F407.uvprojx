@@ -399,20 +399,40 @@
               <FileType>1</FileType>
               <FilePath>..\User\main.c</FilePath>
             </File>
+            <File>
+              <FileName>MyRTOS_Config.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\MyRTOS_Config.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>MyRTOS</GroupName>
           <Files>
             <File>
-              <FileName>MyRTOS.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MyRTOS\MyRTOS.c</FilePath>
-            </File>
-            <File>
               <FileName>MyRTOS.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\MyRTOS\MyRTOS.h</FilePath>
+            </File>
+            <File>
+              <FileName>MyRTOS.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\core\MyRTOS.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyRTOS_Port_USART.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\portable\MyRTOS_Port_USART.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyRTOS_Log.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\services\MyRTOS_Log.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyRTOS_Monitor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\tool\MyRTOS_Monitor.c</FilePath>
             </File>
           </Files>
         </Group>
