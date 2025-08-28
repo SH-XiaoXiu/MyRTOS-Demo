@@ -44,49 +44,58 @@ TimerHandle_t single_timer_h = NULL;
 MutexHandle_t recursive_lock; // 测试递归锁
 TaskHandle_t recursive_task_h = NULL; // 测试递归锁的任务
 
+static int scheduler_started = 0;
+
+#define SAFE_PRINTF(...)                                \
+do {                                                    \
+    if (scheduler_started) {                            \
+        Mutex_Lock(print_lock);                         \
+        printf(__VA_ARGS__);                            \
+        Mutex_Unlock(print_lock);                       \
+    } else {                                            \
+        printf(__VA_ARGS__);                            \
+    }                                                   \
+} while (0)
+
 
 void perio_timer_cb(TimerHandle_t timer) {
-    Mutex_Lock(print_lock);
-    printf("周期性 定时器 执行: %llu\n", MyRTOS_GetTick());
-    Mutex_Unlock(print_lock);
+    SAFE_PRINTF("周期性 定时器 执行: %llu\n", MyRTOS_GetTick());
 }
 
 void single_timer_cb(TimerHandle_t timer) {
-    Mutex_Lock(print_lock);
-    printf("单次 定时器 执行: %llu\n", MyRTOS_GetTick());
-    Mutex_Unlock(print_lock);
+    SAFE_PRINTF("单次 定时器 执行: %llu\n", MyRTOS_GetTick());
 }
 
 void a_task(void *param) {
-    static uint8_t i = 0;
-    Mutex_Lock(print_lock);
-    printf("任务 A (Prio %d) 启动\n", COLLABORATION_TASKS_PRIO);
-    Mutex_Unlock(print_lock);
+    static uint16_t i = 0;
+
+    SAFE_PRINTF("任务 A (Prio %d) 启动\n", COLLABORATION_TASKS_PRIO);
+
     while (1) {
         Task_Wait();
         while (1) {
             i++;
-            Mutex_Lock(print_lock);
-            printf("任务 A: 尝试获取递归锁...\n");
-            Mutex_Unlock(print_lock);
+
+            SAFE_PRINTF("任务 A: 尝试获取递归锁...\n");
+
 
             Mutex_Lock_Recursive(recursive_lock); // 使用普通 Lock 也行，这里为了统一
 
-            Mutex_Lock(print_lock);
-            printf("任务 A: 成功获取递归锁！运行一次, 然后释放。\n");
-            Mutex_Unlock(print_lock);
+
+            SAFE_PRINTF("任务 A: 成功获取递归锁 运行一次, 然后释放。\n");
+
 
             Mutex_Unlock_Recursive(recursive_lock);
 
-            Mutex_Lock(print_lock);
-            printf("任务 A 正在运行,第 %d 次\n", i);
-            Mutex_Unlock(print_lock);
+
+            SAFE_PRINTF("任务 A 正在运行,第 %d 次\n", i);
+
 
             if (i == 5) {
                 i = 0;
-                Mutex_Lock(print_lock);
-                printf("任务 A 唤醒 任务 B, 并开始等待 任务 B 的唤醒\n");
-                Mutex_Unlock(print_lock);
+
+                SAFE_PRINTF("任务 A 唤醒 任务 B, 并开始等待 任务 B 的唤醒\n");
+
                 Task_Notify(b_task_h);
                 break;
             }
@@ -96,22 +105,21 @@ void a_task(void *param) {
 }
 
 void b_task(void *param) {
-    static uint8_t i = 0;
-    Mutex_Lock(print_lock);
-    printf("任务 B (Prio %d) 启动\n", COLLABORATION_TASKS_PRIO);
-    Mutex_Unlock(print_lock);
+    static uint16_t i = 0;
+
+    SAFE_PRINTF("任务 B (Prio %d) 启动\n", COLLABORATION_TASKS_PRIO);
+
     while (1) {
         Task_Wait();
         while (1) {
-            Mutex_Lock(print_lock);
-            printf("任务 B 正在运行,第 %d 次\n", i);
-            Mutex_Unlock(print_lock);
+            SAFE_PRINTF("任务 B 正在运行,第 %d 次\n", i);
+
             i++;
             if (i == 3) {
                 i = 0;
-                Mutex_Lock(print_lock);
-                printf("任务 B 唤醒 任务 A, 并开始等待 任务 A 的唤醒\n");
-                Mutex_Unlock(print_lock);
+
+                SAFE_PRINTF("任务 B 唤醒 任务 A, 并开始等待 任务 A 的唤醒\n");
+
                 Task_Notify(a_task_h);
                 break;
             }
@@ -121,19 +129,18 @@ void b_task(void *param) {
 }
 
 void c_task(void *param) {
-    uint32_t index = 0;
-    Mutex_Lock(print_lock);
-    printf("任务 C (Prio %d) 启动\n", COLLABORATION_TASKS_PRIO);
-    Mutex_Unlock(print_lock);
+    uint16_t index = 0;
+
+    SAFE_PRINTF("任务 C (Prio %d) 启动\n", COLLABORATION_TASKS_PRIO);
+
     while (1) {
         index++;
-        Mutex_Lock(print_lock);
-        printf("任务 C 正在运行,第 %d 次\n", index);
-        Mutex_Unlock(print_lock);
+
+        SAFE_PRINTF("任务 C 正在运行,第 %d 次\n", index);
+
         if (index == 5) {
-            Mutex_Lock(print_lock);
-            printf("任务 C 删除 任务 C\n");
-            Mutex_Unlock(print_lock);
+            SAFE_PRINTF("任务 C 删除 任务 C\n");
+
             // 任务自删除后，这个句柄会失效
             Task_Delete(c_task_h);
         }
@@ -142,33 +149,31 @@ void c_task(void *param) {
 }
 
 void d_task(void *param) {
-    uint32_t index = 0;
-    Mutex_Lock(print_lock);
-    printf("任务 D (Prio %d) 启动\n", COLLABORATION_TASKS_PRIO);
-    Mutex_Unlock(print_lock);
+    uint16_t index = 0;
+
+    SAFE_PRINTF("任务 D (Prio %d) 启动\n", COLLABORATION_TASKS_PRIO);
+
     while (1) {
         // 检查 c_task_h 是否为 NULL 或任务已删除
         if (c_task_h == NULL || Task_GetState(c_task_h) == TASK_STATE_UNUSED) {
             index++;
             if (index >= 5) {
-                Mutex_Lock(print_lock);
-                printf("任务 D 将 创建 任务 C\n");
-                Mutex_Unlock(print_lock);
+                SAFE_PRINTF("任务 D 将 创建 任务 C\n");
+
                 c_task_h = Task_Create(c_task, 256,NULL, COLLABORATION_TASKS_PRIO);
                 index = 0;
             }
         }
-        Mutex_Lock(print_lock);
-        printf("任务 D 正在运行, 检查次数 %d\n", index);
-        Mutex_Unlock(print_lock);
+
+        SAFE_PRINTF("任务 D 正在运行, 检查次数 %d\n", index);
+
         Task_Delay(1000);
     }
 }
 
 void e_task(void *param) {
-    Mutex_Lock(print_lock);
-    printf("任务 E (Prio %d) 启动, 闪烁 PB2\n", COLLABORATION_TASKS_PRIO);
-    Mutex_Unlock(print_lock);
+    SAFE_PRINTF("任务 E (Prio %d) 启动, 闪烁 PB2\n", COLLABORATION_TASKS_PRIO);
+
     rcu_periph_clock_enable(RCU_GPIOB);
     gpio_mode_set(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_2);
     gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_2);
@@ -184,9 +189,8 @@ void e_task(void *param) {
 
 // 后台任务, 闪烁另一个LED (PB0)
 void background_blinky_task(void *param) {
-    Mutex_Lock(print_lock);
-    printf("后台任务 (Prio %d) 启动, 闪烁 PB0\n", BACKGROUND_TASK_PRIO);
-    Mutex_Unlock(print_lock);
+    SAFE_PRINTF("后台任务 (Prio %d) 启动, 闪烁 PB0\n", BACKGROUND_TASK_PRIO);
+
     gpio_mode_set(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_0);
     gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_0);
     while (1) {
@@ -196,26 +200,22 @@ void background_blinky_task(void *param) {
 }
 
 void high_prio_task(void *param) {
-    Mutex_Lock(print_lock);
-    printf("高优任务 (Prio %d) 启动\n", HIGH_PRIO_TASK_PRIO);
-    Mutex_Unlock(print_lock);
+    SAFE_PRINTF("高优任务 (Prio %d) 启动\n", HIGH_PRIO_TASK_PRIO);
+
     while (1) {
         Task_Delay(5000); // 每 5 秒抢占一次
-        Mutex_Lock(print_lock);
-        printf("\n<<<<<<<<<< [高优先级任务抢占] >>>>>>>>>>\n\n");
-        Mutex_Unlock(print_lock);
+
+        SAFE_PRINTF("\n<<<<<<<<<< [高优先级任务抢占] >>>>>>>>>>\n\n");
     }
 }
 
 void interrupt_handler_task(void *param) {
-    Mutex_Lock(print_lock);
-    printf("任务中断 (Prio %d) 启动, 等待按键...\n", INTERRUPT_TASK_PRIO);
-    Mutex_Unlock(print_lock);
+    SAFE_PRINTF("任务中断 (Prio %d) 启动, 等待按键...\n", INTERRUPT_TASK_PRIO);
+
     while (1) {
         Task_Wait();
-        Mutex_Lock(print_lock);
-        printf("\n\n!!!!!!!!!! [中断紧急事件处理] !!!!!!!!!!\n\n");
-        Mutex_Unlock(print_lock);
+
+        SAFE_PRINTF("\n\n!!!!!!!!!! [中断紧急事件处理] !!!!!!!!!!\n\n");
     }
 }
 
@@ -224,24 +224,20 @@ void producer_task(void *param) {
     Product_t product;
     product.id = 0;
     product.data = 100;
-    Mutex_Lock(print_lock);
-    printf("生产者 启动 (Prio %d)", PRODUCER_PRIO);
-    Mutex_Unlock(print_lock);
+
+    SAFE_PRINTF("生产者 启动 (Prio %d)", PRODUCER_PRIO);
+
     while (1) {
         product.id++;
         product.data += 10;
-        Mutex_Lock(print_lock);
-        printf("生产者: 发送产品 ID %d\n", product.id);
-        Mutex_Unlock(print_lock);
+
+        SAFE_PRINTF("生产者: 发送产品 ID %d\n", product.id);
+
         // 发送产品到队列，如果队列满了会阻塞等待
         if (Queue_Send(product_queue, &product, MY_RTOS_MAX_DELAY)) {
-            Mutex_Lock(print_lock);
-            printf("生产者: 成功发送产品 ID %d\n", product.id);
-            Mutex_Unlock(print_lock);
+            SAFE_PRINTF("生产者: 成功发送产品 ID %d\n", product.id);
         } else {
-            Mutex_Lock(print_lock);
-            printf("生产者: 队列已满, 放弃发送产品 ID %d\n", product.id);
-            Mutex_Unlock(print_lock);
+            SAFE_PRINTF("生产者: 队列已满, 放弃发送产品 ID %d\n", product.id);
         }
         Task_Delay(2000); // 每 2 秒生产一个
     }
@@ -252,22 +248,17 @@ void producer_task(void *param) {
  */
 void consumer_task(void *param) {
     Product_t received_product;
-    Mutex_Lock(print_lock);
-    printf("消费者 启动 (Prio %d)", CONSUMER_PRIO);
-    Mutex_Unlock(print_lock);
+
+    SAFE_PRINTF("消费者 启动 (Prio %d)", CONSUMER_PRIO);
+
     while (1) {
-        Mutex_Lock(print_lock);
-        printf("消费者: 等待接收产品...\n");
-        Mutex_Unlock(print_lock);
+        SAFE_PRINTF("消费者: 等待接收产品...\n");
+
         // 从队列接收产品，如果队列为空会阻塞等待
         if (Queue_Receive(product_queue, &received_product, MY_RTOS_MAX_DELAY)) {
-            Mutex_Lock(print_lock);
-            printf("消费者: 接收到产品 ID %d\n", received_product.id);
-            Mutex_Unlock(print_lock);
+            SAFE_PRINTF("消费者: 接收到产品 ID %d\n", received_product.id);
         } else {
-            Mutex_Lock(print_lock);
-            printf("消费者: 队列已空, 放弃接收产品\n");
-            Mutex_Unlock(print_lock);
+            SAFE_PRINTF("消费者: 队列已空, 放弃接收产品\n");
         }
         // 没有延时，处理完一个马上就去等下一个
     }
@@ -279,23 +270,18 @@ void consumer_task(void *param) {
 void inspector_task(void *param) {
     Product_t received_product;
 
-    Mutex_Lock(print_lock);
-    printf("质检员 启动 (Prio %d)", INSPECTOR_PRIO);
-    Mutex_Unlock(print_lock);
+
+    SAFE_PRINTF("质检员 启动 (Prio %d)", INSPECTOR_PRIO);
+
 
     while (1) {
-        Mutex_Lock(print_lock);
-        printf("质检员: 等待接收产品...\n");
-        Mutex_Unlock(print_lock);
+        SAFE_PRINTF("质检员: 等待接收产品...\n");
+
         // 同样从队列接收，但因为优先级高，它会优先被唤醒
         if (Queue_Receive(product_queue, &received_product, MY_RTOS_MAX_DELAY)) {
-            Mutex_Lock(print_lock);
-            printf("质检员: 拦截 到产品 ID %d\n", received_product.id);
-            Mutex_Unlock(print_lock);
+            SAFE_PRINTF("质检员: 拦截 到产品 ID %d\n", received_product.id);
         } else {
-            Mutex_Lock(print_lock);
-            printf("质检员: 队列已空, 放弃 拦截 产品\n");
-            Mutex_Unlock(print_lock);
+            SAFE_PRINTF("质检员: 队列已空, 放弃 拦截 产品\n");
         }
         // 质检员检查完后，休息 5 秒，给消费者一些机会
         Task_Delay(5000);
@@ -304,65 +290,43 @@ void inspector_task(void *param) {
 
 
 void sub_function_needs_lock(int level) {
-    Mutex_Lock(print_lock);
-    printf(">> [递归任务] 进入子函数 level %d, 尝试获取递归锁...\n", level);
-    Mutex_Unlock(print_lock);
-    // 尝试获取递归锁
+    SAFE_PRINTF("递归任务 子函数 %d 加锁\n", level);
+
     Mutex_Lock_Recursive(recursive_lock);
-    Mutex_Lock(print_lock);
-    printf(">> [递归任务] 在 level %d 成功获取递归锁。\n", level);
-    Mutex_Unlock(print_lock);
-    // 模拟一些工作
+
+    SAFE_PRINTF("递归任务 子函数 %d 已加锁\n", level);
+
     Task_Delay(500);
-    Mutex_Lock(print_lock);
-    printf("<< [递归任务] 在 level %d 准备释放递归锁...\n", level);
-    Mutex_Unlock(print_lock);
-    // 释放递归锁
+
+    SAFE_PRINTF("递归任务 子函数 %d 解锁\n", level);
     Mutex_Unlock_Recursive(recursive_lock);
 }
 
 void recursive_test_task(void *param) {
-    Mutex_Lock(print_lock);
-    printf("\n--- [递归锁测试任务启动 (Prio %d)] ---\n", COLLABORATION_TASKS_PRIO);
-    Mutex_Unlock(print_lock);
-    while (1) {
-        Mutex_Lock(print_lock);
-        printf("\n[递归任务] 准备进行第一轮递归加锁 (3层)...\n");
-        Mutex_Unlock(print_lock);
+    SAFE_PRINTF("递归任务 启动 (Prio %d)\n", COLLABORATION_TASKS_PRIO);
 
-        // --- 第一次递归加锁 ---
-        Mutex_Lock(print_lock);
-        printf("[递归任务] 主循环, 尝试获取递归锁 (第1次)...\n");
-        Mutex_Unlock(print_lock);
+    while (1) {
+        SAFE_PRINTF("递归任务 主循环 开始测试 (3层)\n");
 
         Mutex_Lock_Recursive(recursive_lock);
-        Mutex_Lock(print_lock);
-        printf("[递归任务] 主循环, 成功获取递归锁 (第1次)。\n");
-        Mutex_Unlock(print_lock);
+        SAFE_PRINTF("递归任务 主循环 加锁 (1层)\n");
 
-        // 调用子函数，子函数内部会再次加锁
         sub_function_needs_lock(2);
         sub_function_needs_lock(3);
 
-        Mutex_Lock(print_lock);
-        printf("[递归任务] 所有子函数返回, 准备在主循环释放递归锁 (第1次)...\n");
-        Mutex_Unlock(print_lock);
-
+        SAFE_PRINTF("递归任务 主循环 解锁 (1层)\n");
         Mutex_Unlock_Recursive(recursive_lock);
 
-        Mutex_Lock(print_lock);
-        printf("[递归任务] 锁已完全释放！现在延时3秒，给其他任务机会尝试获取锁。\n");
-        printf("--- (在此期间，任务A应该能够运行并打印信息) ---\n");
-        Mutex_Unlock(print_lock);
-        // 延时，让其他任务运行。如果递归锁没有完全释放，其他任务将无法获得锁。
-        // 特意选择一个等待此锁的任务（任务A）来验证
+        SAFE_PRINTF("递归任务 已完全解锁 延时 3秒 给其他任务机会\n");
+
         Task_Delay(3000);
-        Mutex_Lock(print_lock);
-        printf("\n[递归任务] 延时结束，准备进行第二轮测试...\n\n");
-        Mutex_Unlock(print_lock);
+
+        SAFE_PRINTF("递归任务 延时结束\n");
+
         Task_Delay(2000);
     }
 }
+
 
 
 void boot_task(void *param) {
@@ -377,15 +341,13 @@ void boot_task(void *param) {
     Task_Delay(200);
     Task_Notify(a_task_h);
 
-    Mutex_Lock(print_lock);
-    printf("\n队列 启动\n");
-    Mutex_Unlock(print_lock);
+
+    SAFE_PRINTF("队列 启动\n");
+
     // 创建一个能容纳 3 个 Product_t 的队列
     product_queue = Queue_Create(3, sizeof(Product_t));
     if (product_queue == NULL) {
-        Mutex_Lock(print_lock);
-        printf("队列创建失败\n");
-        Mutex_Unlock(print_lock);
+        SAFE_PRINTF("队列创建失败\n");
     }
     // 创建队列相关的任务
     consumer_task_h = Task_Create(consumer_task, 256,NULL, CONSUMER_PRIO);
@@ -395,18 +357,16 @@ void boot_task(void *param) {
     perio_timer_h = Timer_Create(10000, 10000, perio_timer_cb, NULL);
     single_timer_h = Timer_Create(5000, 0, single_timer_cb, NULL);
 
-    Mutex_Lock(print_lock);
-    printf("定时器 启动\n");
-    Mutex_Unlock(print_lock);
+
+    SAFE_PRINTF("定时器 启动\n");
+
 
     Timer_Start(perio_timer_h);
     Timer_Start(single_timer_h);
 
 
+    SAFE_PRINTF("=============================================\n\n");
 
-    Mutex_Lock(print_lock);
-    printf("=============================================\n\n");
-    Mutex_Unlock(print_lock);
     Task_Delete(NULL);
 }
 
@@ -436,9 +396,7 @@ void sys_config() {
     print_lock = Mutex_Create();
     recursive_lock = Mutex_Create();
     if (recursive_lock == NULL) {
-        Mutex_Lock(print_lock);
-        printf("递归锁创建失败!\n");
-        Mutex_Unlock(print_lock);
+        SAFE_PRINTF("递归锁创建失败!\n");
     }
 }
 
@@ -446,13 +404,13 @@ void sys_config() {
 int main(void) {
     sys_config();
     key_exti_init();
-    printf("=========   RTOS Demo   =========\n");
-    printf("|  Author: XiaoXiu                   \n");
-    printf("|  Version: 1.0 (Priority-based)     \n");
-    printf("|  MCU: GD32                         \n");
-    printf("==========================================\n");
+    SAFE_PRINTF("=========   RTOS Demo   =========\n");
+    SAFE_PRINTF("|  Author: XiaoXiu                   \n");
+    SAFE_PRINTF("|  Version: 1.0 (Priority-based)     \n");
+    SAFE_PRINTF("|  MCU: GD32                         \n");
+    SAFE_PRINTF("==========================================\n");
     Task_Create(boot_task, 256, NULL, 0);
-    printf("System Starting...\n");
+    SAFE_PRINTF("System Starting...\n");
     Task_StartScheduler();
     while (1) {
     };
