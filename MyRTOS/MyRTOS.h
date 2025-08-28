@@ -14,11 +14,16 @@
 #define HEAP_BYTE_ALIGNMENT     (8)         // 内存对齐字节数
 
 // 调试输出开关 (设置为1开启, 0关闭)
-#define DEBUG_PRINT 1
+// #define DEBUG_PRINT 0
 
 #if DEBUG_PRINT
 #include <stdio.h>
-#define DBG_PRINTF(...) printf(__VA_ARGS__)
+#define DBG_PRINTF(...) do {                   \
+     uint32_t primask;                         \
+     MY_RTOS_ENTER_CRITICAL(primask);          \
+     printf(__VA_ARGS__);                      \
+     MY_RTOS_EXIT_CRITICAL(primask);           \
+ } while (0)
 #else
 #define DBG_PRINTF(...)
 #endif
