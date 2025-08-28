@@ -2,7 +2,7 @@ MyRTOS README
 
 # MyRTOS
 
-一个基于 Cortex-M4 的多任务调度系统基本实现。参考 FreeRTOS 和 ChatGPT. 结构很简单, 一个头文件一个源文件,
+一个基于 Cortex-M4 的多任务调度系统基本实现。参考 FreeRTOS 和 ChatGPT. 结构简单, 文件关系清晰, 测试用例直接可用,
 适合作为个人学习过程中理解多任务调度的参考。
 
 
