@@ -9,58 +9,75 @@ MyRTOS README
 
 功能
 =============
-*   > 重构整个代码抽象架构.
-* **日志框架**：统一了日志输出，支持不同等级的日志输出，如 DEBUG、INFO、WARN、ERROR 等。
-* **系统监视器**：提供系统运行状态信息,调度情况, 如任务状态、CPU 使用率、内存使用情况等。
-* **多任务调度**：支持基于优先级的抢占调度以及同优先级时间片轮转，确保高优先级任务及时执行。
-* **可重入互斥锁（Recursive Mutex）**：支持递归锁和普通互斥锁，解决共享资源访问冲突.
-*   > 解决了优先级反转问题.
-* **任务延时与定时器**：
-    * 基于 SysTick 的任务延时机制
-    * 周期性和一次性定时器支持
-    * 可触发任务或回调函数
-* **任务通知机制**：轻量级事件通知，任务可等待或接收通知以触发执行，支持中断唤醒。
-* **消息队列（Queue）**：支持多任务间通信，队列长度和数据类型可自定义，阻塞与非阻塞接收模式。
-* **动态内存管理**：内存池实现，支持任务栈、消息队列等动态资源分配，避免碎片化。
-* **任务管理**：
-    * 动态创建和删除任务
-    * 获取任务状态与优先级
-    * 支持空闲任务与系统心跳
-* **中断与调度集成**：
-    * 支持外部中断唤醒任务
-    * PendSV 上下文切换，保证任务切换安全高效
-* **系统可调试性**：
-    * 支持 HardFault 基础调试输出
-    * 调试串口输出示例
-* **轻量简洁**：源码结构简单，仅一个头文件和一个源文件，方便学习和定制。
-*   > 持续更新完善中...
+*   **分层架构**：内核、服务与平台实现完全解耦，提供统一API，支持不同平台轻松替换，实现高度可移植性与可维护性。
+*   **多任务调度**：支持基于优先级的抢占式调度，以及同优先级时间片轮转。
+*   **IPC机制**：
+   *   **消息队列 (Queue)**：支持阻塞/非阻塞、带超时的任务间安全通信。
+   *   **互斥锁 (Mutex)**：内置优先级继承协议，有效解决优先级反转。
+   *   **递归互斥锁 (Recursive Mutex)**：支持同一任务递归加锁，简化复杂场景。
+   *   **任务通知**：极低开销的任务间直接同步机制. (即将支持ISR中唤醒任务-FromISR操作)
+*   **时间管理**：
+   *   基于系统Tick的精准任务延时 (`Task_Delay`)。
+   *   高效的软件定时器服务，支持创建大量的**周期性**与**一次性**定时器，不额外消耗硬件资源。
+*   **动态内存管理**：内置高性能内存池，支持内存块的分配、释放与自动合并，有效防止内存碎片。
+*   **完善的任务管理**：支持任务的动态创建与删除，可实时获取任务状态与优先级。
+*   **系统监控与调试**：
+   *   **实时监视器 (Monitor)**：通过串口实时显示任务状态、栈使用率、及**微秒级CPU运行时间**。
+   *   **内存监控**：实时追踪堆内存使用情况，包括当前剩余与历史最低水位。
+   *   **HardFault异常处理**：崩溃时自动打印详细的寄存器与故障信息，加速问题定位。
+*   **异步日志服务**：独立任务处理日志，支持多级别(DEBUG, INFO, WARN, ERROR)输出，避免I/O操作阻塞业务任务。
+*   **高度可配置**：所有功能、驱动和服务均可通过单一配置文件 (`MyRTOS_Config.h`) 进行裁剪和配置。
+
+_\> **持续更新，不断完善中...**_
 
 抽象架构
 =============
 ![架构图](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/framework.svg)
 
-
 <h2>目录结构</h2>
 <pre>
-MyRTOS/
-├── assets/                             # 示例资源文件，如图片、日志
-├── Firmware/                           # 硬件抽象层与外设库
-│   ├── CMSIS/                          # Cortex-M4 核心相关头文件与源码
-│   ├── GD32F4xx_standard_peripheral/   # 标准外设驱动（GPIO、USART、Timer 等）
-│   └── GD32F4xx_usb_library/           # USB 设备与主机库，包括 device 与 host 模块
-├── Libraries/                          # 通用库文件，扩展外设功能
-├── <span style="background-color:yellow; font-weight:bold;">MyRTOS/</span>   # 核心 RTOS 源码
-│   ├── core/                            # 内核层：任务调度、TCB管理、软件定时器、IPC机制
-│   ├── portable/                        # 硬件抽象层接口实现（MyRTOS Port Layer）
-│   ├── services/                        # 服务与工具层：日志等
-│   └── tool/                            # 辅助工具,监视器等
-├── Project/                             # Keil工程
-│   ├── Listings/                        # 汇编/编译列表文件
-│   └── Objects/                         # 目标文件
-└── User/                                # 用户应用示例代码
-    ├── main.c                            # 应用入口 组装所有模块 测试用例
-    └── MyRTOS_Config.h                   # 应用配置文件
+MyRTOS-Project/
+├── Firmware/ # 芯片官方库与核心文件
+│ ├── CMSIS/ # Cortex-M 内核通用文件
+│ └── GD32F4xx_standard_peripheral/ # GD32F4xx 标准外设库
+├── <span style="background-color:yellow; font-weight:bold;">MyRTOS/</span> # MyRTOS 操作系统源码
+│ ├── include/ # RTOS 对用户开放的所有API头文件 (统一接口层)
+│ ├── kernel/ # 内核实现 (平台无关)
+│ ├── services/ # 服务实现 (平台无关)
+│ └── platform/ # 可替换的平台包
+│ └── GD32F4xx/ # 针对 GD32F4xx 的具体实现
+├── Project/ # Keil MDK 或其他 IDE 的工程文件
+└── User/ # 用户应用代码
+├── main.c # 应用入口，创建业务任务
+└── MyRTOS_Config.h # RTOS 功能及平台配置文件 (用户唯一配置入口)
 </pre>
+<ul>
+<li><strong>Firmware：</strong>存放芯片原厂商提供的底层驱动库，如 <strong>CMSIS</strong> 核心文件和 <strong>GD32标准外设库</strong>。这一层是RTOS运行的基础。</li>
+<li><strong>MyRTOS：</strong>RTOS的全部源码，其内部结构清晰地体现了分层设计：
+<ul>
+<li><strong style="color:#0097a7;">include：</strong>RTOS的<strong>统一接口层</strong>。这是用户唯一需要包含的目录，它定义了RTOS提供的所有功能，包括内核API、服务API和标准化的硬件驱动API（如Timer）。</li>
+<li><strong style="color:#1976d2;">kernel：</strong>RTOS的<strong>内核实现</strong>。包含任务调度、内存管理、IPC机制等纯软件逻辑，完全与硬件平台无关。</li>
+<li><strong style="color:#f57c00;">services：</strong>RTOS的<strong>服务实现</strong>。包含日志、系统监视器等可选的功能模块，它们依赖内核API，但与硬件平台无关。</li>
+<li><strong style="color:#c62828;">platform：</strong>RTOS的<strong>平台包</strong>，是连接上层软件与底层硬件的桥梁，是RTOS可移植性的关键。当前提供了一个针对 <strong>GD32F4xx</strong> 的实现包，其内部包含了：
+<ul>
+<li>CPU核心移植代码 (上下文切换、中断处理等)。</li>
+<li>板级支持代码 (如调试串口 `PutChar` 的实现)。</li>
+<li>标准硬件驱动的实现 (如 `MyRTOS_Driver_Timer` 的具体实现)。</li>
+<li>统一的系统启动流程 (`MyRTOS_SystemInit`)。</li>
+<li>一个供用户参考的 `MyRTOS_Config_Example.h` 配置文件模板。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Project：</strong>存放IDE（如Keil MDK）的工程文件，负责组织代码、配置编译选项和链接。</li>
+<li><strong>User：</strong>用户的最终应用代码。
+<ul>
+<li><strong>main.c：</strong>应用的入口点。现在它变得非常简洁，只需调用 `MyRTOS_SystemInit()`，创建初始任务，然后启动调度器。</li>
+<li><strong>MyRTOS_Config.h：</strong><strong>用户唯一的配置中心</strong>。用户通过复制和修改平台包中的模板来创建此文件。它控制着RTOS的所有功能开关、硬件资源映射和平台定义，是整个项目的“指挥棒”。</li>
+</ul>
+</li>
+</ul>
+
 
 <ul>
     <li><strong>assets：</strong>示例资源文件，如图片、日志等辅助文件。</li>
@@ -146,7 +163,6 @@ API 列表
 * `MY_RTOS_EXIT_CRITICAL(status_var)` — 退出临界区
 * `MY_RTOS_YIELD()` — 任务让出 CPU
 
-
 快速开始
 =========
 
@@ -155,7 +171,6 @@ API 列表
 -------
 MyRTOS 配置文件示例
 -------------
-
 
     //
     // Created by XiaoXiu on 8/28/2025.
@@ -226,8 +241,6 @@ MyRTOS 配置文件示例
     #endif
     
     #endif // MYRTOS_CONFIG_H
-
-
 
 任务创建与调度
 -------
@@ -411,14 +424,11 @@ MyRTOS 配置文件示例
         Task_StartScheduler();
     }
 
-
 调度机制
 =============
 
 
 MyRTOS 的调度机制核心基于 Cortex-M4 的 SysTick 与 PendSV 中断，实现了优先级抢占与时间片轮转，并支持延时任务、互斥锁和任务通知。
-
-
 
 ### 机制说明
 
@@ -432,8 +442,8 @@ MyRTOS 的调度机制核心基于 Cortex-M4 的 SysTick 与 PendSV 中断，实
 
 通过以上机制，MyRTOS 可以实现多任务优先级抢占、时间片轮转、延时任务、互斥资源保护和任务通知等功能。
 
-
 ### 调度流程
+
 ![流程图](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/flow.svg)
 
 ## 示例输出
