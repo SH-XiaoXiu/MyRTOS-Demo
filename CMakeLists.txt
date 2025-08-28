@@ -19,7 +19,7 @@ target_include_directories(MyRTOS PRIVATE
         ./Firmware/CMSIS/GD/GD32F4xx/Include
         ./Firmware/GD32F4xx_standard_peripheral/Include
         ./Libraries
-        ./MyRTOS
+        ./MyRTOS/include
         ./User
 )
 

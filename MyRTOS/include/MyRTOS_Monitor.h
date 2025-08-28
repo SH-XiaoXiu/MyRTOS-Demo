@@ -3,6 +3,19 @@
 
 #include "MyRTOS_Config.h"
 
+// =============================
+// Kernel Event Reporting API (provided by Monitor Service)
+// =============================
+#if (MY_RTOS_MONITOR_KERNEL_LOG == 1)
+    #include "MyRTOS_Log.h"
+    #define MY_RTOS_KERNEL_LOGD(fmt, ...)   SYS_LOGD(fmt, ##__VA_ARGS__)
+    #define MY_RTOS_KERNEL_LOGE(fmt, ...)   SYS_LOGE(fmt, ##__VA_ARGS__)
+#else
+    #define MY_RTOS_KERNEL_LOGD(fmt, ...)
+    #define MY_RTOS_KERNEL_LOGE(fmt, ...)
+#endif
+
+
 #if (MY_RTOS_USE_MONITOR == 1)
 
 /**

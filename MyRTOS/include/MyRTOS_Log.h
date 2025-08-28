@@ -44,6 +44,10 @@ void MyRTOS_Log_Vprintf(int level, const char* file, int line, const char* fmt, 
 #define SYS_LOGD(fmt, ...)
 #endif
 
+// --- 内部服务接口 (供Monitor等模块使用) ---
+void MyRTOS_Log_SetMonitorMode(int active);
+
+
 #else
 // 禁用所有日志和打印
 #define MyRTOS_Log_Init()
@@ -52,6 +56,8 @@ void MyRTOS_Log_Vprintf(int level, const char* file, int line, const char* fmt, 
 #define SYS_LOGW(fmt, ...)
 #define SYS_LOGI(fmt, ...)
 #define SYS_LOGD(fmt, ...)
+#define MyRTOS_Log_SetMonitorMode(active)
+
 #endif
 
 #endif

@@ -2,8 +2,7 @@
 #define MYRTOS_H
 
 #include <stdint.h>
-#include "gd32f4xx.h"
-#include "MyRTOS_Config.h"
+#include "MyRTOS_Config.h" // 用户的配置文件将包含所有功能开关
 
 // -----------------------------
 // 时间转换宏
@@ -44,18 +43,18 @@ typedef void *QueueHandle_t;
 // -----------------------------
 typedef void (*TimerCallback_t)(TimerHandle_t timer);
 
-// -----------------------------
-// 核心宏
-// -----------------------------
-#define MY_RTOS_ENTER_CRITICAL(status_var)   do { (status_var) = __get_PRIMASK(); __disable_irq(); } while(0)
-#define MY_RTOS_EXIT_CRITICAL(status_var)    do { __set_PRIMASK(status_var); } while(0)
-#define MY_RTOS_YIELD()                      do { SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; __ISB(); } while(0)
-
 // =============================
 // System Core
 // =============================
 /**
- * @brief 初始化RTOS核心，初始化任务、队列、定时器等对象
+ * @brief 统一的系统初始化函数。
+ *        用户在 main 中应首先调用此函数。
+ */
+void MyRTOS_SystemInit(void);
+
+/**
+ * @brief 初始化RTOS内核的核心数据结构。
+ *        此函数由 MyRTOS_SystemInit 自动调用。
  */
 void MyRTOS_Init(void);
 
@@ -70,6 +69,11 @@ void Task_StartScheduler(void);
  */
 uint64_t MyRTOS_GetTick(void);
 
+/**
+ * @brief 内核的Tick处理函数，由移植层的Tick中断调用
+ */
+void MyRTOS_Tick_Handler(void);
+
 // =============================
 // Task Management
 // =============================
@@ -77,7 +81,7 @@ uint64_t MyRTOS_GetTick(void);
  * @brief 创建任务
  * @param func 任务函数指针
  * @param taskName 任务名称，可用于调试或统计
- * @param stack_size 栈大小(单位：word)
+ * @param stack_size 栈大小(单位：word, 4 bytes)
  * @param param 任务参数
  * @param priority 任务优先级
  * @return 任务句柄
@@ -169,7 +173,7 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks);
 int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks);
 
 // =============================
-// Timer Management
+// Timer Management (Software Timers)
 // =============================
 /**
  * @brief 创建定时器
@@ -219,7 +223,7 @@ void Mutex_Lock(MutexHandle_t mutex);
 /**
  * @brief 带超时的锁
  * @param block_ticks 阻塞tick数，0表示不阻塞
- * @return 0成功，-1超时
+ * @return 1成功，0超时失败
  */
 int Mutex_Lock_Timeout(MutexHandle_t mutex, uint32_t block_ticks);
 
@@ -253,9 +257,9 @@ typedef struct TaskStats_t {
     TaskState_t state;                    // 当前任务状态
     uint8_t currentPriority;              // 当前优先级
     uint8_t basePriority;                 // 基础优先级
-    uint64_t runTimeCounter;              // 累计运行时间
-    uint32_t stackHighWaterMark;          // 栈水位
-    uint32_t stackSize;                   // 栈大小
+    uint64_t runTimeCounter;              // 累计运行时间(单位:由高精度定时器频率决定)
+    uint32_t stackHighWaterMark;          // 栈水位(已用栈大小, bytes)
+    uint32_t stackSize;                   // 栈大小(bytes)
 } TaskStats_t;
 
 /**
