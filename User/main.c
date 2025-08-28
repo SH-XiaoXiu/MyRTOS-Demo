@@ -1,47 +1,74 @@
-#include "gd32f4xx.h"
 #include "MyRTOS.h"
 #include "MyRTOS_Log.h"
 #include "MyRTOS_Monitor.h"
-#include <string.h>
-
+#include "MyRTOS_Driver_Timer.h"
 #include "gd32f4xx_exti.h"
 #include "gd32f4xx_gpio.h"
 #include "gd32f4xx_rcu.h"
 #include "gd32f4xx_syscfg.h"
-#include "lib_usart0.h"
+#include <string.h>
+
 
 // 任务优先级定义
 #define BACKGROUND_TASK_PRIO       1
 #define CONSUMER_PRIO              1
 #define COLLABORATION_TASKS_PRIO   2
 #define PRODUCER_PRIO              2
+#define TIMER_TEST_TASK_PRIO       2
 #define HIGH_PRIO_TASK_PRIO        3
 #define INTERRUPT_TASK_PRIO        4
 #define INSPECTOR_PRIO             4
+
+// 全局句柄
+QueueHandle_t product_queue;
+MutexHandle_t recursive_lock;
+TaskHandle_t producer_task_h, consumer_task_h, inspector_task_h;
+TaskHandle_t a_task_h, b_task_h, c_task_h, d_task_h, e_task_h;
+TaskHandle_t high_prio_task_h, interrupt_task_h, background_task_h;
+TimerHandle_t perio_timer_h, single_timer_h;
+TaskHandle_t recursive_task_h, timer_test_task_h;
 
 typedef struct {
     uint32_t id;
     uint32_t data;
 } Product_t;
 
-// 全局句柄
-QueueHandle_t product_queue;
-MutexHandle_t recursive_lock;
+// --- 任务和回调函数声明 ---
+void perio_timer_cb(TimerHandle_t timer);
 
-TaskHandle_t producer_task_h = NULL;
-TaskHandle_t consumer_task_h = NULL;
-TaskHandle_t inspector_task_h = NULL;
-TaskHandle_t a_task_h = NULL;
-TaskHandle_t b_task_h = NULL;
-TaskHandle_t c_task_h = NULL;
-TaskHandle_t d_task_h = NULL;
-TaskHandle_t e_task_h = NULL;
-TaskHandle_t high_prio_task_h = NULL;
-TaskHandle_t interrupt_task_h = NULL;
-TaskHandle_t background_task_h = NULL;
-TimerHandle_t perio_timer_h = NULL;
-TimerHandle_t single_timer_h = NULL;
-TaskHandle_t recursive_task_h = NULL;
+void single_timer_cb(TimerHandle_t timer);
+
+void a_task(void *param);
+
+void b_task(void *param);
+
+void c_task(void *param);
+
+void d_task(void *param);
+
+void e_task(void *param);
+
+void background_blinky_task(void *param);
+
+void high_prio_task(void *param);
+
+void interrupt_handler_task(void *param);
+
+void producer_task(void *param);
+
+void consumer_task(void *param);
+
+void inspector_task(void *param);
+
+void recursive_test_task(void *param);
+
+void timer_test_task(void *param);
+
+void boot_task(void *param);
+
+void key_exti_init(void);
+
+// --- 任务和回调函数实现 ---
 
 void perio_timer_cb(TimerHandle_t timer) {
     SYS_LOGI("周期性 定时器 执行\n");
@@ -57,12 +84,7 @@ void a_task(void *param) {
         Task_Wait();
         while (1) {
             i++;
-            PRINT("任务 A: 尝试获取递归锁...\n");
-            Mutex_Lock_Recursive(recursive_lock);
-            PRINT("任务 A: 成功获取递归锁 运行一次, 然后释放。\n");
-            Mutex_Unlock_Recursive(recursive_lock);
-            PRINT("任务 A 正在运行,第 %d 次\n", i);
-
+            PRINT("任务 A: 正在运行,第 %d 次\n", i);
             if (i == 5) {
                 i = 0;
                 SYS_LOGI("任务 A 唤醒 任务 B, 并等待\n");
@@ -112,6 +134,9 @@ void d_task(void *param) {
             if (index >= 5) {
                 SYS_LOGI("任务 D 创建 任务 C\n");
                 c_task_h = Task_Create(c_task, "TaskC_dynamic", 256, NULL, COLLABORATION_TASKS_PRIO);
+                if (c_task_h == NULL) {
+                    SYS_LOGE("Task D failed to create Task C.\n");
+                }
                 index = 0;
             }
         }
@@ -194,22 +219,12 @@ void inspector_task(void *param) {
     }
 }
 
-void sub_function_needs_lock(int level) {
-    PRINT("递归任务: 子函数 %d 尝试加锁\n", level);
-    Mutex_Lock_Recursive(recursive_lock);
-    PRINT("递归任务: 子函数 %d 已加锁\n", level);
-    Task_Delay(MS_TO_TICKS(500));
-    Mutex_Unlock_Recursive(recursive_lock);
-    PRINT("递归任务: 子函数 %d 已解锁\n", level);
-}
-
 void recursive_test_task(void *param) {
     while (1) {
         SYS_LOGI("递归任务: 开始测试\n");
         Mutex_Lock_Recursive(recursive_lock);
         PRINT("递归任务: 主循环加锁 (1层)\n");
-        sub_function_needs_lock(2);
-        sub_function_needs_lock(3);
+        Task_Delay(MS_TO_TICKS(500));
         Mutex_Unlock_Recursive(recursive_lock);
         PRINT("递归任务: 主循环解锁 (1层)\n");
         SYS_LOGI("递归任务: 已完全解锁，等待3秒\n");
@@ -217,19 +232,37 @@ void recursive_test_task(void *param) {
     }
 }
 
+void timer_test_task(void *param) {
+    TimerHandle_dev_t user_timer = MyRTOS_Timer_GetHandle(TIMER_ID_USER_APP_TIMER);
+    if (user_timer == NULL) {
+        SYS_LOGE("Timer Test Task failed to get handle.\n");
+        Task_Delete(NULL);
+    }
+
+    MyRTOS_Timer_Start(user_timer);
+    while (1) {
+        uint32_t count = MyRTOS_Timer_GetCount(user_timer);
+        PRINT("通用定时器测试: 当前计数值 = %lu\n", count);
+        Task_Delay(MS_TO_TICKS(2000));
+    }
+}
+
 void boot_task(void *param) {
     SYS_LOGI("Boot task starting...\n");
-    recursive_lock = Mutex_Create();
 
-    // 创建任务并命名
-    recursive_task_h = Task_Create(recursive_test_task, "RecursiveTask", 512, NULL, COLLABORATION_TASKS_PRIO);
+    recursive_lock = Mutex_Create();
+    if (recursive_lock == NULL)
+        SYS_LOGE("Failed to create recursive_lock.\n");
+
     a_task_h = Task_Create(a_task, "TaskA", 256, NULL, COLLABORATION_TASKS_PRIO);
     b_task_h = Task_Create(b_task, "TaskB", 256, NULL, COLLABORATION_TASKS_PRIO);
     d_task_h = Task_Create(d_task, "TaskD_Creator", 256, NULL, COLLABORATION_TASKS_PRIO);
-    e_task_h = Task_Create(e_task, "LED_Blinky_PB2", 256, NULL, COLLABORATION_TASKS_PRIO);
-    background_task_h = Task_Create(background_blinky_task, "BG_Blinky_PB0", 256, NULL, BACKGROUND_TASK_PRIO);
+    e_task_h = Task_Create(e_task, "LED_Blinky_PB2", 128, NULL, COLLABORATION_TASKS_PRIO);
+    background_task_h = Task_Create(background_blinky_task, "BG_Blinky_PB0", 128, NULL, BACKGROUND_TASK_PRIO);
     high_prio_task_h = Task_Create(high_prio_task, "HighPrioTask", 256, NULL, HIGH_PRIO_TASK_PRIO);
     interrupt_task_h = Task_Create(interrupt_handler_task, "KeyHandlerTask", 256, NULL, INTERRUPT_TASK_PRIO);
+    recursive_task_h = Task_Create(recursive_test_task, "RecursiveTask", 256, NULL, COLLABORATION_TASKS_PRIO);
+    timer_test_task_h = Task_Create(timer_test_task, "TimerTest", 256, NULL, TIMER_TEST_TASK_PRIO);
 
     Task_Delay(MS_TO_TICKS(200));
     Task_Notify(a_task_h);
@@ -273,21 +306,25 @@ void EXTI0_IRQHandler(void) {
     }
 }
 
-
-void sys_config() {
-    lib_usart0_init();
-    key_exti_init();
-}
-
 int main(void) {
-    sys_config();
-    SYS_LOGI("=========   MyRTOS v2.1 (Named Tasks)   =========\n");
-    SYS_LOGI("|  Author: XiaoXiu (Refactored by AI)\n");
+    // 统一初始化RTOS所有模块 必须先做这一步
+    MyRTOS_SystemInit();
+    // 初始化用户特定的硬件
+    key_exti_init();
+    SYS_LOGI("=========   MyRTOS v4.0 (Layered Arch)   =========\n");
+    SYS_LOGI("|  Author: XiaoXiu\n");
     SYS_LOGI("|  Press USER key to toggle Monitor\n");
-    SYS_LOGI("================================================\n");
-    Task_Create(boot_task, "BootTask", 512, NULL, 2);
+    SYS_LOGI("===================================================\n");
+    // 创建启动任务，由它来创建其他所有应用任务和服务
+    TaskHandle_t boot_task_h = Task_Create(boot_task, "BootTask", 512, NULL, 2);
+    if (boot_task_h == NULL) {
+        // 如果启动任务创建失败，打印信息并挂起
+        SYS_LOGE("FATAL: Failed to create Boot Task!\n");
+        while (1);
+    }
     SYS_LOGI("System Starting Scheduler...\n");
     Task_StartScheduler();
-
-    while (1) {};
+    // 不会执行到这里
+    while (1) {
+    };
 }

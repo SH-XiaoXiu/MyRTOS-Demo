@@ -323,7 +323,7 @@
             <PlainCh>0</PlainCh>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
-            <wLevel>3</wLevel>
+            <wLevel>1</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>1</uC99>
@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,GD32F407,DEBUG_PRINT=0</Define>
               <Undefine></Undefine>
-              <IncludePath>..\User;..\Firmware\CMSIS\GD\GD32F4xx\Include;..\Firmware\GD32F4xx_standard_peripheral\Include;..\Firmware\CMSIS;..\Libraries;..\MyRTOS</IncludePath>
+              <IncludePath>..\Firmware\CMSIS\GD\GD32F4xx\Include;..\Firmware\GD32F4xx_standard_peripheral\Include;..\Firmware\CMSIS;..\Libraries;..\MyRTOS\include;..\User</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -403,36 +403,6 @@
               <FileName>MyRTOS_Config.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\MyRTOS_Config.h</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>MyRTOS</GroupName>
-          <Files>
-            <File>
-              <FileName>MyRTOS.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\MyRTOS\MyRTOS.h</FilePath>
-            </File>
-            <File>
-              <FileName>MyRTOS.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MyRTOS\core\MyRTOS.c</FilePath>
-            </File>
-            <File>
-              <FileName>MyRTOS_Port_USART.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MyRTOS\portable\MyRTOS_Port_USART.c</FilePath>
-            </File>
-            <File>
-              <FileName>MyRTOS_Log.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MyRTOS\services\MyRTOS_Log.c</FilePath>
-            </File>
-            <File>
-              <FileName>MyRTOS_Monitor.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MyRTOS\tool\MyRTOS_Monitor.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -508,6 +478,51 @@
               <FileName>lib_usart0.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Libraries\lib_usart0.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>MyRTOS</GroupName>
+          <Files>
+            <File>
+              <FileName>MyRTOS.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\core\kernel\MyRTOS.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyRTOS_Log.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\core\services\MyRTOS_Log.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyRTOS_Monitor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\core\services\MyRTOS_Monitor.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>MyRTOS\Platform</GroupName>
+          <Files>
+            <File>
+              <FileName>MyRTOS_Driver_Timer_GD32.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Driver_Timer_GD32.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyRTOS_Platform_GD32.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Platform_GD32.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyRTOS_Port_ARM_CM4F_GD32.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Port_ARM_CM4F_GD32.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyRTOS_Startup_GD32.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Startup_GD32.c</FilePath>
             </File>
           </Files>
         </Group>
