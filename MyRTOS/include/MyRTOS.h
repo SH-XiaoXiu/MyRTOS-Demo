@@ -37,6 +37,8 @@ typedef struct Task_t *TaskHandle_t;
 typedef struct Mutex_t *MutexHandle_t;
 typedef struct Timer_t *TimerHandle_t;
 typedef void *QueueHandle_t;
+struct Semaphore_t;
+typedef struct Semaphore_t *SemaphoreHandle_t;
 
 // -----------------------------
 // 定时器回调函数指针类型
@@ -241,6 +243,41 @@ void Mutex_Lock_Recursive(MutexHandle_t mutex);
  * @brief 递归锁释放
  */
 void Mutex_Unlock_Recursive(MutexHandle_t mutex);
+
+
+
+
+// =============================
+// Semaphore Management
+// =============================
+/**
+ * @brief 创建一个计数信号量
+ * @param maxCount 信号量能达到的最大计数值
+ * @param initialCount 信号量的初始计数值
+ * @return 成功返回信号量句柄，失败返回NULL
+ */
+SemaphoreHandle_t Semaphore_Create(uint32_t maxCount, uint32_t initialCount);
+
+/**
+ * @brief 删除一个信号量
+ * @param semaphore 要删除的信号量句柄
+ */
+void Semaphore_Delete(SemaphoreHandle_t semaphore);
+
+/**
+ * @brief 获取(P操作)一个信号量
+ * @param semaphore 信号量句柄
+ * @param block_ticks 阻塞时间(ticks)。0表示不阻塞，MY_RTOS_MAX_DELAY表示无限等待
+ * @return 1表示成功获取，0表示超时失败
+ */
+int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks);
+
+/**
+ * @brief 释放(V操作)一个信号量
+ * @param semaphore 信号量句柄
+ * @return 1表示成功释放，0表示信号量已达最大值
+ */
+int Semaphore_Give(SemaphoreHandle_t semaphore);
 
 // =============================
 // 运行时统计 API

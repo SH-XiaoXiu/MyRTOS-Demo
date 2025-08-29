@@ -83,6 +83,13 @@ typedef struct Queue_t {
 } Queue_t;
 
 
+typedef struct Semaphore_t {
+    volatile uint32_t count;
+    uint32_t maxCount;
+    EventList_t eventList;
+} Semaphore_t;
+
+
 //====================== Static Global Variables ======================
 
 /*----- Memory Management -----*/
@@ -152,7 +159,7 @@ static void addTaskToSortedDelayList(TaskHandle_t task);
 
 static void addTaskToReadyList(TaskHandle_t task);
 
-static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t pTaskToRemove);
+static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t taskToRemove);
 
 static void task_set_priority(TaskHandle_t task, uint8_t newPriority);
 
@@ -505,21 +512,21 @@ static void addTaskToReadyList(TaskHandle_t task) {
     MyRTOS_Port_EXIT_CRITICAL(primask_status);
 }
 
-static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t pTaskToRemove) {
-    if (pTaskToRemove == NULL) return;
-    if (pTaskToRemove->pPrevGeneric != NULL) {
-        pTaskToRemove->pPrevGeneric->pNextGeneric = pTaskToRemove->pNextGeneric;
+static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t taskToRemove) {
+    if (taskToRemove == NULL) return;
+    if (taskToRemove->pPrevGeneric != NULL) {
+        taskToRemove->pPrevGeneric->pNextGeneric = taskToRemove->pNextGeneric;
     } else {
-        *ppListHead = pTaskToRemove->pNextGeneric;
+        *ppListHead = taskToRemove->pNextGeneric;
     }
-    if (pTaskToRemove->pNextGeneric != NULL) {
-        pTaskToRemove->pNextGeneric->pPrevGeneric = pTaskToRemove->pPrevGeneric;
+    if (taskToRemove->pNextGeneric != NULL) {
+        taskToRemove->pNextGeneric->pPrevGeneric = taskToRemove->pPrevGeneric;
     }
-    pTaskToRemove->pNextGeneric = NULL;
-    pTaskToRemove->pPrevGeneric = NULL;
-    if (pTaskToRemove->state == TASK_STATE_READY) {
-        if (readyTaskLists[pTaskToRemove->priority] == NULL) {
-            topReadyPriority &= ~(1UL << pTaskToRemove->priority);
+    taskToRemove->pNextGeneric = NULL;
+    taskToRemove->pPrevGeneric = NULL;
+    if (taskToRemove->state == TASK_STATE_READY) {
+        if (readyTaskLists[taskToRemove->priority] == NULL) {
+            topReadyPriority &= ~(1UL << taskToRemove->priority);
         }
     }
 }
@@ -1183,6 +1190,134 @@ void MyRTOS_Tick_Handler(void) {
         }
         addTaskToReadyList(taskToWake);
     }
+}
+
+//======================= 信号量 ==============================
+SemaphoreHandle_t Semaphore_Create(uint32_t maxCount, uint32_t initialCount) {
+    if (maxCount == 0 || initialCount > maxCount) {
+        return NULL;
+    }
+
+    Semaphore_t *semaphore = rtos_malloc(sizeof(Semaphore_t));
+    if (semaphore != NULL) {
+        semaphore->count = initialCount;
+        semaphore->maxCount = maxCount;
+        eventListInit(&semaphore->eventList);
+    }
+    return semaphore;
+}
+
+void Semaphore_Delete(SemaphoreHandle_t semaphore) {
+    if (semaphore == NULL) {
+        return;
+    }
+    uint32_t primask_status;
+    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+
+    // 唤醒所有等待该信号量的任务，防止它们永久阻塞
+    while (semaphore->eventList.head != NULL) {
+        Task_t *taskToWake = semaphore->eventList.head;
+        eventListRemove(taskToWake);
+        addTaskToReadyList(taskToWake);
+    }
+
+    rtos_free(semaphore);
+
+    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+}
+
+int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks) {
+    if (semaphore == NULL) {
+        return 0;
+    }
+
+    uint32_t primask_status;
+    while (1) {
+        MyRTOS_Port_ENTER_CRITICAL(primask_status);
+        //检查信号量计数值
+        if (semaphore->count > 0) {
+            semaphore->count--;
+            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            return 1; // 成功
+        }
+        if (block_ticks == 0) {
+            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            return 0; // 失败
+        }
+        //需要阻塞当前任务
+        removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
+        currentTask->state = TASK_STATE_BLOCKED;
+        eventListInsert(&semaphore->eventList, currentTask);
+        // 如果设置了超时，则将任务也添加到延时列表
+        currentTask->delay = 0;
+        if (block_ticks != MY_RTOS_MAX_DELAY) {
+            currentTask->delay = MyRTOS_GetTick() + block_ticks;
+            addTaskToSortedDelayList(currentTask);
+        }
+        MyRTOS_Port_EXIT_CRITICAL(primask_status);
+        MyRTOS_Port_YIELD(); // 触发调度，让出CPU
+
+        // --- 任务从这里被唤醒 ---
+        // 如果是被Give唤醒，pEventList会被设为NULL
+        if (currentTask->pEventList == NULL) {
+            // 成功获取信号量
+            return 1;
+        }
+        // 如果是超时唤醒
+        MyRTOS_Port_ENTER_CRITICAL(primask_status);
+        eventListRemove(currentTask);   //手动移除
+        MyRTOS_Port_EXIT_CRITICAL(primask_status);
+        return 0; // 超时返回
+    }
+}
+
+int Semaphore_Give(SemaphoreHandle_t semaphore) {
+    if (semaphore == NULL) {
+        return 0;
+    }
+
+    uint32_t primask_status;
+    int trigger_yield = 0;
+
+    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+
+    // 1. 检查是否有任务在等待
+    if (semaphore->eventList.head != NULL) {
+        // 如果有任务等待，直接唤醒最高优先级的任务，不增加计数值
+        Task_t *taskToWake = semaphore->eventList.head;
+        eventListRemove(taskToWake);
+
+        // 如果该任务同时在延时列表（因为Take有超时），则也从中移除
+        if (taskToWake->delay > 0) {
+            removeTaskFromList(&delayedTaskListHead, taskToWake);
+            taskToWake->delay = 0;
+        }
+
+        addTaskToReadyList(taskToWake);
+
+        // 如果唤醒的任务优先级更高，则标记需要调度
+        if (taskToWake->priority > currentTask->priority) {
+            trigger_yield = 1;
+        }
+    } else {
+        // 2. 没有任务等待，增加计数值
+        if (semaphore->count < semaphore->maxCount) {
+            semaphore->count++;
+        } else {
+            // 计数值已达最大，操作失败
+            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            return 0;
+        }
+    }
+
+    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+
+    // 如果需要，执行任务调度
+    if (trigger_yield) {
+        MyRTOS_Port_YIELD();
+    }
+
+    return 1; // 成功
 }
 
 
