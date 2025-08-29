@@ -95,12 +95,11 @@ static void prvMonitorTask(void *pv) {
             Task_GetInfo(temp_handle_for_sum, &temp_stats_for_sum);
 
             if ((temp_handle_for_sum != idleTask) &&
-                (temp_handle_for_sum != g_monitor_task_handle)) {
-                if (temp_stats_for_sum.taskId < MAX_TASKS_FOR_STATS) {
-                    all_app_tasks_runtime_delta += (
-                        current_run_time_counters[temp_stats_for_sum.taskId] - g_last_run_time_counters[
-                            temp_stats_for_sum.taskId]);
-                }
+                (temp_handle_for_sum != g_monitor_task_handle) &&
+                (temp_stats_for_sum.taskId < MAX_TASKS_FOR_STATS))
+            {
+                all_app_tasks_runtime_delta += (current_run_time_counters[temp_stats_for_sum.taskId] -
+                                                g_last_run_time_counters[temp_stats_for_sum.taskId]);
             }
             temp_handle_for_sum = Task_GetNextTaskHandle(temp_handle_for_sum);
         }
