@@ -28,6 +28,7 @@ do { \
 
 //====================== 内核核心配置 ======================
 #define MY_RTOS_MAX_PRIORITIES              (16)      // 最大支持的优先级数量
+#define MY_RTOS_MAX_CONCURRENT_TASKS        (32)      // 最大支持的并发任务数量 最大64
 #define MY_RTOS_TICK_RATE_HZ                (1000)    // 系统Tick频率 (Hz)
 #define MY_RTOS_MAX_DELAY                   (0xFFFFFFFFU) // 最大延时ticks
 #define MY_RTOS_TASK_NAME_MAX_LEN           (16)       // 任务名称最大长度
@@ -68,7 +69,7 @@ do { \
 #define MY_RTOS_MONITOR_TASK_STACK_SIZE    (1024) // 需要较大栈来容纳缓冲区
 #define MY_RTOS_MONITOR_TASK_PERIOD_MS     (300) // 监视器刷新周期
 #define MY_RTOS_MONITOR_BUFFER_SIZE        (2048)
-#define MAX_TASKS_FOR_STATS                (32) //最大监视任务数
+#define MAX_TASKS_FOR_STATS                (MY_RTOS_MAX_CONCURRENT_TASKS) //最大监视任务数
 #endif
 
 //====================== 运行时统计配置 ======================
