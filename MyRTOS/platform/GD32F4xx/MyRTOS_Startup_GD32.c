@@ -6,8 +6,10 @@
 
 #include "MyRTOS.h"
 #include "MyRTOS_Config.h"
+#include "MyRTOS_Console.h"
 #include "MyRTOS_Platform.h"
 #include "MyRTOS_Driver_Timer.h"
+#include "MyRTOS_Terminal.h"
 
 #if (MY_RTOS_USE_LOG == 1)
 #include "MyRTOS_Log.h"
@@ -24,12 +26,16 @@ void MyRTOS_SystemInit(void) {
 #if (defined(MY_RTOS_TIMER_DEVICE_LIST))
     MyRTOS_Timer_Init();
 #endif
-
     //内核初始化
     MyRTOS_Init();
-
-    //服务层初始化 (例如: 日志)
+    //服务层初始化
+#if (MY_RTOS_USE_CONSOLE == 1)
+    MyRTOS_Console_Init();
+#endif
 #if (MY_RTOS_USE_LOG == 1)
     MyRTOS_Log_Init();
+#endif
+#if (MY_RTOS_USE_TERMINAL == 1)
+    MyRTOS_Terminal_Init();
 #endif
 }
