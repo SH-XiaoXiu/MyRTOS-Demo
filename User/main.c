@@ -386,7 +386,7 @@ int main(void) {
     MyRTOS_Platform_TerminalCommandsInit();
     // 初始化用户特定的硬件
     key_exti_init();
-    SYS_LOGI("=========   MyRTOS v4.0 (Layered Arch)   =========\n");
+    SYS_LOGI("=========   MyRTOS  =========\n");
     SYS_LOGI("|  Author: XiaoXiu\n");
     SYS_LOGI("|  Press USER key to toggle Monitor\n");
     SYS_LOGI("===================================================\n");
