@@ -66,8 +66,9 @@ do { \
 // 监视器任务的相关配置
 #define MY_RTOS_MONITOR_TASK_PRIORITY      (1)
 #define MY_RTOS_MONITOR_TASK_STACK_SIZE    (1024) // 需要较大栈来容纳缓冲区
-#define MY_RTOS_MONITOR_TASK_PERIOD_MS     (500) // 监视器刷新周期
+#define MY_RTOS_MONITOR_TASK_PERIOD_MS     (300) // 监视器刷新周期
 #define MY_RTOS_MONITOR_BUFFER_SIZE        (2048)
+#define MAX_TASKS_FOR_STATS                (32) //最大监视任务数
 #endif
 
 //====================== 运行时统计配置 ======================
