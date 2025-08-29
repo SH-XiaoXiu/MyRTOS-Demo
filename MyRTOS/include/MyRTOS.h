@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "MyRTOS_Config.h" // 用户的配置文件将包含所有功能开关
 
+
 // -----------------------------
 // 时间转换宏
 // -----------------------------
@@ -25,9 +26,9 @@ struct Queue_t;
 // -----------------------------
 typedef enum {
     TASK_STATE_UNUSED = 0, // 任务控制块未使用
-    TASK_STATE_READY,      // 任务就绪
-    TASK_STATE_DELAYED,    // 任务延时中
-    TASK_STATE_BLOCKED     // 任务因等待事件阻塞
+    TASK_STATE_READY, // 任务就绪
+    TASK_STATE_DELAYED, // 任务延时中
+    TASK_STATE_BLOCKED // 任务因等待事件阻塞
 } TaskState_t;
 
 // -----------------------------
@@ -39,6 +40,12 @@ typedef struct Timer_t *TimerHandle_t;
 typedef void *QueueHandle_t;
 struct Semaphore_t;
 typedef struct Semaphore_t *SemaphoreHandle_t;
+
+// -----------------------------
+// 当前运行任务句柄
+extern TaskHandle_t currentTask;
+extern TaskHandle_t idleTask;
+// -----------------------------
 
 // -----------------------------
 // 定时器回调函数指针类型
@@ -254,8 +261,6 @@ void Mutex_Lock_Recursive(MutexHandle_t mutex);
 void Mutex_Unlock_Recursive(MutexHandle_t mutex);
 
 
-
-
 // =============================
 // Semaphore Management
 // =============================
@@ -305,24 +310,24 @@ int Semaphore_GiveFromISR(SemaphoreHandle_t semaphore, int *higherPriorityTaskWo
  * @brief 任务运行统计信息
  */
 typedef struct TaskStats_t {
-    uint32_t taskId;                      // 任务ID
+    uint32_t taskId; // 任务ID
 #if (MY_RTOS_TASK_NAME_MAX_LEN > 0)
     char taskName[MY_RTOS_TASK_NAME_MAX_LEN]; // 任务名称
 #endif
-    TaskState_t state;                    // 当前任务状态
-    uint8_t currentPriority;              // 当前优先级
-    uint8_t basePriority;                 // 基础优先级
-    uint64_t runTimeCounter;              // 累计运行时间(单位:由高精度定时器频率决定)
-    uint32_t stackHighWaterMark;          // 栈水位(已用栈大小, bytes)
-    uint32_t stackSize;                   // 栈大小(bytes)
+    TaskState_t state; // 当前任务状态
+    uint8_t currentPriority; // 当前优先级
+    uint8_t basePriority; // 基础优先级
+    uint64_t runTimeCounter; // 累计运行时间(单位:由高精度定时器频率决定)
+    uint32_t stackHighWaterMark; // 栈水位(已用栈大小, bytes)
+    uint32_t stackSize; // 栈大小(bytes)
 } TaskStats_t;
 
 /**
  * @brief 堆内存统计信息
  */
 typedef struct HeapStats_t {
-    size_t totalHeapSize;                 // 堆总大小
-    size_t freeBytesRemaining;            // 当前剩余内存
+    size_t totalHeapSize; // 堆总大小
+    size_t freeBytesRemaining; // 当前剩余内存
     size_t minimumEverFreeBytesRemaining; // 历史最小剩余内存
 } HeapStats_t;
 

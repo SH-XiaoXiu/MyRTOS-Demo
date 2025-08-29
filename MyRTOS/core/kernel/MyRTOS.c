@@ -114,9 +114,9 @@ static size_t minimumEverFreeBytesRemaining = 0U; //历史最小剩余堆
 static volatile uint8_t systemIsInitialized = 0;
 volatile uint32_t criticalNestingCount = 0;
 static volatile uint64_t systemTickCount = 0;
-TaskHandle_t allTaskListHead = NULL;
+static TaskHandle_t allTaskListHead = NULL;
 TaskHandle_t currentTask = NULL;
-static TaskHandle_t idleTask = NULL;
+TaskHandle_t idleTask;
 static uint32_t nextTaskId = 0;
 static TaskHandle_t readyTaskLists[MY_RTOS_MAX_PRIORITIES];
 static TaskHandle_t delayedTaskListHead = NULL;
@@ -154,7 +154,7 @@ static void rtos_free(void *pv);
 
 void *schedule_next_task(void);
 
-static void MyRTOS_Idle_Task(void *pv);
+extern void MyRTOS_Idle_Task(void *pv); //外部提供
 
 static void addTaskToSortedDelayList(TaskHandle_t task);
 
@@ -415,13 +415,6 @@ void *schedule_next_task(void) {
     }
 
     return currentTask->sp;
-}
-
-static void MyRTOS_Idle_Task(void *pv) {
-    MY_RTOS_KERNEL_LOGD("Idle Task starting..\n");
-    while (1) {
-        __asm volatile ("wfi");
-    }
 }
 
 
