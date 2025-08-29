@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,GD32F407,DEBUG_PRINT=0</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Firmware\CMSIS\GD\GD32F4xx\Include;..\Firmware\GD32F4xx_standard_peripheral\Include;..\Firmware\CMSIS;..\Libraries;..\MyRTOS\include;..\User</IncludePath>
+              <IncludePath>..\Firmware\CMSIS\GD\GD32F4xx\Include;..\Firmware\GD32F4xx_standard_peripheral\Include;..\Firmware\CMSIS;..\Libraries;..\User;..\MyRTOS\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -499,6 +499,16 @@
               <FileType>1</FileType>
               <FilePath>..\MyRTOS\core\services\MyRTOS_Monitor.c</FilePath>
             </File>
+            <File>
+              <FileName>MyRTOS_Console.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\core\services\MyRTOS_Console.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyRTOS_Terminal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\core\services\MyRTOS_Terminal.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -523,6 +533,11 @@
               <FileName>MyRTOS_Startup_GD32.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Startup_GD32.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyRTOS_Terminal_Commands_GD32.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Terminal_Commands_GD32.c</FilePath>
             </File>
           </Files>
         </Group>

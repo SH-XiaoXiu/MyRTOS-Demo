@@ -38,8 +38,21 @@ do { \
 #define HEAP_BYTE_ALIGNMENT                 (8)         // 内存对齐字节数
 
 //====================== 日志与监视器配置 ======================
+
 #define MY_RTOS_USE_LOG                     1 // 1: 启用日志服务; 0: 禁用
-#define MY_RTOS_USE_MONITOR                 1 // 1: 启用系统监视器模块; 0: 禁用
+
+// 1: 启用统一控制台服务 (Terminal 和 Monitor 的基础)
+// 0: 禁用, 所有交互功能将不可用
+#define MY_RTOS_USE_CONSOLE                 1
+
+#if (MY_RTOS_USE_CONSOLE == 1)
+#define MY_RTOS_USE_MONITOR             1 // 1: 启用系统监视器模块; 0: 禁用
+#define MY_RTOS_USE_TERMINAL            1 // 1: 启用交互式终端 (Shell) 功能
+#else
+#define MY_RTOS_USE_MONITOR             0
+#define MY_RTOS_USE_TERMINAL            0
+#endif
+
 #if MY_RTOS_USE_MONITOR
 #define MY_RTOS_MONITOR_KERNEL_LOG          1 //1: 启用内核日志; 0: 禁用内核日志
 #endif
@@ -56,11 +69,24 @@ do { \
 // 设置当前系统的日志级别
 #define SYS_LOG_LEVEL                   SYS_LOG_LEVEL_INFO
 
+// 设置用户应用程序的默认日志级别
+#define USER_LOG_LEVEL                  SYS_LOG_LEVEL_DEBUG
+
+// --- 异步日志系统配置 ---
+
 // --- 异步日志系统配置 ---
 #define SYS_LOG_QUEUE_LENGTH            30
 #define SYS_LOG_MAX_MSG_LENGTH          128
 #define SYS_LOG_TASK_PRIORITY           1
 #define SYS_LOG_TASK_STACK_SIZE         512
+#endif
+
+#if (MY_RTOS_USE_CONSOLE == 1)
+//统一控制台服务配置 ---
+#define SYS_CONSOLE_QUEUE_LENGTH            20   // 输出队列长度
+#define SYS_CONSOLE_MAX_MSG_LENGTH          128  // 单条输出消息最大长度
+#define SYS_CONSOLE_TASK_PRIORITY           (MY_RTOS_MAX_PRIORITIES - 1) // 设置一个较高的优先级
+#define SYS_CONSOLE_TASK_STACK_SIZE         256
 #endif
 
 #if (MY_RTOS_USE_MONITOR == 1)
@@ -70,6 +96,16 @@ do { \
 #define MY_RTOS_MONITOR_TASK_PERIOD_MS     (300) // 监视器刷新周期
 #define MY_RTOS_MONITOR_BUFFER_SIZE        (2048)
 #define MAX_TASKS_FOR_STATS                (MY_RTOS_MAX_CONCURRENT_TASKS) //最大监视任务数
+#endif
+
+
+#if (MY_RTOS_USE_TERMINAL == 1)
+// --- 终端 (Shell) 服务配置 ---
+#define SYS_TERMINAL_TASK_PRIORITY          (2)  // 优先级应低于日志和监视器
+#define SYS_TERMINAL_TASK_STACK_SIZE        (1024) // 需要较大栈来处理命令和缓冲区
+#define SYS_TERMINAL_MAX_CMD_LENGTH         (64)   // 最大命令长度
+#define SYS_TERMINAL_MAX_ARGS               (8)    // 最大参数数量
+#define SYS_TERMINAL_PROMPT                 "MyRTOS> " // 终端提示符
 #endif
 
 //====================== 运行时统计配置 ======================
