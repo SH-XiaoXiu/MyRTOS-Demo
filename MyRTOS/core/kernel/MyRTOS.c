@@ -619,7 +619,7 @@ int Task_Delete(TaskHandle_t task_h) {
     if (task_h == NULL) {
         task_to_delete = currentTask;
     } else {
-        task_to_delete = (Task_t *) task_h;
+        task_to_delete = task_h;
     }
 
     if (task_to_delete == idleTask) {
@@ -669,15 +669,12 @@ int Task_Delete(TaskHandle_t task_h) {
 
     if (task_to_delete == currentTask) {
         trigger_yield = 1;
-    }
-
-    uint32_t deleted_task_id = task_to_delete->taskId;
-
-    rtos_free(task_to_delete->stack_base);
-    rtos_free(task_to_delete);
-
-    if (trigger_yield) {
-        currentTask = NULL; //必须置NULL，否则会有内存问题
+        rtos_free(task_to_delete->stack_base);
+        rtos_free(task_to_delete);
+        currentTask = NULL;
+    } else {
+        rtos_free(task_to_delete->stack_base);
+        rtos_free(task_to_delete);
     }
 
     MyRTOS_Port_EXIT_CRITICAL();
