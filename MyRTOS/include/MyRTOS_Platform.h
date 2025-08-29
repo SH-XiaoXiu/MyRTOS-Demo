@@ -18,4 +18,23 @@ void MyRTOS_Platform_Init(void);
  */
 void MyRTOS_Platform_PutChar(char c);
 
+
+/**
+ * @brief 从硬件获取一个字符（非阻塞）。
+ *        此函数立即返回。
+ * @param c 指向用于存储接收字符的变量的指针。
+ * @return 1 表示成功获取一个字符, 0 表示当前没有可用字符。
+ */
+int MyRTOS_Platform_GetChar(char *c);
+
+/**
+ * @brief 从硬件获取一个字符（阻塞式）。
+ *        此函数将阻塞任务，直到接收到一个新字符。
+ *        这是输入驱动型任务（如Terminal）的理想选择。
+ * @param c 指向用于存储接收字符的变量的指针。
+ * @return 1 表示成功获取一个字符, 0 表示超时或失败 (在此实现中永不为0)。
+ */
+int MyRTOS_Platform_GetChar_Blocking(char *c);
+
+
 #endif // MYRTOS_PLATFORM_H

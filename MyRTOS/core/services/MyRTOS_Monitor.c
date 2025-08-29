@@ -4,8 +4,7 @@
 
 #include "MyRTOS_Monitor.h"
 #include "MyRTOS.h"
-#include "MyRTOS_Log.h"
-#include "MyRTOS_Platform.h"
+#include "MyRTOS_Console.h"
 #include "MyRTOS_Driver_Timer.h"
 #include <stdio.h>
 #include <string.h>
@@ -27,10 +26,9 @@ static const char *const taskStateToStr_Monitor[] = {
     "Blocked"
 };
 
-// 辅助函数，用于直接打印字符串
 static void monitor_puts(const char *str) {
-    while (*str) {
-        MyRTOS_Platform_PutChar(*str++);
+    if (MyRTOS_Console_GetMode() == CONSOLE_MODE_MONITOR) {
+        MyRTOS_Console_Printf("%s", str);
     }
 }
 
@@ -65,6 +63,9 @@ static void prvMonitorTask(void *pv) {
 
 
     while (1) {
+        if (MyRTOS_Console_GetMode() != CONSOLE_MODE_MONITOR) {
+            Task_Delay(MS_TO_TICKS(MY_RTOS_MONITOR_TASK_PERIOD_MS));
+        }
         TaskHandle_t taskHandle = NULL;
         HeapStats_t heapStats;
         char temp_buffer[256]; // 行缓冲区
@@ -96,8 +97,7 @@ static void prvMonitorTask(void *pv) {
 
             if ((temp_handle_for_sum != idleTask) &&
                 (temp_handle_for_sum != g_monitor_task_handle) &&
-                (temp_stats_for_sum.taskId < MAX_TASKS_FOR_STATS))
-            {
+                (temp_stats_for_sum.taskId < MAX_TASKS_FOR_STATS)) {
                 all_app_tasks_runtime_delta += (current_run_time_counters[temp_stats_for_sum.taskId] -
                                                 g_last_run_time_counters[temp_stats_for_sum.taskId]);
             }
@@ -229,15 +229,16 @@ static void prvMonitorTask(void *pv) {
 int MyRTOS_Monitor_Start(void) {
     if (g_monitor_task_handle != NULL) return -1;
 
-    MyRTOS_Log_SetMonitorMode(1);
-    Task_Delay(MS_TO_TICKS(50));
+    // 抢占屏幕焦点
+    MyRTOS_Console_SetMode(CONSOLE_MODE_MONITOR);
+    Task_Delay(MS_TO_TICKS(50)); // 短暂延时确保模式切换的消息被处理
     g_monitor_task_handle = Task_Create(prvMonitorTask,
                                         "Monitor",
                                         MY_RTOS_MONITOR_TASK_STACK_SIZE,
                                         NULL,
                                         MY_RTOS_MONITOR_TASK_PRIORITY);
     if (g_monitor_task_handle == NULL) {
-        MyRTOS_Log_SetMonitorMode(0);
+        MyRTOS_Console_SetMode(CONSOLE_MODE_LOG);
         return -1;
     }
     return 0;
@@ -250,7 +251,9 @@ int MyRTOS_Monitor_Stop(void) {
     if (g_monitor_task_handle == NULL) return -1;
     Task_Delete(g_monitor_task_handle);
     g_monitor_task_handle = NULL;
-    MyRTOS_Log_SetMonitorMode(0);
+
+    // 释放屏幕焦点, 恢复日志模式
+    MyRTOS_Console_SetMode(CONSOLE_MODE_LOG);
     PRINT("\r\n\r\n----- Monitor Stopped. Normal Log Resumed. -----\r\n\r\n");
     return 0;
 }
