@@ -10,18 +10,18 @@ extern volatile uint32_t criticalNestingCount;
 //定义平台相关的宏 (临界区, Yield等)
 #define MyRTOS_Port_ENTER_CRITICAL() \
 do { \
-__disable_irq(); \
-criticalNestingCount++; \
+    __disable_irq(); \
+    criticalNestingCount++; \
 } while(0)
 
 #define MyRTOS_Port_EXIT_CRITICAL() \
 do { \
-if (criticalNestingCount > 0) { \
-criticalNestingCount--; \
-if (criticalNestingCount == 0) { \
-__enable_irq(); \
-} \
-} \
+    if (criticalNestingCount > 0) { \
+        criticalNestingCount--; \
+        if (criticalNestingCount == 0) { \
+            __enable_irq(); \
+        } \
+    } \
 } while(0)
 
 #define MyRTOS_Port_YIELD()                      do { SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; __ISB(); } while(0)
@@ -40,6 +40,10 @@ __enable_irq(); \
 //====================== 日志与监视器配置 ======================
 #define MY_RTOS_USE_LOG                     1 // 1: 启用日志服务; 0: 禁用
 #define MY_RTOS_USE_MONITOR                 1 // 1: 启用系统监视器模块; 0: 禁用
+#if MY_RTOS_USE_MONITOR
+#define MY_RTOS_MONITOR_KERNEL_LOG          1 //1: 启用内核日志; 0: 禁用内核日志
+#endif
+
 
 #if (MY_RTOS_USE_LOG == 1)
 // --- 日志级别定义 ---
@@ -65,6 +69,7 @@ __enable_irq(); \
 #define MY_RTOS_MONITOR_TASK_STACK_SIZE    (1024) // 需要较大栈来容纳缓冲区
 #define MY_RTOS_MONITOR_TASK_PERIOD_MS     (500) // 监视器刷新周期
 #define MY_RTOS_MONITOR_BUFFER_SIZE        (2048)
+#define MAX_TASKS_FOR_STATS                (32) //最大监视任务数
 #endif
 
 //====================== 运行时统计配置 ======================
@@ -88,4 +93,5 @@ __enable_irq(); \
 #endif
 
 #endif // MYRTOS_CONFIG_H
+
 #endif
