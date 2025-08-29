@@ -112,6 +112,9 @@ static size_t minimumEverFreeBytesRemaining = 0U; //历史最小剩余堆
 
 /*----- System & Task -----*/
 static volatile uint8_t systemIsInitialized = 0;
+
+volatile uint8_t g_scheduler_started = 0;
+
 volatile uint32_t criticalNestingCount = 0;
 static volatile uint64_t systemTickCount = 0;
 static TaskHandle_t allTaskListHead = NULL;
@@ -336,6 +339,11 @@ uint64_t MyRTOS_GetTick(void) {
     return tick_value;
 }
 
+uint8_t MyRTOS_Schedule_IsRunning(void) {
+    return g_scheduler_started;
+}
+
+
 void Task_StartScheduler(void) {
     idleTask = Task_Create(MyRTOS_Idle_Task, "IDLE", 64, NULL, 0);
     if (idleTask == NULL) {
@@ -354,7 +362,10 @@ void Task_StartScheduler(void) {
         while (1);
     }
 
+
     MY_RTOS_KERNEL_LOGD("Starting scheduler....\n");
+
+    g_scheduler_started = 1;
 
     if (MyRTOS_Port_StartScheduler() != 0) {
         // Should not get here
@@ -460,6 +471,21 @@ static void eventListRemove(TaskHandle_t taskToRemove) {
     taskToRemove->pNextEvent = NULL;
     taskToRemove->pEventList = NULL;
 }
+
+
+// ========================== Public Memory API ==========================
+
+void *MyRTOS_Malloc(size_t wantedSize) {
+    // 调用内部实现
+    return rtos_malloc(wantedSize);
+}
+
+void MyRTOS_Free(void *pv) {
+    // 调用内部实现
+    rtos_free(pv);
+}
+
+// ========================== Public Memory API ==========================
 
 //================= Task Management ================
 static void addTaskToSortedDelayList(TaskHandle_t task) {
@@ -686,7 +712,7 @@ int Task_Delete(TaskHandle_t task_h) {
         }
     }
 
-    // 3. 从全局任务列表中移除
+    //全局任务列表中移除
     task_to_delete->state = TASK_STATE_UNUSED;
     Task_t *prev = NULL;
     Task_t *curr = allTaskListHead;
@@ -1332,7 +1358,7 @@ int Semaphore_Give(SemaphoreHandle_t semaphore) {
 
     MyRTOS_Port_ENTER_CRITICAL();
 
-    // 1. 检查是否有任务在等待
+    //检查是否有任务在等待
     if (semaphore->eventList.head != NULL) {
         // 如果有任务等待，直接唤醒最高优先级的任务，不增加计数值
         Task_t *taskToWake = semaphore->eventList.head;
@@ -1351,7 +1377,7 @@ int Semaphore_Give(SemaphoreHandle_t semaphore) {
             trigger_yield = 1;
         }
     } else {
-        // 2. 没有任务等待，增加计数值
+        //没有任务等待，增加计数值
         if (semaphore->count < semaphore->maxCount) {
             semaphore->count++;
         } else {

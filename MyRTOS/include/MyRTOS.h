@@ -47,6 +47,9 @@ extern TaskHandle_t currentTask;
 extern TaskHandle_t idleTask;
 // -----------------------------
 
+extern volatile uint8_t g_scheduler_started;
+uint8_t MyRTOS_Schedule_IsRunning(void);
+
 // -----------------------------
 // 定时器回调函数指针类型
 // -----------------------------
@@ -82,6 +85,26 @@ uint64_t MyRTOS_GetTick(void);
  * @brief 内核的Tick处理函数，由移植层的Tick中断调用
  */
 void MyRTOS_Tick_Handler(void);
+
+// =============================
+// Memory Management
+// =============================
+
+/**
+ * @brief 从 MyRTOS 管理的堆中分配内存。
+ *        这是线程安全的。
+ * @param wantedSize 要分配的字节数
+ * @return 成功则返回指向分配内存的指针, 失败则返回 NULL。
+ */
+void *MyRTOS_Malloc(size_t wantedSize);
+
+/**
+ * @brief 释放由 MyRTOS_Malloc 分配的内存。
+ * @param pv 指向要释放的内存的指针
+ */
+void MyRTOS_Free(void *pv);
+
+
 
 // =============================
 // Task Management
