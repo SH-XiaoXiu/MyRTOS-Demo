@@ -121,7 +121,10 @@ static uint32_t nextTaskId = 0;
 static TaskHandle_t readyTaskLists[MY_RTOS_MAX_PRIORITIES];
 static TaskHandle_t delayedTaskListHead = NULL;
 static volatile uint32_t topReadyPriority = 0;
-
+#if (MY_RTOS_MAX_CONCURRENT_TASKS > 64)
+#error "MY_RTOS_MAX_TASKS cannot exceed 64 in this implementation."
+#endif
+static uint64_t taskIdBitmap = 0; // 每一位代表一个ID是否被占用。0:空闲, 1:占用
 
 //================= Event Management ================
 static void eventListInit(EventList_t *pEventList);
@@ -560,16 +563,36 @@ TaskHandle_t Task_Create(void (*func)(void *),
         return NULL;
     }
 
+
 #if (MY_RTOS_GENERATE_RUN_TIME_STATS == 1)
     memset(stack, 0xA5, stack_size * sizeof(StackType_t));
 #endif
+
+
+    uint32_t newTaskId = (uint32_t) -1; // -1 表示无效ID
+    MyRTOS_Port_ENTER_CRITICAL();
+    if (taskIdBitmap != 0xFFFFFFFFFFFFFFFFULL) {
+        //使用 __builtin_ctzll (Count Trailing Zeros) >>>
+        // ~taskIdBitmap 会把空闲位(0)变成1。
+        // ctz 会找到最低位的1，这个1的位置就是最小的空闲ID。
+        newTaskId = __builtin_ctzll(~taskIdBitmap);
+        taskIdBitmap |= (1ULL << newTaskId);
+    }
+    MyRTOS_Port_EXIT_CRITICAL();
+
+    if (newTaskId == (uint32_t) -1) {
+        MY_RTOS_KERNEL_LOGE("Failed to create task, task ID pool is full.");
+        rtos_free(stack);
+        rtos_free(t);
+        return NULL;
+    }
 
     t->func = func;
     t->param = param;
     t->delay = 0;
     t->notification = 0;
     t->is_waiting_notification = 0;
-    t->taskId = nextTaskId++;
+    t->taskId = newTaskId;
 #if (MY_RTOS_TASK_NAME_MAX_LEN > 0)
     if (taskName != NULL) {
         strncpy(t->taskName, taskName, MY_RTOS_TASK_NAME_MAX_LEN - 1);
@@ -611,25 +634,34 @@ TaskHandle_t Task_Create(void (*func)(void *),
     return t;
 }
 
+// 在 MyRTOS.c 中
+
 int Task_Delete(TaskHandle_t task_h) {
     Task_t *task_to_delete;
-
-    int trigger_yield = 0;
+    int need_reschedule = 0;
+    int is_self_delete = 0;
 
     if (task_h == NULL) {
         task_to_delete = currentTask;
+        is_self_delete = 1; //自杀
     } else {
         task_to_delete = task_h;
     }
 
-    if (task_to_delete == idleTask) {
+    if (task_to_delete == idleTask || task_to_delete == NULL) {
+        MY_RTOS_KERNEL_LOGE("Invalid task handle.");
         return -1;
     }
 
+    // 在TCB被释放前，提前获取ID
+    uint32_t deleted_task_id = task_to_delete->taskId;
+
     MyRTOS_Port_ENTER_CRITICAL();
+
+    //从调度列表中移除
     if (task_to_delete->state == TASK_STATE_READY) {
         removeTaskFromList(&readyTaskLists[task_to_delete->priority], task_to_delete);
-    } else {
+    } else if (task_to_delete->state == TASK_STATE_DELAYED || task_to_delete->state == TASK_STATE_BLOCKED) {
         removeTaskFromList(&delayedTaskListHead, task_to_delete);
     }
 
@@ -637,6 +669,7 @@ int Task_Delete(TaskHandle_t task_h) {
         eventListRemove(task_to_delete);
     }
 
+    //处理持有的互斥锁
     while (task_to_delete->held_mutexes_head != NULL) {
         Mutex_t *mutex_to_release = task_to_delete->held_mutexes_head;
         task_to_delete->held_mutexes_head = mutex_to_release->next_held_mutex;
@@ -646,11 +679,14 @@ int Task_Delete(TaskHandle_t task_h) {
             Task_t *taskToWake = mutex_to_release->eventList.head;
             eventListRemove(taskToWake);
             addTaskToReadyList(taskToWake);
-            if (taskToWake->priority > currentTask->priority) {
-                trigger_yield = 1;
+            // 只有在 删除其他任务 且 唤醒的任务优先级更高 时，才标记需要调度
+            if (!is_self_delete && (currentTask != NULL) && (taskToWake->priority > currentTask->priority)) {
+                need_reschedule = 1;
             }
         }
     }
+
+    // 3. 从全局任务列表中移除
     task_to_delete->state = TASK_STATE_UNUSED;
     Task_t *prev = NULL;
     Task_t *curr = allTaskListHead;
@@ -658,7 +694,6 @@ int Task_Delete(TaskHandle_t task_h) {
         prev = curr;
         curr = curr->pNextTask;
     }
-
     if (curr != NULL) {
         if (prev == NULL) {
             allTaskListHead = curr->pNextTask;
@@ -667,21 +702,27 @@ int Task_Delete(TaskHandle_t task_h) {
         }
     }
 
-    if (task_to_delete == currentTask) {
-        trigger_yield = 1;
-        rtos_free(task_to_delete->stack_base);
-        rtos_free(task_to_delete);
-        currentTask = NULL;
-    } else {
-        rtos_free(task_to_delete->stack_base);
-        rtos_free(task_to_delete);
+    //自杀，必须进行调度
+    if (is_self_delete) {
+        need_reschedule = 1;
     }
+
+    rtos_free(task_to_delete->stack_base);
+    rtos_free(task_to_delete);
+
+    if (is_self_delete) {
+        currentTask = NULL;
+    }
+
+    // 将对应ID的位清零
+    taskIdBitmap &= ~(1ULL << deleted_task_id);
 
     MyRTOS_Port_EXIT_CRITICAL();
 
-    if (trigger_yield) {
+    if (need_reschedule) {
         MyRTOS_Port_YIELD();
     }
+
     MY_RTOS_KERNEL_LOGD("Task %lu deleted.", deleted_task_id);
     return 0;
 }
