@@ -10,6 +10,7 @@
 #include "MyRTOS_Port.h"
 
 #if (MY_RTOS_GENERATE_RUN_TIME_STATS == 1)
+#include <stdio.h>
 #include "MyRTOS_Driver_Timer.h"
 #endif
 
