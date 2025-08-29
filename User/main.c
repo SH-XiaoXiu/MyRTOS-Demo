@@ -15,6 +15,8 @@
 #define COLLABORATION_TASKS_PRIO   2
 #define PRODUCER_PRIO              2
 #define TIMER_TEST_TASK_PRIO       2
+#define PRINTER_TASK_PRIO          2
+#define ISR_TEST_TASK_PRIO         3
 #define HIGH_PRIO_TASK_PRIO        3
 #define INTERRUPT_TASK_PRIO        4
 #define INSPECTOR_PRIO             4
@@ -22,11 +24,15 @@
 // 全局句柄
 QueueHandle_t product_queue;
 MutexHandle_t recursive_lock;
+SemaphoreHandle_t printer_semaphore;
+SemaphoreHandle_t isr_semaphore; // 用于中断测试的信号量
 TaskHandle_t producer_task_h, consumer_task_h, inspector_task_h;
 TaskHandle_t a_task_h, b_task_h, c_task_h, d_task_h, e_task_h;
 TaskHandle_t high_prio_task_h, interrupt_task_h, background_task_h;
 TimerHandle_t perio_timer_h, single_timer_h;
 TaskHandle_t recursive_task_h, timer_test_task_h;
+TaskHandle_t printer_task1_h, printer_task2_h, printer_task3_h;
+TaskHandle_t isr_test_task_h;
 
 typedef struct {
     uint32_t id;
@@ -54,6 +60,8 @@ void high_prio_task(void *param);
 
 void interrupt_handler_task(void *param);
 
+void isr_test_task(void *param);
+
 void producer_task(void *param);
 
 void consumer_task(void *param);
@@ -63,6 +71,8 @@ void inspector_task(void *param);
 void recursive_test_task(void *param);
 
 void timer_test_task(void *param);
+
+void printer_task(void *param);
 
 void boot_task(void *param);
 
@@ -176,11 +186,22 @@ void high_prio_task(void *param) {
 
 void interrupt_handler_task(void *param) {
     while (1) {
-        Task_Wait();
+        Task_Wait(); // 等待来自ISR的通知
+        SYS_LOGW("按键处理任务: 已被中断唤醒, 切换Monitor状态.\n");
         if (MyRTOS_Monitor_IsRunning()) {
             MyRTOS_Monitor_Stop();
         } else {
             MyRTOS_Monitor_Start();
+        }
+    }
+}
+
+void isr_test_task(void *param) {
+    SYS_LOGI("ISR测试任务: 启动并等待信号量...\n");
+    while (1) {
+        // 无限期等待一个由ISR给出的信号量
+        if (Semaphore_Take(isr_semaphore, MY_RTOS_MAX_DELAY)) {
+            SYS_LOGI("ISR测试任务: [?] 成功从ISR获取信号量!\n");
         }
     }
 }
@@ -247,13 +268,27 @@ void timer_test_task(void *param) {
     }
 }
 
+void printer_task(void *param) {
+    const char *taskName = (const char *) param;
+    while (1) {
+        PRINT("%s: 正在等待打印机...\n", taskName);
+        if (Semaphore_Take(printer_semaphore, MY_RTOS_MAX_DELAY)) {
+            PRINT("%s: [?] 获取到打印机, 开始打印 (耗时3秒)...\n", taskName);
+            Task_Delay(MS_TO_TICKS(3000));
+            PRINT("%s: [↑] 打印完成, 释放打印机.\n", taskName);
+            Semaphore_Give(printer_semaphore);
+        }
+        Task_Delay(MS_TO_TICKS(1000 + ((uint32_t)param % 3) * 500));
+    }
+}
+
 void boot_task(void *param) {
     SYS_LOGI("Boot task starting...\n");
 
+    // --- 互斥锁和协作任务 ---
     recursive_lock = Mutex_Create();
     if (recursive_lock == NULL)
         SYS_LOGE("Failed to create recursive_lock.\n");
-
     a_task_h = Task_Create(a_task, "TaskA", 256, NULL, COLLABORATION_TASKS_PRIO);
     b_task_h = Task_Create(b_task, "TaskB", 256, NULL, COLLABORATION_TASKS_PRIO);
     d_task_h = Task_Create(d_task, "TaskD_Creator", 256, NULL, COLLABORATION_TASKS_PRIO);
@@ -267,6 +302,7 @@ void boot_task(void *param) {
     Task_Delay(MS_TO_TICKS(200));
     Task_Notify(a_task_h);
 
+    // --- 队列测试 ---
     product_queue = Queue_Create(3, sizeof(Product_t));
     if (product_queue) {
         consumer_task_h = Task_Create(consumer_task, "Consumer", 256, NULL, CONSUMER_PRIO);
@@ -276,10 +312,31 @@ void boot_task(void *param) {
         SYS_LOGE("Product queue creation failed!\n");
     }
 
+    // --- 软件定时器测试 ---
     perio_timer_h = Timer_Create(MS_TO_TICKS(10000), MS_TO_TICKS(10000), perio_timer_cb, NULL);
     single_timer_h = Timer_Create(MS_TO_TICKS(5000), 0, single_timer_cb, NULL);
     Timer_Start(perio_timer_h);
     Timer_Start(single_timer_h);
+
+    // --- 信号量测试 ---
+    printer_semaphore = Semaphore_Create(2, 2);
+    if (printer_semaphore) {
+        SYS_LOGI("创建3个打印任务来竞争2台打印机...\n");
+        printer_task1_h = Task_Create(printer_task, "PrinterTask1", 256, (void *) "打印任务1", PRINTER_TASK_PRIO);
+        printer_task2_h = Task_Create(printer_task, "PrinterTask2", 256, (void *) "打印任务2", PRINTER_TASK_PRIO);
+        printer_task3_h = Task_Create(printer_task, "PrinterTask3", 256, (void *) "打印任务3", PRINTER_TASK_PRIO);
+    } else {
+        SYS_LOGE("Printer semaphore creation failed!\n");
+    }
+
+    // --- 中断安全API测试 ---
+    isr_semaphore = Semaphore_Create(1, 0); // 创建二进制信号量
+    if (isr_semaphore) {
+        // 创建一个比按键处理任务(INTERRUPT_TASK_PRIO=4)优先级低，但比大多数任务高的任务
+        isr_test_task_h = Task_Create(isr_test_task, "ISR_Test", 256, NULL, ISR_TEST_TASK_PRIO);
+    } else {
+        SYS_LOGE("ISR semaphore creation failed!\n");
+    }
 
     SYS_LOGI("All initial tasks and services created.\n");
     SYS_LOGI("Boot task deleting itself.\n");
@@ -298,11 +355,23 @@ void key_exti_init(void) {
 }
 
 void EXTI0_IRQHandler(void) {
+    //初始化为0 (false)
+    int higherPriorityTaskWoken = 0;
     if (exti_interrupt_flag_get(EXTI_0) != RESET) {
-        if (interrupt_task_h != NULL) {
-            Task_Notify(interrupt_task_h);
-        }
+        // 推荐先清除中断标志，防止重入
         exti_interrupt_flag_clear(EXTI_0);
+        // 唤醒最高优先级的按键处理任务
+        if (interrupt_task_h != NULL) {
+            Task_NotifyFromISR(interrupt_task_h, &higherPriorityTaskWoken);
+        }
+        if (isr_semaphore != NULL) {
+            Semaphore_GiveFromISR(isr_semaphore, &higherPriorityTaskWoken);
+        }
+        //检查标志位，如果为真，则手动请求一次上下文切换
+        //这会在中断退出后，通过PendSV安全地进行
+        if (higherPriorityTaskWoken) {
+            MyRTOS_Port_YIELD();
+        }
     }
 }
 
