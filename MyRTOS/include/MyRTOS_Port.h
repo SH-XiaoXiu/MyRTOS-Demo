@@ -16,9 +16,6 @@ typedef uint32_t    StackType_t;
 typedef int32_t     BaseType_t;
 typedef uint32_t    UBaseType_t;
 
-#define MyRTOS_Port_ENTER_CRITICAL(status_var)   do { (status_var) = __get_PRIMASK(); __disable_irq(); } while(0)
-#define MyRTOS_Port_EXIT_CRITICAL(status_var)    do { __set_PRIMASK(status_var); } while(0)
-#define MyRTOS_Port_YIELD()                      do { SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; __ISB(); } while(0)
 
 
 // =======================================================================

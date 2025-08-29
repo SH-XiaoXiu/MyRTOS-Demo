@@ -169,12 +169,11 @@ __attribute__((naked)) void PendSV_Handler(void) {
  * @brief SysTick Handler
  */
 void SysTick_Handler(void) {
-    uint32_t primask_status;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+    MyRTOS_Port_ENTER_CRITICAL();
 
     MyRTOS_Tick_Handler();
 
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
 
     MyRTOS_Port_YIELD();
 }

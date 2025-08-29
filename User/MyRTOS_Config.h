@@ -5,9 +5,24 @@
 //包含目标硬件平台的底层头文件
 #include "gd32f4xx.h"
 
-// 2. 定义平台相关的宏 (临界区, Yield等)
-#define MyRTOS_Port_ENTER_CRITICAL(status_var)   do { (status_var) = __get_PRIMASK(); __disable_irq(); } while(0)
-#define MyRTOS_Port_EXIT_CRITICAL(status_var)    do { __set_PRIMASK(status_var); } while(0)
+extern volatile uint32_t criticalNestingCount;
+//定义平台相关的宏 (临界区, Yield等)
+#define MyRTOS_Port_ENTER_CRITICAL() \
+do { \
+    __disable_irq(); \
+    criticalNestingCount++; \
+} while(0)
+
+#define MyRTOS_Port_EXIT_CRITICAL() \
+do { \
+    if (criticalNestingCount > 0) { \
+        criticalNestingCount--; \
+        if (criticalNestingCount == 0) { \
+            __enable_irq(); \
+        } \
+    } \
+} while(0)
+
 #define MyRTOS_Port_YIELD()                      do { SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk; __ISB(); } while(0)
 
 
