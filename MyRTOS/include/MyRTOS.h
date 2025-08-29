@@ -114,6 +114,15 @@ void Task_Delay(uint32_t tick);
  */
 int Task_Notify(TaskHandle_t task_h);
 
+
+/**
+ * @brief [ISR安全] 发送通知给任务
+ * @param task_h 任务句柄
+ * @param higherPriorityTaskWoken 如果唤醒的任务优先级更高，此指针指向的值将被设为1
+ * @return 0成功，-1失败
+ */
+int Task_NotifyFromISR(TaskHandle_t task_h, int *higherPriorityTaskWoken);
+
 /**
  * @brief 等待任务通知
  */
@@ -278,6 +287,15 @@ int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks);
  * @return 1表示成功释放，0表示信号量已达最大值
  */
 int Semaphore_Give(SemaphoreHandle_t semaphore);
+
+
+/**
+ * @brief [ISR安全] 释放(V操作)一个信号量
+ * @param semaphore 信号量句柄
+ * @param higherPriorityTaskWoken 如果唤醒的任务优先级更高，此指针指向的值将被设为1
+ * @return 1表示成功释放，0表示信号量已达最大值
+ */
+int Semaphore_GiveFromISR(SemaphoreHandle_t semaphore, int *higherPriorityTaskWoken);
 
 // =============================
 // 运行时统计 API

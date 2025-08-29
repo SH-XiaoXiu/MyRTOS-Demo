@@ -112,6 +112,7 @@ static size_t minimumEverFreeBytesRemaining = 0U; //历史最小剩余堆
 
 /*----- System & Task -----*/
 static volatile uint8_t systemIsInitialized = 0;
+volatile uint32_t criticalNestingCount = 0;
 static volatile uint64_t systemTickCount = 0;
 TaskHandle_t allTaskListHead = NULL;
 TaskHandle_t currentTask = NULL;
@@ -240,9 +241,9 @@ static void insertBlockIntoFreeList(BlockLink_t *blockToInsert) {
 static void *rtos_malloc(const size_t wantedSize) {
     BlockLink_t *block, *previousBlock, *newBlockLink;
     void *pvReturn = NULL;
-    uint32_t primask_status;
 
-    MyRTOS_Port_ENTER_CRITICAL(primask_status); {
+
+    MyRTOS_Port_ENTER_CRITICAL(); {
         if (blockLinkEnd == NULL) {
             heapInit();
         }
@@ -284,7 +285,7 @@ static void *rtos_malloc(const size_t wantedSize) {
             }
         }
     }
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
 
     return pvReturn;
 }
@@ -294,18 +295,18 @@ static void rtos_free(void *pv) {
 
     uint8_t *puc = (uint8_t *) pv;
     BlockLink_t *link;
-    uint32_t primask_status;
+
 
     puc -= heapStructSize;
     link = (BlockLink_t *) puc;
 
     if (((link->blockSize & blockAllocatedBit) != 0) && (link->nextFreeBlock == NULL)) {
         link->blockSize &= ~blockAllocatedBit;
-        MyRTOS_Port_ENTER_CRITICAL(primask_status); {
+        MyRTOS_Port_ENTER_CRITICAL(); {
             freeBytesRemaining += link->blockSize;
             insertBlockIntoFreeList(link);
         }
-        MyRTOS_Port_EXIT_CRITICAL(primask_status);
+        MyRTOS_Port_EXIT_CRITICAL();
     }
 }
 
@@ -326,10 +327,9 @@ void MyRTOS_Init(void) {
 }
 
 uint64_t MyRTOS_GetTick(void) {
-    uint32_t primask_status;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+    MyRTOS_Port_ENTER_CRITICAL();
     const uint64_t tick_value = systemTickCount;
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
     return tick_value;
 }
 
@@ -493,8 +493,8 @@ static void addTaskToReadyList(TaskHandle_t task) {
     if (task == NULL || task->priority >= MY_RTOS_MAX_PRIORITIES) {
         return;
     }
-    uint32_t primask_status;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+
+    MyRTOS_Port_ENTER_CRITICAL();
     topReadyPriority |= (1UL << task->priority);
     task->pNextGeneric = NULL;
     if (readyTaskLists[task->priority] == NULL) {
@@ -509,7 +509,7 @@ static void addTaskToReadyList(TaskHandle_t task) {
         task->pPrevGeneric = pLast;
     }
     task->state = TASK_STATE_READY;
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
 }
 
 static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t taskToRemove) {
@@ -602,8 +602,8 @@ TaskHandle_t Task_Create(void (*func)(void *),
 
     t->sp = MyRTOS_Port_InitialiseStack(stack + stack_size, func, param);
 
-    uint32_t primask_status;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+
+    MyRTOS_Port_ENTER_CRITICAL();
     if (allTaskListHead == NULL) {
         allTaskListHead = t;
     } else {
@@ -612,7 +612,7 @@ TaskHandle_t Task_Create(void (*func)(void *),
         p->pNextTask = t;
     }
     addTaskToReadyList(t);
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
 
     MY_RTOS_KERNEL_LOGD("Task '%s' created with priority %u.", taskName, t->priority);
     return t;
@@ -620,7 +620,7 @@ TaskHandle_t Task_Create(void (*func)(void *),
 
 int Task_Delete(TaskHandle_t task_h) {
     Task_t *task_to_delete;
-    uint32_t primask_status;
+
     int trigger_yield = 0;
 
     if (task_h == NULL) {
@@ -633,7 +633,7 @@ int Task_Delete(TaskHandle_t task_h) {
         return -1;
     }
 
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+    MyRTOS_Port_ENTER_CRITICAL();
     if (task_to_delete->state == TASK_STATE_READY) {
         removeTaskFromList(&readyTaskLists[task_to_delete->priority], task_to_delete);
     } else {
@@ -683,7 +683,7 @@ int Task_Delete(TaskHandle_t task_h) {
     rtos_free(task_to_delete->stack_base);
     rtos_free(task_to_delete);
 
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
 
     if (trigger_yield) {
         MyRTOS_Port_YIELD();
@@ -694,20 +694,19 @@ int Task_Delete(TaskHandle_t task_h) {
 
 void Task_Delay(uint32_t tick) {
     if (tick == 0) return;
-    uint32_t primask_status;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+
+    MyRTOS_Port_ENTER_CRITICAL();
     removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
     currentTask->delay = MyRTOS_GetTick() + tick;
     currentTask->state = TASK_STATE_DELAYED;
     addTaskToSortedDelayList(currentTask);
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
     MyRTOS_Port_YIELD();
 }
 
 int Task_Notify(TaskHandle_t task_h) {
-    uint32_t primask_status;
     int trigger_yield = 0;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+    MyRTOS_Port_ENTER_CRITICAL();
     if (task_h->is_waiting_notification && task_h->state == TASK_STATE_BLOCKED) {
         task_h->is_waiting_notification = 0;
         addTaskToReadyList(task_h);
@@ -715,21 +714,42 @@ int Task_Notify(TaskHandle_t task_h) {
             trigger_yield = 1;
         }
     }
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
     if (trigger_yield) {
         MyRTOS_Port_YIELD();
     }
     return 0;
 }
 
+
+int Task_NotifyFromISR(TaskHandle_t task_h, int *higherPriorityTaskWoken) {
+    if (higherPriorityTaskWoken == NULL) {
+        return -1;
+    }
+    // 默认没有更高优先级的任务被唤醒
+    *higherPriorityTaskWoken = 0;
+    MyRTOS_Port_ENTER_CRITICAL();
+    // 检查任务是否正在等待通知
+    if (task_h->is_waiting_notification && task_h->state == TASK_STATE_BLOCKED) {
+        task_h->is_waiting_notification = 0;
+        // 将任务移至就绪列表
+        addTaskToReadyList(task_h);
+        // 检查是否需要进行上下文切换
+        if (task_h->priority > currentTask->priority) {
+            *higherPriorityTaskWoken = 1;
+        }
+    }
+    MyRTOS_Port_EXIT_CRITICAL();
+    return 0;
+}
+
 void Task_Wait(void) {
-    uint32_t primask_status;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+    MyRTOS_Port_ENTER_CRITICAL();
     removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
     currentTask->is_waiting_notification = 1;
     currentTask->state = TASK_STATE_BLOCKED;
     MyRTOS_Port_YIELD();
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
 }
 
 TaskState_t Task_GetState(TaskHandle_t task_h) {
@@ -768,8 +788,8 @@ QueueHandle_t Queue_Create(uint32_t length, uint32_t itemSize) {
 void Queue_Delete(QueueHandle_t delQueue) {
     Queue_t *queue = delQueue;
     if (queue == NULL) return;
-    uint32_t primask_status;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+
+    MyRTOS_Port_ENTER_CRITICAL();
     while (queue->sendEventList.head != NULL) {
         Task_t *taskToWake = queue->sendEventList.head;
         eventListRemove(taskToWake);
@@ -782,15 +802,15 @@ void Queue_Delete(QueueHandle_t delQueue) {
     }
     rtos_free(queue->storage);
     rtos_free(queue);
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
 }
 
 int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
     Queue_t *pQueue = queue;
     if (pQueue == NULL) return 0;
-    uint32_t primask_status;
+
     while (1) {
-        MyRTOS_Port_ENTER_CRITICAL(primask_status);
+        MyRTOS_Port_ENTER_CRITICAL();
         if (pQueue->receiveEventList.head != NULL) {
             Task_t *taskToWake = pQueue->receiveEventList.head;
             eventListRemove(taskToWake);
@@ -804,7 +824,7 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
             if (taskToWake->priority > currentTask->priority) {
                 MyRTOS_Port_YIELD();
             }
-            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            MyRTOS_Port_EXIT_CRITICAL();
             return 1;
         }
         if (pQueue->waitingCount < pQueue->length) {
@@ -814,11 +834,11 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
                 pQueue->writePtr = pQueue->storage;
             }
             pQueue->waitingCount++;
-            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            MyRTOS_Port_EXIT_CRITICAL();
             return 1;
         }
         if (block_ticks == 0) {
-            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            MyRTOS_Port_EXIT_CRITICAL();
             return 0;
         }
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
@@ -829,14 +849,14 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
             currentTask->delay = MyRTOS_GetTick() + block_ticks;
             addTaskToSortedDelayList(currentTask);
         }
-        MyRTOS_Port_EXIT_CRITICAL(primask_status);
+        MyRTOS_Port_EXIT_CRITICAL();
         MyRTOS_Port_YIELD();
         if (currentTask->pEventList == NULL) {
             continue;
         }
-        MyRTOS_Port_ENTER_CRITICAL(primask_status);
+        MyRTOS_Port_ENTER_CRITICAL();
         eventListRemove(currentTask);
-        MyRTOS_Port_EXIT_CRITICAL(primask_status);
+        MyRTOS_Port_EXIT_CRITICAL();
         return 0;
     }
 }
@@ -844,9 +864,9 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
 int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
     Queue_t *pQueue = queue;
     if (pQueue == NULL) return 0;
-    uint32_t primask_status;
+
     while (1) {
-        MyRTOS_Port_ENTER_CRITICAL(primask_status);
+        MyRTOS_Port_ENTER_CRITICAL();
         if (pQueue->waitingCount > 0) {
             memcpy(buffer, pQueue->readPtr, pQueue->itemSize);
             pQueue->readPtr += pQueue->itemSize;
@@ -866,11 +886,11 @@ int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
                     MyRTOS_Port_YIELD();
                 }
             }
-            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            MyRTOS_Port_EXIT_CRITICAL();
             return 1;
         }
         if (block_ticks == 0) {
-            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            MyRTOS_Port_EXIT_CRITICAL();
             return 0;
         }
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
@@ -882,15 +902,15 @@ int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
             currentTask->delay = MyRTOS_GetTick() + block_ticks;
             addTaskToSortedDelayList(currentTask);
         }
-        MyRTOS_Port_EXIT_CRITICAL(primask_status);
+        MyRTOS_Port_EXIT_CRITICAL();
         MyRTOS_Port_YIELD();
         if (currentTask->pEventList == NULL) {
             return 1;
         }
-        MyRTOS_Port_ENTER_CRITICAL(primask_status);
+        MyRTOS_Port_ENTER_CRITICAL();
         eventListRemove(currentTask);
         currentTask->eventData = NULL;
-        MyRTOS_Port_EXIT_CRITICAL(primask_status);
+        MyRTOS_Port_EXIT_CRITICAL();
         return 0;
     }
 }
@@ -1043,19 +1063,18 @@ MutexHandle_t Mutex_Create(void) {
 }
 
 int Mutex_Lock_Timeout(MutexHandle_t mutex, uint32_t block_ticks) {
-    uint32_t primask_status;
     while (1) {
-        MyRTOS_Port_ENTER_CRITICAL(primask_status);
+        MyRTOS_Port_ENTER_CRITICAL();
         if (!mutex->locked) {
             mutex->locked = 1;
             mutex->owner_tcb = currentTask;
             mutex->next_held_mutex = currentTask->held_mutexes_head;
             currentTask->held_mutexes_head = mutex;
-            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            MyRTOS_Port_EXIT_CRITICAL();
             return 1;
         }
         if (block_ticks == 0) {
-            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            MyRTOS_Port_EXIT_CRITICAL();
             return 0;
         }
         TaskHandle_t owner_tcb = mutex->owner_tcb;
@@ -1070,15 +1089,15 @@ int Mutex_Lock_Timeout(MutexHandle_t mutex, uint32_t block_ticks) {
             currentTask->delay = MyRTOS_GetTick() + block_ticks;
             addTaskToSortedDelayList(currentTask);
         }
-        MyRTOS_Port_EXIT_CRITICAL(primask_status);
+        MyRTOS_Port_EXIT_CRITICAL();
         MyRTOS_Port_YIELD();
         if (mutex->owner_tcb == currentTask) {
             return 1;
         }
         if (currentTask->pEventList != NULL) {
-            MyRTOS_Port_ENTER_CRITICAL(primask_status);
+            MyRTOS_Port_ENTER_CRITICAL();
             eventListRemove(currentTask);
-            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            MyRTOS_Port_EXIT_CRITICAL();
             return 0;
         }
     }
@@ -1089,11 +1108,10 @@ void Mutex_Lock(MutexHandle_t mutex) {
 }
 
 void Mutex_Unlock(MutexHandle_t mutex) {
-    uint32_t primask_status;
     int trigger_yield = 0;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+    MyRTOS_Port_ENTER_CRITICAL();
     if (!mutex->locked || mutex->owner_tcb != currentTask) {
-        MyRTOS_Port_EXIT_CRITICAL(primask_status);
+        MyRTOS_Port_EXIT_CRITICAL();
         return;
     }
     if (currentTask->held_mutexes_head == mutex) {
@@ -1132,42 +1150,40 @@ void Mutex_Unlock(MutexHandle_t mutex) {
             trigger_yield = 1;
         }
     }
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
     if (trigger_yield) {
         MyRTOS_Port_YIELD();
     }
 }
 
 void Mutex_Lock_Recursive(MutexHandle_t mutex) {
-    uint32_t primask_status;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+    MyRTOS_Port_ENTER_CRITICAL();
     if (mutex->locked && mutex->owner_tcb == currentTask) {
         mutex->recursion_count++;
-        MyRTOS_Port_EXIT_CRITICAL(primask_status);
+        MyRTOS_Port_EXIT_CRITICAL();
         return;
     }
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
     Mutex_Lock(mutex);
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+    MyRTOS_Port_ENTER_CRITICAL();
     if (mutex->owner_tcb == currentTask) {
         mutex->recursion_count = 1;
     }
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
 }
 
 void Mutex_Unlock_Recursive(MutexHandle_t mutex) {
-    uint32_t primask_status;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+    MyRTOS_Port_ENTER_CRITICAL();
     if (mutex->locked && mutex->owner_tcb == currentTask) {
         mutex->recursion_count--;
         if (mutex->recursion_count == 0) {
-            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            MyRTOS_Port_EXIT_CRITICAL();
             Mutex_Unlock(mutex);
         } else {
-            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            MyRTOS_Port_EXIT_CRITICAL();
         }
     } else {
-        MyRTOS_Port_EXIT_CRITICAL(primask_status);
+        MyRTOS_Port_EXIT_CRITICAL();
     }
 }
 
@@ -1211,8 +1227,8 @@ void Semaphore_Delete(SemaphoreHandle_t semaphore) {
     if (semaphore == NULL) {
         return;
     }
-    uint32_t primask_status;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+
+    MyRTOS_Port_ENTER_CRITICAL();
 
     // 唤醒所有等待该信号量的任务，防止它们永久阻塞
     while (semaphore->eventList.head != NULL) {
@@ -1223,7 +1239,7 @@ void Semaphore_Delete(SemaphoreHandle_t semaphore) {
 
     rtos_free(semaphore);
 
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
 }
 
 int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks) {
@@ -1231,17 +1247,17 @@ int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks) {
         return 0;
     }
 
-    uint32_t primask_status;
+
     while (1) {
-        MyRTOS_Port_ENTER_CRITICAL(primask_status);
+        MyRTOS_Port_ENTER_CRITICAL();
         //检查信号量计数值
         if (semaphore->count > 0) {
             semaphore->count--;
-            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            MyRTOS_Port_EXIT_CRITICAL();
             return 1; // 成功
         }
         if (block_ticks == 0) {
-            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            MyRTOS_Port_EXIT_CRITICAL();
             return 0; // 失败
         }
         //需要阻塞当前任务
@@ -1254,7 +1270,7 @@ int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks) {
             currentTask->delay = MyRTOS_GetTick() + block_ticks;
             addTaskToSortedDelayList(currentTask);
         }
-        MyRTOS_Port_EXIT_CRITICAL(primask_status);
+        MyRTOS_Port_EXIT_CRITICAL();
         MyRTOS_Port_YIELD(); // 触发调度，让出CPU
 
         // --- 任务从这里被唤醒 ---
@@ -1264,9 +1280,9 @@ int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks) {
             return 1;
         }
         // 如果是超时唤醒
-        MyRTOS_Port_ENTER_CRITICAL(primask_status);
-        eventListRemove(currentTask);   //手动移除
-        MyRTOS_Port_EXIT_CRITICAL(primask_status);
+        MyRTOS_Port_ENTER_CRITICAL();
+        eventListRemove(currentTask); //手动移除
+        MyRTOS_Port_EXIT_CRITICAL();
         return 0; // 超时返回
     }
 }
@@ -1276,10 +1292,10 @@ int Semaphore_Give(SemaphoreHandle_t semaphore) {
         return 0;
     }
 
-    uint32_t primask_status;
+
     int trigger_yield = 0;
 
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+    MyRTOS_Port_ENTER_CRITICAL();
 
     // 1. 检查是否有任务在等待
     if (semaphore->eventList.head != NULL) {
@@ -1305,12 +1321,12 @@ int Semaphore_Give(SemaphoreHandle_t semaphore) {
             semaphore->count++;
         } else {
             // 计数值已达最大，操作失败
-            MyRTOS_Port_EXIT_CRITICAL(primask_status);
+            MyRTOS_Port_EXIT_CRITICAL();
             return 0;
         }
     }
 
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
 
     // 如果需要，执行任务调度
     if (trigger_yield) {
@@ -1318,6 +1334,48 @@ int Semaphore_Give(SemaphoreHandle_t semaphore) {
     }
 
     return 1; // 成功
+}
+
+
+int Semaphore_GiveFromISR(SemaphoreHandle_t semaphore, int *pxHigherPriorityTaskWoken) {
+    if (semaphore == NULL || pxHigherPriorityTaskWoken == NULL) {
+        return 0;
+    }
+
+    *pxHigherPriorityTaskWoken = 0;
+    int result = 0;
+
+    MyRTOS_Port_ENTER_CRITICAL();
+
+    if (semaphore->eventList.head != NULL) {
+        // 如果有任务等待，直接唤醒最高优先级的任务
+        Task_t *taskToWake = semaphore->eventList.head;
+        eventListRemove(taskToWake);
+
+        if (taskToWake->delay > 0) {
+            removeTaskFromList(&delayedTaskListHead, taskToWake);
+            taskToWake->delay = 0;
+        }
+
+        addTaskToReadyList(taskToWake);
+
+        if (taskToWake->priority > currentTask->priority) {
+            *pxHigherPriorityTaskWoken = 1;
+        }
+        result = 1;
+    } else {
+        // 没有任务等待，增加计数值
+        if (semaphore->count < semaphore->maxCount) {
+            semaphore->count++;
+            result = 1;
+        } else {
+            result = 0; // 已达最大值
+        }
+    }
+
+    MyRTOS_Port_EXIT_CRITICAL();
+
+    return result;
 }
 
 
@@ -1338,8 +1396,8 @@ static uint32_t prvCalculateStackHighWaterMark(TaskHandle_t task) {
 
 void Task_GetInfo(TaskHandle_t taskHandle, TaskStats_t *pTaskStats) {
     if (taskHandle == NULL || pTaskStats == NULL) return;
-    uint32_t primask_status;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+
+    MyRTOS_Port_ENTER_CRITICAL();
     pTaskStats->taskId = taskHandle->taskId;
 #if (MY_RTOS_TASK_NAME_MAX_LEN > 0)
     strncpy(pTaskStats->taskName, taskHandle->taskName, MY_RTOS_TASK_NAME_MAX_LEN);
@@ -1350,30 +1408,29 @@ void Task_GetInfo(TaskHandle_t taskHandle, TaskStats_t *pTaskStats) {
     pTaskStats->runTimeCounter = taskHandle->runTimeCounter;
     pTaskStats->stackSize = taskHandle->stackSizeInWords * sizeof(uint32_t);
     pTaskStats->stackHighWaterMark = prvCalculateStackHighWaterMark(taskHandle);
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
 }
 
 TaskHandle_t Task_GetNextTaskHandle(TaskHandle_t lastTaskHandle) {
-    uint32_t primask_status;
     TaskHandle_t nextTask = NULL;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+    MyRTOS_Port_ENTER_CRITICAL();
     if (lastTaskHandle == NULL) {
         nextTask = allTaskListHead;
     } else {
         nextTask = lastTaskHandle->pNextTask;
     }
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
     return nextTask;
 }
 
 void Heap_GetStats(HeapStats_t *pHeapStats) {
     if (pHeapStats == NULL) return;
-    uint32_t primask_status;
-    MyRTOS_Port_ENTER_CRITICAL(primask_status);
+
+    MyRTOS_Port_ENTER_CRITICAL();
     pHeapStats->totalHeapSize = RTOS_MEMORY_POOL_SIZE;
     pHeapStats->freeBytesRemaining = freeBytesRemaining;
     pHeapStats->minimumEverFreeBytesRemaining = minimumEverFreeBytesRemaining;
-    MyRTOS_Port_EXIT_CRITICAL(primask_status);
+    MyRTOS_Port_EXIT_CRITICAL();
 }
 
 #endif // MY_RTOS_GENERATE_RUN_TIME_STATS
