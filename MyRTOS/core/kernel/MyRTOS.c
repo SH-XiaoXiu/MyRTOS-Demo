@@ -676,6 +676,10 @@ int Task_Delete(TaskHandle_t task_h) {
     rtos_free(task_to_delete->stack_base);
     rtos_free(task_to_delete);
 
+    if (trigger_yield) {
+        currentTask = NULL; //必须置NULL，否则会有内存问题
+    }
+
     MyRTOS_Port_EXIT_CRITICAL();
 
     if (trigger_yield) {
