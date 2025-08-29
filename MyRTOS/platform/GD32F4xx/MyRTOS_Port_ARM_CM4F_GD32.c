@@ -18,6 +18,12 @@ extern void *schedule_next_task(void);
 // 外部函数，从 MyRTOS.c 引用，用于处理Tick逻辑
 extern void MyRTOS_Tick_Handler(void);
 
+void MyRTOS_Idle_Task(void *pv) {
+    MY_RTOS_KERNEL_LOGD("Idle Task starting..\n");
+    while (1) {
+        __WFI();
+    }
+}
 
 /**
  * @brief 初始化任务的栈帧
