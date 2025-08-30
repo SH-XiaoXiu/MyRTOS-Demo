@@ -490,24 +490,19 @@
               <FilePath>..\MyRTOS\core\kernel\MyRTOS.c</FilePath>
             </File>
             <File>
+              <FileName>MyRTOS_IO.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\core\services\MyRTOS_IO.c</FilePath>
+            </File>
+            <File>
               <FileName>MyRTOS_Log.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\MyRTOS\core\services\MyRTOS_Log.c</FilePath>
             </File>
             <File>
-              <FileName>MyRTOS_Monitor.c</FileName>
+              <FileName>MyRTOS_Shell.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\core\services\MyRTOS_Monitor.c</FilePath>
-            </File>
-            <File>
-              <FileName>MyRTOS_Console.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MyRTOS\core\services\MyRTOS_Console.c</FilePath>
-            </File>
-            <File>
-              <FileName>MyRTOS_Terminal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MyRTOS\core\services\MyRTOS_Terminal.c</FilePath>
+              <FilePath>..\MyRTOS\core\services\MyRTOS_Shell.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -533,6 +528,16 @@
               <FileName>MyRTOS_Startup_GD32.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Startup_GD32.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyRTOS_Monitor_GD32.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Monitor_GD32.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyRTOS_Platform_StdIO_GD32.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Platform_StdIO_GD32.c</FilePath>
             </File>
             <File>
               <FileName>MyRTOS_Terminal_Commands_GD32.c</FileName>
