@@ -1,7 +1,5 @@
 //
-// Created by XiaoXiu on 8/29/2025.
-//
-// Platform: GD32F4xx Series
+// Created by XiaoXiu on 8/30/2025.
 //
 
 #include "gd32f4xx_usart.h"
@@ -86,7 +84,7 @@ void USART0_IRQHandler(void) {
         // 如果环形缓冲区满了, 新数据会被丢弃，这是一种健壮的策略
     }
 
-    //处理其他错误
+    // (可选但推荐) 处理其他错误
     if (usart_interrupt_flag_get(MYRTOS_PORT_USARTx, USART_INT_FLAG_ERR_ORERR)) {
         usart_data_receive(MYRTOS_PORT_USARTx); // 清除 ORE 标志
     }

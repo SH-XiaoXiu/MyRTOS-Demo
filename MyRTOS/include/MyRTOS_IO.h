@@ -97,8 +97,10 @@ char *MyRTOS_fgets(char *buffer, int size, Stream_t *stream);
 #define MyRTOS_gets(buf, size) MyRTOS_fgets(buf, size, Task_GetStdIn(NULL))
 
 #else
-#define MyRTOS_printf(...) ((void)0)
-#define MyRTOS_fprintf(stream, fmt, ...) (0)
-#define MyRTOS_gets(buf, size) (NULL)
+#define MyRTOS_StdIO_Init()                 ((void)0)
+#define MyRTOS_fprintf(stream, fmt, ...)    (0)
+#define MyRTOS_fgets(buffer, size, stream)  (NULL)
+#define MyRTOS_printf(...)                  ((void)0)
+#define MyRTOS_gets(buf, size)              (NULL)
 #endif // MY_RTOS_USE_STDIO
 #endif // MYRTOS_IO_H

@@ -9,6 +9,7 @@
 // 为了方便应用程序开发，提供一组类似标准C库的宏
 
 #if (MY_RTOS_USE_STDIO == 1)
+#include "MyRTOS_IO.h"
 #define printf(...)    MyRTOS_printf(__VA_ARGS__)
 //打印字符串并自动换行
 #define puts(s)        MyRTOS_printf("%s\n", s)
@@ -25,10 +26,6 @@
 //                       标准服务头文件包含
 // ======================================================================
 // 这个头文件旨在提供MyRTOS最常用和标准的服务接口。
-
-#if (MY_RTOS_USE_STDIO == 1)
-#include "MyRTOS_IO.h"
-#endif
 
 #if (MY_RTOS_USE_LOG == 1)
 #include "MyRTOS_Log.h"
@@ -52,6 +49,7 @@ typedef enum {
 // ======================================================================
 #if (MY_RTOS_USE_MONITOR == 1)
 
+void MyRTOS_Monitor_Init(void);
 /**
  * @brief 启动系统监视器服务。
  *        将创建并运行一个后台任务，该任务会周期性地将系统状态
@@ -73,6 +71,11 @@ MyRTOS_Status_t MyRTOS_Monitor_Stop(void);
  */
 int MyRTOS_Monitor_IsRunning(void);
 
+#else
+#define MyRTOS_Monitor_Init()       ((void)0)
+#define MyRTOS_Monitor_Start()      (MYRTOS_OK)
+#define MyRTOS_Monitor_Stop()       (MYRTOS_OK)
+#define MyRTOS_Monitor_IsRunning()  (0)
 #endif // MY_RTOS_USE_MONITOR
 
 
@@ -86,4 +89,4 @@ int MyRTOS_Monitor_IsRunning(void);
 */
 
 
-#endif // MY_RTOS_STANDARD_H
+#endif // MYRTOS_STANDARD_H

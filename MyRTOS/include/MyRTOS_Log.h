@@ -3,8 +3,9 @@
 
 #include "MyRTOS_Config.h"
 
-#if (MY_RTOS_USE_LOG == 1)
 
+#if (MY_RTOS_USE_LOG == 1)
+#include <string.h>
 /**
  * @brief 日志模块定义
  */
