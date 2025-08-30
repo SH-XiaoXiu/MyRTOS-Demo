@@ -6,7 +6,6 @@
 #define MYRTOS_PORT_H
 
 #include <stdint.h>
-#include "MyRTOS_Config.h"
 
 // =======================================================================
 // CPU 架构相关的类型和宏

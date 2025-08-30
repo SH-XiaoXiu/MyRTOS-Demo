@@ -75,7 +75,6 @@ void MyRTOS_Log_SetLevel(LogModule_t module, int level);
 
 
 #else
-// 禁用所有日志和打印
 #define MyRTOS_Log_Init()
 #define PRINT(...)
 #define SYS_LOGE(fmt, ...)
