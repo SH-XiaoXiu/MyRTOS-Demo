@@ -3,14 +3,16 @@
 //
 
 #include "MyRTOS.h"
-#include "MyRTOS_Monitor.h"
+#if (MY_RTOS_USE_STDIO == 1)
+#include "MyRTOS_IO.h"
+#endif
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h> // KERNEL_LOG
 #include "MyRTOS_Port.h"
 
 #if (MY_RTOS_GENERATE_RUN_TIME_STATS == 1)
-#include <stdio.h>
 #include "MyRTOS_Driver_Timer.h"
 #endif
 
@@ -60,8 +62,15 @@ typedef struct Task_t {
 #if (MY_RTOS_GENERATE_RUN_TIME_STATS == 1)
     volatile uint64_t runTimeCounter; //运行时统计需要
 #endif
+#if (MY_RTOS_USE_STDIO == 1)
+    // 为StdIO服务预留的槽位，内核自身不使用它们
+    Stream_t *std_in;
+    Stream_t *std_out;
+    Stream_t *std_err;
+#endif
 } Task_t;
 
+#if (MY_RTOS_USE_SOFTWARE_TIMERS == 1)
 typedef struct Timer_t {
     TimerCallback_t callback; // 定时器到期时执行的回调函数
     void *arg; // 传递给回调函数的额外参数
@@ -71,6 +80,8 @@ typedef struct Timer_t {
     struct Timer_t *pNext; // 用于构建活动定时器链表
     volatile uint8_t active; // 定时器是否处于活动状态 (0:inactive, 1:active)
 } Timer_t;
+#endif
+
 
 typedef struct Queue_t {
     uint8_t *storage;
@@ -113,9 +124,7 @@ static size_t minimumEverFreeBytesRemaining = 0U; //历史最小剩余堆
 
 /*----- System & Task -----*/
 static volatile uint8_t systemIsInitialized = 0;
-
 volatile uint8_t g_scheduler_started = 0;
-
 volatile uint32_t criticalNestingCount = 0;
 static volatile uint64_t systemTickCount = 0;
 static TaskHandle_t allTaskListHead = NULL;
@@ -126,9 +135,13 @@ static TaskHandle_t readyTaskLists[MY_RTOS_MAX_PRIORITIES];
 static TaskHandle_t delayedTaskListHead = NULL;
 static volatile uint32_t topReadyPriority = 0;
 #if (MY_RTOS_MAX_CONCURRENT_TASKS > 64)
-#error "MY_RTOS_MAX_TASKS cannot exceed 64 in this implementation."
+#error "MY_RTOS_MAX_TASKS cannot > 64 in this implementation."
 #endif
 static uint64_t taskIdBitmap = 0; // 每一位代表一个ID是否被占用。0:空闲, 1:占用
+
+// 内核日志钩子函数指针
+static KernelLogHook_t g_pfnKernelLogHook = NULL;
+static char g_kernel_log_buffer[128]; // 内核日志的临时格式化缓冲区
 
 //================= Event Management ================
 static void eventListInit(EventList_t *pEventList);
@@ -138,6 +151,7 @@ static void eventListInsert(EventList_t *pEventList, TaskHandle_t taskToInsert);
 static void eventListRemove(TaskHandle_t taskToRemove);
 
 /*----- Timer -----*/
+#if (MY_RTOS_USE_SOFTWARE_TIMERS == 1)
 typedef enum { TIMER_CMD_START, TIMER_CMD_STOP, TIMER_CMD_DELETE } TimerCommandType_t;
 
 typedef struct {
@@ -148,6 +162,7 @@ typedef struct {
 static TaskHandle_t timerServiceTaskHandle = NULL;
 static QueueHandle_t timerCommandQueue = NULL;
 static TimerHandle_t activeTimerListHead = NULL;
+#endif
 
 
 //====================== Function Prototypes ======================
@@ -171,6 +186,7 @@ static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t taskToRemo
 
 static void task_set_priority(TaskHandle_t task, uint8_t newPriority);
 
+#if (MY_RTOS_USE_SOFTWARE_TIMERS == 1)
 static void TimerServiceTask(void *pv);
 
 static void insertTimerIntoActiveList(Timer_t *timerToInsert);
@@ -180,9 +196,24 @@ static void removeTimerFromActiveList(Timer_t *timerToRemove);
 static void processExpiredTimers(void);
 
 static int sendCommandToTimerTask(TimerHandle_t timer, TimerCommandType_t cmd, int block);
+#endif
 
+
+//====================== Kernel Logging Hook ======================
+
+// 内核日志的统一出口
+#define KERNEL_LOG(format, ...) \
+    do { \
+        if (g_pfnKernelLogHook != NULL) { \
+            int len = snprintf(g_kernel_log_buffer, sizeof(g_kernel_log_buffer), format, ##__VA_ARGS__); \
+            if (len > 0) { \
+                g_pfnKernelLogHook(g_kernel_log_buffer, (uint16_t)len); \
+            } \
+        } \
+    } while(0)
 
 //====================== Function Implementations ======================
+
 
 //====================== 动态内存管理 ======================
 static void heapInit(void) {
@@ -330,7 +361,7 @@ void MyRTOS_Init(void) {
     delayedTaskListHead = NULL;
     topReadyPriority = 0;
     systemIsInitialized = 1;
-    MY_RTOS_KERNEL_LOGD("MyRTOS Initialized..\n");
+    KERNEL_LOG("MyRTOS Initialized..");
 }
 
 uint64_t MyRTOS_GetTick(void) {
@@ -348,28 +379,29 @@ uint8_t MyRTOS_Schedule_IsRunning(void) {
 void Task_StartScheduler(void) {
     idleTask = Task_Create(MyRTOS_Idle_Task, "IDLE", 64, NULL, 0);
     if (idleTask == NULL) {
-        MY_RTOS_KERNEL_LOGE("Failed to create Idle Task!.\n");
+        KERNEL_LOG("Error: Failed to create Idle Task!");
         while (1);
     }
 
+#if (MY_RTOS_USE_SOFTWARE_TIMERS == 1)
     timerCommandQueue = Queue_Create(10, sizeof(TimerCommand_t));
     if (timerCommandQueue == NULL) {
-        MY_RTOS_KERNEL_LOGE("Failed to create Timer Command Queue!.\n");
+        KERNEL_LOG("Error: Failed to create Timer Command Queue!");
         while (1);
     }
     timerServiceTaskHandle = Task_Create(TimerServiceTask, "TIM", 256, NULL, MY_RTOS_MAX_PRIORITIES - 1);
     if (timerServiceTaskHandle == NULL) {
-        MY_RTOS_KERNEL_LOGE("Failed to create Timer Service Task!.\n");
+        KERNEL_LOG("Error: Failed to create Timer Service Task!");
         while (1);
     }
+#endif
 
-
-    MY_RTOS_KERNEL_LOGD("Starting scheduler....\n");
+    KERNEL_LOG("Starting scheduler....");
 
     g_scheduler_started = 1;
 
     if (MyRTOS_Port_StartScheduler() != 0) {
-        // Should not get here
+        //不应该到这哈
     }
 
     for (;;);
@@ -414,12 +446,20 @@ void *schedule_next_task(void) {
             nextTaskToRun->pNextGeneric->pPrevGeneric = NULL;
 
             Task_t *pLast = readyTaskLists[highestPriority];
-            while (pLast->pNextGeneric != NULL) {
-                pLast = pLast->pNextGeneric;
+            if (pLast != NULL) {
+                while (pLast->pNextGeneric != NULL) {
+                    pLast = pLast->pNextGeneric;
+                }
+                pLast->pNextGeneric = nextTaskToRun;
+                nextTaskToRun->pPrevGeneric = pLast;
+                nextTaskToRun->pNextGeneric = NULL;
+            } else {
+                //如果列表在移除头元素后变为空
+                //重新连接相同且唯一的元素。
+                readyTaskLists[highestPriority] = nextTaskToRun;
+                nextTaskToRun->pPrevGeneric = NULL;
+                nextTaskToRun->pNextGeneric = NULL;
             }
-            pLast->pNextGeneric = nextTaskToRun;
-            nextTaskToRun->pPrevGeneric = pLast;
-            nextTaskToRun->pNextGeneric = NULL;
         }
     }
 
@@ -547,6 +587,8 @@ static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t taskToRemo
     }
     taskToRemove->pNextGeneric = NULL;
     taskToRemove->pPrevGeneric = NULL;
+
+    //如果我们从一个就绪列表中删除，我们需要检查该优先级现在是否为空。
     if (taskToRemove->state == TASK_STATE_READY) {
         if (readyTaskLists[taskToRemove->priority] == NULL) {
             topReadyPriority &= ~(1UL << taskToRemove->priority);
@@ -573,19 +615,19 @@ TaskHandle_t Task_Create(void (*func)(void *),
                          void *param,
                          uint8_t priority) {
     if (priority >= MY_RTOS_MAX_PRIORITIES) {
-        MY_RTOS_KERNEL_LOGE("Invalid task priority %u.", priority);
+        KERNEL_LOG("Error: Invalid task priority %u.", priority);
         return NULL;
     }
 
     Task_t *t = rtos_malloc(sizeof(Task_t));
     if (t == NULL) {
-        MY_RTOS_KERNEL_LOGE("Failed to allocate memory for TCB.\n");
+        KERNEL_LOG("Error: Failed to allocate memory for TCB.");
         return NULL;
     }
 
     StackType_t *stack = rtos_malloc(stack_size * sizeof(StackType_t));
     if (stack == NULL) {
-        MY_RTOS_KERNEL_LOGE("Failed to allocate memory for stack.\n");
+        KERNEL_LOG("Error: Failed to allocate memory for stack.");
         rtos_free(t);
         return NULL;
     }
@@ -608,7 +650,7 @@ TaskHandle_t Task_Create(void (*func)(void *),
     MyRTOS_Port_EXIT_CRITICAL();
 
     if (newTaskId == (uint32_t) -1) {
-        MY_RTOS_KERNEL_LOGE("Failed to create task, task ID pool is full.");
+        KERNEL_LOG("Error: Failed to create task, task ID pool is full.");
         rtos_free(stack);
         rtos_free(t);
         return NULL;
@@ -625,7 +667,7 @@ TaskHandle_t Task_Create(void (*func)(void *),
         strncpy(t->taskName, taskName, MY_RTOS_TASK_NAME_MAX_LEN - 1);
         t->taskName[MY_RTOS_TASK_NAME_MAX_LEN - 1] = '\0';
     } else {
-        snprintf(t->taskName, MY_RTOS_TASK_NAME_MAX_LEN, "Task%lu", t->taskId);
+        snprintf(t->taskName, MY_RTOS_TASK_NAME_MAX_LEN, "Task%lu", (unsigned long) t->taskId);
     }
 #endif
     t->stack_base = stack;
@@ -643,6 +685,20 @@ TaskHandle_t Task_Create(void (*func)(void *),
     t->held_mutexes_head = NULL;
     t->eventData = NULL;
 
+#if (MY_RTOS_USE_STDIO == 1)
+    // 新创建的任务继承父任务的StdIO流
+    // 如果在调度器启动前创建(没有当前任务)，则使用系统默认流
+    if (g_scheduler_started && currentTask != NULL) {
+        t->std_in = currentTask->std_in;
+        t->std_out = currentTask->std_out;
+        t->std_err = currentTask->std_err;
+    } else {
+        t->std_in = g_myrtos_std_in;
+        t->std_out = g_myrtos_std_out;
+        t->std_err = g_myrtos_std_err;
+    }
+#endif
+
     t->sp = MyRTOS_Port_InitialiseStack(stack + stack_size, func, param);
 
 
@@ -657,7 +713,7 @@ TaskHandle_t Task_Create(void (*func)(void *),
     addTaskToReadyList(t);
     MyRTOS_Port_EXIT_CRITICAL();
 
-    MY_RTOS_KERNEL_LOGD("Task '%s' created with priority %u.", taskName, t->priority);
+    KERNEL_LOG("Task '%s' created with priority %u.", taskName, t->priority);
     return t;
 }
 
@@ -676,7 +732,7 @@ int Task_Delete(TaskHandle_t task_h) {
     }
 
     if (task_to_delete == idleTask || task_to_delete == NULL) {
-        MY_RTOS_KERNEL_LOGE("Invalid task handle.");
+        KERNEL_LOG("Error: Invalid task handle for deletion.");
         return -1;
     }
 
@@ -750,12 +806,13 @@ int Task_Delete(TaskHandle_t task_h) {
         MyRTOS_Port_YIELD();
     }
 
-    MY_RTOS_KERNEL_LOGD("Task %lu deleted.", deleted_task_id);
+    KERNEL_LOG("Task %lu deleted.", (unsigned long)deleted_task_id);
     return 0;
 }
 
 void Task_Delay(uint32_t tick) {
     if (tick == 0) return;
+    if (g_scheduler_started == 0) return;
 
     MyRTOS_Port_ENTER_CRITICAL();
     removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
@@ -810,8 +867,8 @@ void Task_Wait(void) {
     removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
     currentTask->is_waiting_notification = 1;
     currentTask->state = TASK_STATE_BLOCKED;
-    MyRTOS_Port_YIELD();
     MyRTOS_Port_EXIT_CRITICAL();
+    MyRTOS_Port_YIELD();
 }
 
 TaskState_t Task_GetState(TaskHandle_t task_h) {
@@ -824,6 +881,24 @@ uint8_t Task_GetPriority(TaskHandle_t task_h) {
 
 TaskHandle_t Task_GetCurrentTaskHandle(void) {
     return currentTask;
+}
+
+/**
+ * @brief 获取当前任务的调试信息，主要供 HardFault Handler 使用。
+ */
+int Task_GetDebugInfo(char *pTaskNameBuffer, size_t bufferSize, uint32_t *pTaskId) {
+    if (currentTask != NULL && pTaskNameBuffer != NULL && pTaskId != NULL) {
+#if (MY_RTOS_TASK_NAME_MAX_LEN > 0)
+        strncpy(pTaskNameBuffer, currentTask->taskName, bufferSize - 1);
+        pTaskNameBuffer[bufferSize - 1] = '\0'; // 确保字符串正确结尾
+#else
+        strncpy(pTaskNameBuffer, "N/A", bufferSize - 1);
+        pTaskNameBuffer[bufferSize - 1] = '\0';
+#endif
+        *pTaskId = currentTask->taskId;
+        return 1;
+    }
+    return 0;
 }
 
 
@@ -979,6 +1054,7 @@ int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
 
 
 //=======================Soft Timer==============================
+#if (MY_RTOS_USE_SOFTWARE_TIMERS == 1)
 TimerHandle_t Timer_Create(uint32_t delay, uint32_t period, TimerCallback_t callback, void *arg) {
     TimerHandle_t timer = rtos_malloc(sizeof(Timer_t));
     if (timer) {
@@ -1109,7 +1185,7 @@ static void processExpiredTimers(void) {
         }
     }
 }
-
+#endif // MY_RTOS_USE_SOFTWARE_TIMERS
 
 //============== 互斥锁 =============
 MutexHandle_t Mutex_Create(void) {
@@ -1206,6 +1282,7 @@ void Mutex_Unlock(MutexHandle_t mutex) {
         eventListRemove(taskToWake);
         mutex->locked = 1;
         mutex->owner_tcb = taskToWake;
+        mutex->next_held_mutex = taskToWake->held_mutexes_head;
         taskToWake->held_mutexes_head = mutex;
         addTaskToReadyList(taskToWake);
         if (taskToWake->priority > currentTask->priority) {
@@ -1264,6 +1341,7 @@ void MyRTOS_Tick_Handler(void) {
         taskToWake->pPrevGeneric = NULL;
         taskToWake->delay = 0;
         if (taskToWake->pEventList != NULL) {
+            // Task timed out waiting for an event
             eventListRemove(taskToWake);
         }
         addTaskToReadyList(taskToWake);
@@ -1447,13 +1525,14 @@ static uint32_t prvCalculateStackHighWaterMark(TaskHandle_t task) {
     if (task == NULL || task->stack_base == NULL) {
         return 0;
     }
-    const uint32_t *stack_ptr = task->stack_base;
+    const uint32_t *stack_ptr = (uint32_t *) task->stack_base;
     uint32_t free_words = 0;
     while ((stack_ptr < (task->stack_base + task->stackSizeInWords)) && (*stack_ptr == 0xA5A5A5A5)) {
         stack_ptr++;
         free_words++;
     }
-    return (task->stackSizeInWords - free_words) * sizeof(uint32_t);
+    // Return used stack size in bytes
+    return (task->stackSizeInWords - free_words) * sizeof(StackType_t);
 }
 
 void Task_GetInfo(TaskHandle_t taskHandle, TaskStats_t *pTaskStats) {
@@ -1468,7 +1547,7 @@ void Task_GetInfo(TaskHandle_t taskHandle, TaskStats_t *pTaskStats) {
     pTaskStats->currentPriority = taskHandle->priority;
     pTaskStats->basePriority = taskHandle->basePriority;
     pTaskStats->runTimeCounter = taskHandle->runTimeCounter;
-    pTaskStats->stackSize = taskHandle->stackSizeInWords * sizeof(uint32_t);
+    pTaskStats->stackSize = taskHandle->stackSizeInWords * sizeof(StackType_t);
     pTaskStats->stackHighWaterMark = prvCalculateStackHighWaterMark(taskHandle);
     MyRTOS_Port_EXIT_CRITICAL();
 }
@@ -1495,4 +1574,48 @@ void Heap_GetStats(HeapStats_t *pHeapStats) {
     MyRTOS_Port_EXIT_CRITICAL();
 }
 
+
+#if (MY_RTOS_USE_STDIO == 1)
+
+Stream_t *Task_GetStdIn(TaskHandle_t task_h) {
+    const Task_t *const target_task = (task_h == NULL) ? currentTask : task_h;
+    if (target_task) {
+        return target_task->std_in;
+    }
+    return g_myrtos_std_in; //如果任务无效，返回系统默认流
+}
+
+Stream_t *Task_GetStdOut(TaskHandle_t task_h) {
+    const Task_t *const target_task = (task_h == NULL) ? currentTask : task_h;
+    if (target_task) {
+        return target_task->std_out;
+    }
+    return g_myrtos_std_out;
+}
+
+Stream_t *Task_GetStdErr(TaskHandle_t task_h) {
+    const Task_t *const target_task = (task_h == NULL) ? currentTask : task_h;
+    if (target_task) {
+        return target_task->std_err;
+    }
+    return g_myrtos_std_err;
+}
+
+#endif // MY_RTOS_USE_STDIO
+
+
+//===============Hook==================
+
+/**
+ * @brief 向内核注册一个日志钩子函数。
+ *        上层服务(如Log)可以通过此函数来捕获内核的底层调试信息。
+ * @param pfnHook 用户提供的钩子函数指针。
+ */
+void MyRTOS_RegisterKernelLogHook(KernelLogHook_t pfnHook) {
+    MyRTOS_Port_ENTER_CRITICAL();
+    g_pfnKernelLogHook = pfnHook;
+    MyRTOS_Port_EXIT_CRITICAL();
+}
+
+//===============Hook==================
 #endif // MY_RTOS_GENERATE_RUN_TIME_STATS
