@@ -1,26 +1,27 @@
 //
 // Created by XiaoXiu on 8/29/2025.
+// Registers all platform-specific shell commands.
 //
 
-// terminal commands for MyRTOS on the GD32F4xx platform.
-
-#include <stdio.h>
-
 #include "MyRTOS.h"
-#include "MyRTOS_Terminal.h"
-#include "MyRTOS_Monitor.h"
+#include "MyRTOS_Shell.h"
 #include "MyRTOS_Log.h"
-#include "MyRTOS_Console.h"
+#include "MyRTOS_IO.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
-#if (MY_RTOS_USE_TERMINAL == 1)
+#if (MY_RTOS_USE_SHELL == 1)
 
 static void cmd_ps(int argc, char **argv);
+
 static void cmd_heap(int argc, char **argv);
-static void cmd_loglevel(int argc, char **argv);
+
 static void cmd_reboot(int argc, char **argv);
-static void cmd_mode(int argc, char **argv);
+
+#if (MY_RTOS_USE_LOG == 1)
+static void cmd_loglevel(int argc, char **argv);
+#endif
 
 
 /**
@@ -28,37 +29,37 @@ static void cmd_mode(int argc, char **argv);
  *        应在 main 函数中, MyRTOS_SystemInit 之后调用。
  */
 void MyRTOS_Platform_TerminalCommandsInit(void) {
-    MyRTOS_Terminal_RegisterCommand("ps", "Show task list and status", cmd_ps);
-    MyRTOS_Terminal_RegisterCommand("heap", "Show heap memory stats", cmd_heap);
-    MyRTOS_Terminal_RegisterCommand("loglevel", "Set log level. Usage: loglevel <sys|user> <level>", cmd_loglevel);
-    MyRTOS_Terminal_RegisterCommand("reboot", "Reboot the system", cmd_reboot);
-    MyRTOS_Terminal_RegisterCommand("mode", "Switch console mode. Usage: mode <log|mon>", cmd_mode);
+    // 注册本地实现的简单命令
+    MyRTOS_Shell_RegisterCommand("ps", "Show task list and status", cmd_ps);
+    MyRTOS_Shell_RegisterCommand("heap", "Show heap memory stats", cmd_heap);
+    MyRTOS_Shell_RegisterCommand("reboot", "Reboot the system", cmd_reboot);
+
+#if (MY_RTOS_USE_LOG == 1)
+    MyRTOS_Shell_RegisterCommand("loglevel", "Set log level. Usage: loglevel <sys|user> <level>", cmd_loglevel);
+#endif
 }
 
-
-//实现
-
+// --- 命令函数实现 ---
 static void cmd_ps(int argc, char **argv) {
     TaskHandle_t taskHandle = Task_GetNextTaskHandle(NULL);
     TaskStats_t taskStats;
-
-    PRINT("%-16s %-3s %-10s %-8s %-12s\r\n", "Name", "ID", "State", "Prio", "Stack(H/T)");
-    PRINT("----------------------------------------------------------\r\n");
-
+    MyRTOS_printf("%-16s %-3s %-10s %-8s %-12s\r\n", "Name", "ID", "State", "Prio", "Stack(H/T)");
+    MyRTOS_printf("----------------------------------------------------------\r\n");
     const char *const stateStr[] = {"Unused", "Ready", "Delayed", "Blocked"};
 
-    while(taskHandle != NULL) {
+    while (taskHandle != NULL) {
         Task_GetInfo(taskHandle, &taskStats);
         char prioStr[8];
         char stackStr[12];
         snprintf(prioStr, sizeof(prioStr), "%d/%d", taskStats.basePriority, taskStats.currentPriority);
-        snprintf(stackStr, sizeof(stackStr), "%u/%u", (unsigned int)taskStats.stackHighWaterMark, (unsigned int)taskStats.stackSize);
-        PRINT("%-16s %-3u %-10s %-8s %-12s\r\n",
-              taskStats.taskName,
-              (unsigned int)taskStats.taskId,
-              stateStr[taskStats.state],
-              prioStr,
-              stackStr);
+        snprintf(stackStr, sizeof(stackStr), "%u/%u", (unsigned int) taskStats.stackHighWaterMark,
+                 (unsigned int) taskStats.stackSize);
+        MyRTOS_printf("%-16s %-3u %-10s %-8s %-12s\r\n",
+                      taskStats.taskName,
+                      (unsigned int)taskStats.taskId,
+                      stateStr[taskStats.state],
+                      prioStr,
+                      stackStr);
         taskHandle = Task_GetNextTaskHandle(taskHandle);
     }
 }
@@ -66,15 +67,16 @@ static void cmd_ps(int argc, char **argv) {
 static void cmd_heap(int argc, char **argv) {
     HeapStats_t heapStats;
     Heap_GetStats(&heapStats);
-    PRINT("Heap Info:\r\n");
-    PRINT("  Total Size:      %u bytes\r\n", (unsigned int)heapStats.totalHeapSize);
-    PRINT("  Free Remaining:  %u bytes\r\n", (unsigned int)heapStats.freeBytesRemaining);
-    PRINT("  Min Ever Free:   %u bytes\r\n", (unsigned int)heapStats.minimumEverFreeBytesRemaining);
+    MyRTOS_printf("Heap Info:\r\n");
+    MyRTOS_printf("  Total Size:      %u bytes\r\n", (unsigned int)heapStats.totalHeapSize);
+    MyRTOS_printf("  Free Remaining:  %u bytes\r\n", (unsigned int)heapStats.freeBytesRemaining);
+    MyRTOS_printf("  Min Ever Free:   %u bytes\r\n", (unsigned int)heapStats.minimumEverFreeBytesRemaining);
 }
 
+#if (MY_RTOS_USE_LOG == 1)
 static void cmd_loglevel(int argc, char **argv) {
     if (argc != 3) {
-        PRINT("Usage: %s <sys|user> <none|error|warn|info|debug>\r\n", argv[0]);
+        MyRTOS_printf("Usage: %s <sys|user> <level>\r\n", argv[0]);
         return;
     }
 
@@ -82,7 +84,7 @@ static void cmd_loglevel(int argc, char **argv) {
     if (strcmp(argv[1], "sys") == 0) module = LOG_MODULE_SYSTEM;
     else if (strcmp(argv[1], "user") == 0) module = LOG_MODULE_USER;
     else {
-        PRINT("Invalid module. Use 'sys' or 'user'.\r\n");
+        MyRTOS_printf("Invalid module. Use 'sys' or 'user'.\r\n");
         return;
     }
 
@@ -93,41 +95,19 @@ static void cmd_loglevel(int argc, char **argv) {
     else if (strcmp(argv[2], "info") == 0) level = SYS_LOG_LEVEL_INFO;
     else if (strcmp(argv[2], "debug") == 0) level = SYS_LOG_LEVEL_DEBUG;
     else {
-        PRINT("Invalid level.\r\n");
+        MyRTOS_printf("Invalid level.\r\n");
         return;
     }
 
     MyRTOS_Log_SetLevel(module, level);
-    PRINT("Log level for '%s' module set to '%s'.\r\n", argv[1], argv[2]);
+    MyRTOS_printf("Log level for '%s' module set to '%s'.\r\n", argv[1], argv[2]);
 }
+#endif
 
 static void cmd_reboot(int argc, char **argv) {
-    PRINT("Rebooting system...\r\n");
+    MyRTOS_printf("Rebooting system...\r\n");
     Task_Delay(MS_TO_TICKS(100));
     NVIC_SystemReset();
 }
 
-static void cmd_mode(int argc, char **argv) {
-    if (argc != 2) {
-        PRINT("Usage: mode <log|mon>\r\n");
-        return;
-    }
-    if (strcmp(argv[1], "log") == 0) {
-        MyRTOS_Console_SetMode(CONSOLE_MODE_LOG);
-        // 'mode log' should also stop the terminal if it's running
-        if (MyRTOS_Terminal_IsRunning()) {
-            MyRTOS_Terminal_Stop();
-        }
-        PRINT("Switched to LOG mode.\r\n");
-    } else if (strcmp(argv[1], "mon") == 0) {
-        #if (MY_RTOS_USE_MONITOR == 1)
-        MyRTOS_Monitor_Start();
-        #else
-        PRINT("Monitor is disabled.\r\n");
-        #endif
-    } else {
-        PRINT("Invalid mode.\r\n");
-    }
-}
-
-#endif // MY_RTOS_USE_TERMINAL
+#endif // MY_RTOS_USE_SHELL

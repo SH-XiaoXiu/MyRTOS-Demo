@@ -16,23 +16,24 @@ static volatile char rx_buffer[RX_BUFFER_SIZE];
 static volatile uint16_t rx_buffer_head = 0;
 static volatile uint16_t rx_buffer_tail = 0;
 
-// 新增的信号量，用于阻塞式读取
+//用于阻塞式读取
 static SemaphoreHandle_t g_rx_char_sem = NULL;
 
 #define MYRTOS_PORT_USARTx      USART0
 
 void MyRTOS_Platform_Init(void) {
     lib_usart0_init();
+    //内核初始化
+    MyRTOS_Init();
     // 在系统启动时创建计数信号量，容量与缓冲区大小相同
     // 初始值为0，表示没有字符可用
     g_rx_char_sem = Semaphore_Create(RX_BUFFER_SIZE, 0);
     if (g_rx_char_sem == NULL) {
-        // 致命错误，无法创建信号量，系统无法继续
+        //无法创建信号量，系统无法继续
         while(1);
     }
 
     usart_interrupt_enable(MYRTOS_PORT_USARTx, USART_INT_RBNE);
-    // 确保中断优先级低于 configMAX_SYSCALL_INTERRUPT_PRIORITY
     // 对于 ARM Cortex-M，数值越大，优先级越低
     NVIC_SetPriority(USART0_IRQn, 6);
     NVIC_EnableIRQ(USART0_IRQn);
@@ -85,7 +86,7 @@ void USART0_IRQHandler(void) {
         // 如果环形缓冲区满了, 新数据会被丢弃，这是一种健壮的策略
     }
 
-    // (可选但推荐) 处理其他错误
+    //处理其他错误
     if (usart_interrupt_flag_get(MYRTOS_PORT_USARTx, USART_INT_FLAG_ERR_ORERR)) {
         usart_data_receive(MYRTOS_PORT_USARTx); // 清除 ORE 标志
     }
