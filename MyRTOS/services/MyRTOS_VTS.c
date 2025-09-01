@@ -107,13 +107,6 @@ int VTS_Init(StreamHandle_t physical_stream, VTS_Handles_t *handles) {
 
 int VTS_SetFocus(StreamHandle_t stream) {
     if (!g_vts) return -1;
-    //允许将焦点设置为NULL（静默模式）
-    if (stream != NULL) {
-        //检查 stream 是否是VTS管理的输出流之一
-        if (stream != g_vts->primary_out && stream != g_vts->background_in) {
-            return -1;
-        }
-    }
     Mutex_Lock(g_vts->lock);
     g_vts->focused_stream = stream;
     Mutex_Unlock(g_vts->lock);
