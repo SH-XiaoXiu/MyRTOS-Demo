@@ -155,8 +155,8 @@ void interrupt_handler_task(void *param) {
     // 这个任务的功能现在由平台层提供，但我们仍然保留它用于演示
     while (1) {
         Task_Wait();
-        LOG_D("按键处理", "已被中断唤醒, 将发送信号量给 ISR_Test 任务.");
-        // 在这里可以添加更多按键处理逻辑interrupt_handler_task
+        LOG_D("按键处理", "已被中断唤醒, 将唤醒A任务.");
+        Task_Notify(a_task_h);
     }
 }
 
@@ -340,15 +340,14 @@ void Platform_CreateTasks_Hook(void) {
         recursive_task_h = Task_Create(recursive_test_task, "RecursiveTask", 128, NULL, COLLABORATION_TASKS_PRIO);
     }
     //
-    a_task_h = Task_Create(a_task, "TaskA", 64, NULL, COLLABORATION_TASKS_PRIO);
-    b_task_h = Task_Create(b_task, "TaskB", 64, NULL, COLLABORATION_TASKS_PRIO);
+    a_task_h = Task_Create(a_task, "TaskA", 128, NULL, COLLABORATION_TASKS_PRIO);
+    b_task_h = Task_Create(b_task, "TaskB", 128, NULL, COLLABORATION_TASKS_PRIO);
     d_task_h = Task_Create(d_task, "TaskD_Creator", 256, NULL, COLLABORATION_TASKS_PRIO);
     background_task_h = Task_Create(background_blinky_task, "BG_Blinky_PB0", 64, NULL, BACKGROUND_TASK_PRIO);
     high_prio_task_h = Task_Create(high_prio_task, "HighPrioTask", 256, NULL, HIGH_PRIO_TASK_PRIO);
     interrupt_task_h = Task_Create(interrupt_handler_task, "KeyHandlerTask", 128, NULL, INTERRUPT_TASK_PRIO);
     timer_test_task_h = Task_Create(timer_test_task, "TimerTest", 512, NULL, TIMER_TEST_TASK_PRIO);
 }
-
 
 
 /*===========================================================================*
@@ -390,4 +389,3 @@ int main(void) {
     Platform_StartScheduler();
     return 0; // 永远不会执行到这里
 }
-

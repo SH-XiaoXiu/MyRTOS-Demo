@@ -23,7 +23,7 @@
 /** @brief 启用系统监控服务模块 */
 #define MYRTOS_SERVICE_MONITOR_ENABLE 1
 
-
+/** @brief 启用虚拟终端服务模块 */
 #define MYRTOS_SERVICE_VTS_ENABLE 1
 
 
