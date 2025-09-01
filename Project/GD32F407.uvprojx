@@ -514,6 +514,11 @@
               <FileType>1</FileType>
               <FilePath>..\MyRTOS\services\MyRTOS_Timer.c</FilePath>
             </File>
+            <File>
+              <FileName>MyRTOS_VTS.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\services\MyRTOS_VTS.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
