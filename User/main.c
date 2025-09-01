@@ -56,12 +56,12 @@ typedef struct {
  *===========================================================================*/
 void perio_timer_cb(TimerHandle_t timer) {
     (void) timer;
-    LOG_I("定时器回调", "周期性定时器(10秒)触发!");
+    LOG_D("定时器回调", "周期性定时器(10秒)触发!");
 }
 
 void single_timer_cb(TimerHandle_t timer) {
     (void) timer;
-    LOG_W("定时器回调", "一次性定时器(5秒)触发!");
+    LOG_D("定时器回调", "一次性定时器(5秒)触发!");
 }
 
 void a_task(void *param) {
@@ -69,13 +69,13 @@ void a_task(void *param) {
     static uint16_t i = 0;
     while (1) {
         Task_Wait();
-        LOG_I("Task A", "被唤醒，开始工作...");
+        LOG_D("Task A", "被唤醒，开始工作...");
         for (i = 1; i <= 5; ++i) {
             LOG_D("Task A", "正在运行, 第 %d 次", i);
             Task_Delay(MS_TO_TICKS(1000));
         }
         i = 0;
-        LOG_I("Task A", "工作完成，唤醒 Task B 并重新等待");
+        LOG_D("Task A", "工作完成，唤醒 Task B 并重新等待");
         Task_Notify(b_task_h);
     }
 }
@@ -85,13 +85,13 @@ void b_task(void *param) {
     static uint16_t i = 0;
     while (1) {
         Task_Wait();
-        LOG_I("Task B", "被唤醒，开始工作...");
+        LOG_D("Task B", "被唤醒，开始工作...");
         for (i = 1; i <= 3; ++i) {
             LOG_D("Task B", "正在运行, 第 %d 次", i);
             Task_Delay(MS_TO_TICKS(1000));
         }
         i = 0;
-        LOG_I("Task B", "工作完成，唤醒 Task A 并重新等待");
+        LOG_D("Task B", "工作完成，唤醒 Task A 并重新等待");
         Task_Notify(a_task_h);
     }
 }
@@ -99,12 +99,12 @@ void b_task(void *param) {
 void c_task(void *param) {
     (void) param;
     uint16_t index = 0;
-    LOG_I("Task C", "已创建并开始运行.");
+    LOG_D("Task C", "已创建并开始运行.");
     while (1) {
         index++;
         LOG_D("Task C", "正在运行, 第 %d 次", index);
         if (index == 5) {
-            LOG_W("Task C", "运行5次后删除自己.");
+            LOG_D("Task C", "运行5次后删除自己.");
             MyRTOS_Port_EnterCritical();
             c_task_h = NULL; // 在临界区内安全地清除全局句柄
             MyRTOS_Port_ExitCritical();
@@ -123,7 +123,7 @@ void d_task(void *param) {
         MyRTOS_Port_ExitCritical();
 
         if (!is_task_c_alive) {
-            LOG_I("Task D", "检测到Task C不存在, 准备重新创建...");
+            LOG_D("Task D", "检测到Task C不存在, 准备重新创建...");
             Task_Delay(MS_TO_TICKS(3000)); // 等待3秒再创建
             c_task_h = Task_Create(c_task, "TaskC_dynamic", 1024, NULL, COLLABORATION_TASKS_PRIO);
             if (c_task_h == NULL) {
@@ -146,7 +146,7 @@ void high_prio_task(void *param) {
     (void) param;
     while (1) {
         Task_Delay(MS_TO_TICKS(5000));
-        LOG_I("高优先级任务", "<<<<<<<<<< [抢占演示] >>>>>>>>>>");
+        LOG_D("高优先级任务", "<<<<<<<<<< [抢占演示] >>>>>>>>>>");
     }
 }
 
@@ -155,17 +155,17 @@ void interrupt_handler_task(void *param) {
     // 这个任务的功能现在由平台层提供，但我们仍然保留它用于演示
     while (1) {
         Task_Wait();
-        LOG_W("按键处理", "已被中断唤醒, 将发送信号量给 ISR_Test 任务.");
+        LOG_D("按键处理", "已被中断唤醒, 将发送信号量给 ISR_Test 任务.");
         // 在这里可以添加更多按键处理逻辑interrupt_handler_task
     }
 }
 
 void isr_test_task(void *param) {
     (void) param;
-    LOG_I("ISR测试", "启动并等待信号量...");
+    LOG_D("ISR测试", "启动并等待信号量...");
     while (1) {
         if (Semaphore_Take(isr_semaphore, MYRTOS_MAX_DELAY) == 1) {
-            LOG_I("ISR测试", "成功从按键中断获取信号量!");
+            LOG_D("ISR测试", "成功从按键中断获取信号量!");
         }
     }
 }
@@ -178,9 +178,9 @@ void producer_task(void *param) {
         product.data += 10;
         LOG_D("生产者", "生产产品 ID %lu", product.id);
         if (Queue_Send(product_queue, &product, MS_TO_TICKS(100)) == 1) {
-            LOG_I("生产者", "产品 ID %lu 已发送", product.id);
+            LOG_D("生产者", "产品 ID %lu 已发送", product.id);
         } else {
-            LOG_W("生产者", "队列已满, 发送产品 ID %lu 失败", product.id);
+            LOG_D("生产者", "队列已满, 发送产品 ID %lu 失败", product.id);
         }
         Task_Delay(MS_TO_TICKS(2000));
     }
@@ -192,7 +192,7 @@ void consumer_task(void *param) {
     while (1) {
         LOG_D("消费者", "等待产品...");
         if (Queue_Receive(product_queue, &received_product, MYRTOS_MAX_DELAY) == 1) {
-            LOG_I("消费者", "接收到产品 ID %lu, 数据: %lu", received_product.id, received_product.data);
+            LOG_D("消费者", "接收到产品 ID %lu, 数据: %lu", received_product.id, received_product.data);
         }
     }
 }
@@ -203,7 +203,7 @@ void inspector_task(void *param) {
     while (1) {
         LOG_D("质检员", "等待拦截产品...");
         if (Queue_Receive(product_queue, &received_product, MYRTOS_MAX_DELAY) == 1) {
-            LOG_W("质检员", "拦截到产品 ID %lu, 销毁!", received_product.id);
+            LOG_D("质检员", "拦截到产品 ID %lu, 销毁!", received_product.id);
         }
         Task_Delay(MS_TO_TICKS(5000));
     }
@@ -212,7 +212,7 @@ void inspector_task(void *param) {
 void recursive_test_task(void *param) {
     (void) param;
     while (1) {
-        LOG_I("递归锁", "开始测试...");
+        LOG_D("递归锁", "开始测试...");
         Mutex_Lock_Recursive(recursive_lock);
         LOG_D("递归锁", "主循环加锁 (第1层)");
         Task_Delay(MS_TO_TICKS(500));
@@ -225,7 +225,7 @@ void recursive_test_task(void *param) {
 
         Mutex_Unlock_Recursive(recursive_lock);
         LOG_D("递归锁", "主循环解锁 (第1层)");
-        LOG_I("递归锁", "测试完成, 等待3秒");
+        LOG_D("递归锁", "测试完成, 等待3秒");
         Task_Delay(MS_TO_TICKS(3000));
     }
 }
@@ -244,9 +244,9 @@ void printer_task(void *param) {
     while (1) {
         LOG_D(taskName, "正在等待打印机...");
         if (Semaphore_Take(printer_semaphore, MYRTOS_MAX_DELAY) == 1) {
-            LOG_I(taskName, "获取到打印机, 开始打印 (耗时3秒)...");
+            LOG_D(taskName, "获取到打印机, 开始打印 (耗时3秒)...");
             Task_Delay(MS_TO_TICKS(3000));
-            LOG_I(taskName, "打印完成, 释放打印机.");
+            LOG_D(taskName, "打印完成, 释放打印机.");
             Semaphore_Give(printer_semaphore);
         }
         Task_Delay(MS_TO_TICKS(500 + (Task_GetId(Task_GetCurrentTaskHandle()) * 300)));
@@ -295,7 +295,7 @@ void Platform_BSP_Init_Hook(void) {
  */
 void Platform_AppSetup_Hook(ShellHandle_t shell_h) {
     if (shell_h) {
-        LOG_I("Hook", "Platform_AppSetup_Hook: Registering user commands...");
+        LOG_D("Hook", "Platform_AppSetup_Hook: Registering user commands...");
         Platform_RegisterShellCommands(g_user_commands, g_user_command_count);
     }
 }
@@ -304,7 +304,7 @@ void Platform_AppSetup_Hook(ShellHandle_t shell_h) {
  * @brief 创建所有的应用程序任务。
  */
 void Platform_CreateTasks_Hook(void) {
-    // LOG_I("Hook", "Platform_CreateTasks_Hook: Creating application tasks...");
+    // LOG_D("Hook", "Platform_CreateTasks_Hook: Creating application tasks...");
 
     // --- 软件定时器测试 ---
     single_timer_h = Timer_Create("单次定时器", MS_TO_TICKS(5000), 0, single_timer_cb, NULL);

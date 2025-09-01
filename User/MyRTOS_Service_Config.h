@@ -24,6 +24,9 @@
 #define MYRTOS_SERVICE_MONITOR_ENABLE 1
 
 
+#define MYRTOS_SERVICE_VTS_ENABLE 1
+
+
 /*==================================================================================================
  *                                    模块参数配置
  *                            (仅在对应模块开启时，以下配置才有效)
@@ -35,7 +38,7 @@
 #endif
 
 #if MYRTOS_SERVICE_LOG_ENABLE == 1
-#define MYRTOS_LOG_MAX_LEVEL LOG_LEVEL_DEBUG
+#define MYRTOS_LOG_MAX_LEVEL LOG_LEVEL_INFO
 #define MYRTOS_LOG_FORMAT "[%c][%s]" , (level == LOG_LEVEL_ERROR ? 'E' : (level == LOG_LEVEL_WARN ? 'W' : (level == LOG_LEVEL_INFO ? 'I' : 'D'))), tag
 #define MYRTOS_LOG_QUEUE_LENGTH    32
 #define MYRTOS_LOG_MSG_MAX_SIZE    128
@@ -43,7 +46,7 @@
 #define MYRTOS_LOG_TASK_PRIORITY   1
 #endif
 
-#if MYRTOS_SERVICE_TIMER_ENABLE== 1
+#if MYRTOS_SERVICE_TIMER_ENABLE == 1
 /** @brief 定时器服务任务命令队列的深度 (能缓存多少个命令) */
 #define MYRTOS_TIMER_COMMAND_QUEUE_SIZE   10
 #endif
@@ -53,6 +56,13 @@
 #define SHELL_MAX_ARGS             10
 /** @brief Shell 命令行输入缓冲区的最大长度 (字节) */
 #define SHELL_CMD_BUFFER_SIZE      64
+#endif
+
+#if MYRTOS_SERVICE_VTS_ENABLE == 1
+#define VTS_TASK_PRIORITY       5
+#define VTS_TASK_STACK_SIZE     1024
+#define VTS_RW_BUFFER_SIZE      128
+#define VTS_PIPE_BUFFER_SIZE    512
 #endif
 
 
