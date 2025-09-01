@@ -1105,6 +1105,64 @@ MutexHandle_t Mutex_Create(void) {
 }
 
 /**
+ * @brief 删除一个互斥锁
+ * @note  这是一个健壮的实现。它会安全地处理以下情况：
+ *        1. 唤醒所有正在等待该锁的任务，防止它们永久阻塞。
+ *        2. 如果锁当前被持有，会从持有者任务的内部链表中安全地移除该锁，防止悬空指针。
+ *        应用程序应确保在删除锁之后，不再有任何代码尝试使用它。
+ * @param mutex 要删除的互斥锁句柄
+ */
+void Mutex_Delete(MutexHandle_t mutex) {
+    if (mutex == NULL) {
+        return;
+    }
+
+    MyRTOS_Port_EnterCritical(); {
+        //唤醒所有正在等待该锁的任务
+        // 遍历事件列表，将所有等待的任务移回到就绪列表
+        while (mutex->eventList.head != NULL) {
+            Task_t *taskToWake = mutex->eventList.head;
+            // 从事件列表中移除任务。eventListRemove 会处理好 taskToWake->pEventList 的清理
+            eventListRemove(taskToWake);
+            // 如果任务因为超时也存在于延迟列表中，则一并移除
+            if (taskToWake->delay > 0) {
+                removeTaskFromList(&delayedTaskListHead, taskToWake);
+                taskToWake->delay = 0;
+            }
+            // 将被唤醒的任务重新添加到就绪列表中
+            addTaskToReadyList(taskToWake);
+        }
+        //如果锁当前被持有，则从持有者任务中断开链接
+        TaskHandle_t owner_tcb = mutex->owner_tcb;
+        if (owner_tcb != NULL) {
+            // 在任务持有的互斥锁链表中查找并移除此锁，以防止悬空指针
+            //要删除的锁是链表头
+            if (owner_tcb->held_mutexes_head == mutex) {
+                owner_tcb->held_mutexes_head = mutex->next_held_mutex;
+            }
+            //要删除的锁在链表中间或末尾
+            else {
+                Mutex_t *p_iterator = owner_tcb->held_mutexes_head;
+                // 遍历链表找到要删除锁的前一个节点
+                while (p_iterator != NULL && p_iterator->next_held_mutex != mutex) {
+                    p_iterator = p_iterator->next_held_mutex;
+                }
+                // 如果找到了前一个节点，就跳过要删除的锁
+                if (p_iterator != NULL) {
+                    p_iterator->next_held_mutex = mutex->next_held_mutex;
+                }
+            }
+        }
+
+        // 释放互斥锁结构本身占用的内存
+        // 此时，已经没有任何任务的TCB或事件列表引用这个互斥锁了，可以安全释放
+        MyRTOS_Free(mutex);
+    }
+    MyRTOS_Port_ExitCritical();
+    // 被唤醒的任务会在下一次调度点（如时钟滴答）运行时获得CPU。
+}
+
+/**
  * @brief 尝试获取一个互斥锁，带超时
  * @param mutex 目标互斥锁句柄
  * @param block_ticks 如果锁已被占用，任务将阻塞等待的最大滴答数。0表示不等待，MYRTOS_MAX_DELAY表示永久等待。
