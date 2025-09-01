@@ -15,7 +15,7 @@ static void heapInit(void);
 static void insertBlockIntoFreeList(BlockLink_t *blockToInsert);
 
 // RTOS内部使用的内存分配函数
-static void *rtos_malloc(const size_t wantedSize);
+static void *rtos_malloc(size_t wantedSize);
 
 // RTOS内部使用的内存释放函数
 static void rtos_free(void *pv);
@@ -229,11 +229,10 @@ static void rtos_free(void *pv) {
     if (((link->blockSize & blockAllocatedBit) != 0) && (link->nextFreeBlock == NULL)) {
         // 清除已分配标志
         link->blockSize &= ~blockAllocatedBit;
-        MyRTOS_Port_EnterCritical(); {
-            // 更新剩余空闲字节数并将其插回空闲链表
-            freeBytesRemaining += link->blockSize;
-            insertBlockIntoFreeList(link);
-        }
+        MyRTOS_Port_EnterCritical();
+        // 更新剩余空闲字节数并将其插回空闲链表
+        freeBytesRemaining += link->blockSize;
+        insertBlockIntoFreeList(link);
         MyRTOS_Port_ExitCritical();
     }
 }
@@ -729,48 +728,48 @@ int Task_Delete(TaskHandle_t task_h) {
     // 广播任务删除事件
     KernelEventData_t eventData = {.eventType = KERNEL_EVENT_TASK_DELETE, .task = task_to_delete};
     broadcast_event(&eventData);
-    MyRTOS_Port_EnterCritical(); {
-        // 从其所在的任何链表中移除任务
-        if (task_to_delete->state == TASK_STATE_READY) {
-            removeTaskFromList(&readyTaskLists[task_to_delete->priority], task_to_delete);
-        } else if (task_to_delete->state == TASK_STATE_DELAYED || task_to_delete->state == TASK_STATE_BLOCKED) {
-            removeTaskFromList(&delayedTaskListHead, task_to_delete);
-        }
-        // 如果任务正在等待事件，也从事件列表中移除
-        if (task_to_delete->pEventList != NULL) {
-            eventListRemove(task_to_delete);
-        }
-        // 释放任务持有的所有互斥锁
-        while (task_to_delete->held_mutexes_head != NULL) {
-            Mutex_Unlock(task_to_delete->held_mutexes_head);
-        }
-        task_to_delete->state = TASK_STATE_UNUSED;
-        // 从全局任务列表中移除
-        Task_t *prev = NULL, *curr = allTaskListHead;
-        while (curr != NULL && curr != task_to_delete) {
-            prev = curr;
-            curr = curr->pNextTask;
-        }
-        if (curr != NULL) {
-            if (prev == NULL) allTaskListHead = curr->pNextTask;
-            else prev->pNextTask = curr->pNextTask;
-        }
-        void *stack_to_free = task_to_delete->stack_base;
-        // 如果是删除自身
-        if (task_h == NULL) {
-            currentTask = NULL; // 标记当前任务为空，调度器将选择新任务
-            taskIdBitmap &= ~(1ULL << deleted_task_id); // 回收任务ID
-            MyRTOS_Free(task_to_delete);
-            MyRTOS_Free(stack_to_free);
-            MyRTOS_Port_ExitCritical();
-            MyRTOS_Port_Yield(); // 触发调度，此任务将不再执行
-        } else {
-            // 如果是删除其他任务
-            taskIdBitmap &= ~(1ULL << deleted_task_id); // 回收任务ID
-            MyRTOS_Free(task_to_delete);
-            MyRTOS_Free(stack_to_free);
-            MyRTOS_Port_ExitCritical();
-        }
+    MyRTOS_Port_EnterCritical();
+    // 从其所在的任何链表中移除任务
+    if (task_to_delete->state == TASK_STATE_READY) {
+        removeTaskFromList(&readyTaskLists[task_to_delete->priority], task_to_delete);
+    } else if (task_to_delete->state == TASK_STATE_DELAYED || task_to_delete->state == TASK_STATE_BLOCKED) {
+        removeTaskFromList(&delayedTaskListHead, task_to_delete);
+    }
+    // 如果任务正在等待事件，也从事件列表中移除
+    if (task_to_delete->pEventList != NULL) {
+        eventListRemove(task_to_delete);
+    }
+    // 释放任务持有的所有互斥锁
+    while (task_to_delete->held_mutexes_head != NULL) {
+        Mutex_Unlock(task_to_delete->held_mutexes_head);
+    }
+    task_to_delete->state = TASK_STATE_UNUSED;
+    // 从全局任务列表中移除
+    Task_t *prev = NULL, *curr = allTaskListHead;
+    while (curr != NULL && curr != task_to_delete) {
+        prev = curr;
+        curr = curr->pNextTask;
+    }
+    if (curr != NULL) {
+        if (prev == NULL) allTaskListHead = curr->pNextTask;
+        else prev->pNextTask = curr->pNextTask;
+    }
+    void *stack_to_free = task_to_delete->stack_base;
+    // 如果是删除自身
+    if (task_h == NULL) {
+        currentTask = NULL; // 标记当前任务为空，调度器将选择新任务
+        taskIdBitmap &= ~(1ULL << deleted_task_id); // 回收任务ID
+        MyRTOS_Free(task_to_delete);
+        MyRTOS_Free(stack_to_free);
+        MyRTOS_Port_ExitCritical();
+        MyRTOS_Port_Yield(); // 触发调度，此任务将不再执行
+    } else {
+        // 如果是删除其他任务
+        taskIdBitmap &= ~(1ULL << deleted_task_id); // 回收任务ID
+        MyRTOS_Free(task_to_delete);
+        MyRTOS_Free(stack_to_free);
+        MyRTOS_Port_ExitCritical();
+        // MyRTOS_Port_Yield();
     }
     return 0;
 }
