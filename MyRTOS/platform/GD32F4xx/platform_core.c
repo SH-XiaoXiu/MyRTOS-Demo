@@ -11,6 +11,7 @@
 #include "MyRTOS_IO.h"
 #include "MyRTOS_Log.h"
 #include "MyRTOS_Monitor.h"
+#include "MyRTOS_Port.h"
 #include "MyRTOS_Timer.h"
 #include "MyRTOS_Shell.h"
 #include "MyRTOS_VTS.h"
@@ -161,7 +162,7 @@ void Platform_Init(void) {
 
     //初始化其他服务
 #if (MYRTOS_SERVICE_LOG_ENABLE == 1)
-    Log_Init(LOG_LEVEL_DEBUG, g_system_stdout);
+    Log_Init();
 #endif
 #if (MYRTOS_SERVICE_MONITOR_ENABLE == 1)
     MonitorConfig_t monitor_config = {.get_hires_timer_value = Platform_Timer_GetHiresValue};
@@ -189,6 +190,11 @@ void Platform_StartScheduler(void) {
 */
 #if (MYRTOS_SERVICE_SHELL_ENABLE == 1 && MYRTOS_SERVICE_VTS_ENABLE == 1)
 
+static TaskHandle_t g_spied_task = NULL; // 正在被监听的任务
+static StreamHandle_t g_original_task_stdout = NULL; // 它原始的 stdout
+static StreamHandle_t g_spy_pipe = NULL; // 用于监听的临时管道
+
+
 // 命令处理函数的前置声明
 int cmd_fg(ShellHandle_t shell_h, int argc, char *argv[]);
 
@@ -196,28 +202,70 @@ int cmd_bg(ShellHandle_t shell_h, int argc, char *argv[]);
 
 int cmd_showall(ShellHandle_t shell_h, int argc, char *argv[]);
 
+int cmd_log(ShellHandle_t shell_h, int argc, char *argv[]);
+
+
 // 用于保存VTS句柄，以便Shell命令可以访问它们
 static VTS_Handles_t g_cmd_vts_handles;
 
 void Platform_RegisterVTSCommands(ShellHandle_t shell_h, const VTS_Handles_t *handles) {
     if (!shell_h || !handles) return;
     g_cmd_vts_handles = *handles;
-    Shell_RegisterCommand(shell_h, "fg", "Focus on the background stream", cmd_fg);
-    Shell_RegisterCommand(shell_h, "bg", "Focus back on the shell", cmd_bg);
-    Shell_RegisterCommand(shell_h, "showall", "Show all streams mixed in background", cmd_showall);
+    Shell_RegisterCommand(shell_h, "fg", "Focus on the shared background stream", cmd_fg);
+    Shell_RegisterCommand(shell_h, "bg", "Focus back on the shell (detaches any spy)", cmd_bg);
+    Shell_RegisterCommand(shell_h, "log", "Spy on a specific task's output. Usage: log <task_name>", cmd_log);
 }
 
-// 命令实现
+static void cleanup_spy_state(void) {
+    if (g_spied_task) {
+        // 恢复被监听任务的原始stdout
+        Task_SetStdOut(g_spied_task, g_original_task_stdout);
+        g_spied_task = NULL;
+        g_original_task_stdout = NULL;
+    }
+    if (g_spy_pipe) {
+        // 销毁临时的spy pipe
+        Pipe_Delete(g_spy_pipe);
+        g_spy_pipe = NULL;
+    }
+}
+
+
+int cmd_log(ShellHandle_t shell_h, int argc, char *argv[]) {
+    if (argc != 2) {
+        MyRTOS_printf("Usage: log <task_name>\n");
+        return -1;
+    }
+    cleanup_spy_state();
+
+    TaskHandle_t target_task = Task_FindByName(argv[1]);
+    if (!target_task) {
+        MyRTOS_printf("Task '%s' not found.\n", argv[1]);
+        return -1;
+    }
+
+    g_spy_pipe = Pipe_Create(1024);
+    if (!g_spy_pipe) {
+        MyRTOS_printf("Error: Failed to create spy pipe.\n");
+        return -1;
+    }
+
+    MyRTOS_Port_EnterCritical();
+    g_original_task_stdout = Task_GetStdOut(target_task);
+    Task_SetStdOut(target_task, g_spy_pipe);
+    g_spied_task = target_task;
+    MyRTOS_Port_ExitCritical();
+
+    VTS_SetFocus(g_spy_pipe);
+    MyRTOS_printf("Spying on task '%s'. Use 'bg' to return to shell.\n", argv[1]);
+    return 0;
+}
+
 int cmd_fg(ShellHandle_t shell_h, int argc, char *argv[]) {
     (void) argc;
     (void) argv;
-
-    // 恢复Shell的stdout到其原始流，以防之前在showall模式
-    if (g_shell_original_stdout) {
-        Task_SetStdOut(Task_GetCurrentTaskHandle(), g_shell_original_stdout);
-    }
-
-    MyRTOS_printf("Switching focus to background stream...\n");
+    cleanup_spy_state();
+    MyRTOS_printf("Focusing on shared background stream...\n");
     VTS_SetFocus(g_cmd_vts_handles.background_stream);
     return 0;
 }
@@ -225,28 +273,11 @@ int cmd_fg(ShellHandle_t shell_h, int argc, char *argv[]) {
 int cmd_bg(ShellHandle_t shell_h, int argc, char *argv[]) {
     (void) argc;
     (void) argv;
+    cleanup_spy_state();
 
-    // 恢复Shell的stdout到其原始流，以防之前在showall模式
-    if (g_shell_original_stdout) {
-        Task_SetStdOut(Task_GetCurrentTaskHandle(), g_shell_original_stdout);
-    }
-
-    // 先把焦点还给Shell，这样下面的提示信息才能被看到
     VTS_SetFocus(g_cmd_vts_handles.primary_output_stream);
-    MyRTOS_printf("Switching focus back to shell...\n");
+    MyRTOS_printf("Focus back on shell.\n");
     return 0;
 }
 
-int cmd_showall(ShellHandle_t shell_h, int argc, char *argv[]) {
-    (void) argc;
-    (void) argv;
-    MyRTOS_printf("Mixing all outputs into background stream. Use 'bg' to restore.\n");
-
-    //将Shell自己的输出也重定向到后台流
-    Task_SetStdOut(Task_GetCurrentTaskHandle(), g_cmd_vts_handles.background_stream);
-
-    //将焦点设置到后台流
-    VTS_SetFocus(g_cmd_vts_handles.background_stream);
-    return 0;
-}
 #endif // (MYRTOS_SERVICE_SHELL_ENABLE && MYRTOS_SERVICE_VTS_ENABLE)
