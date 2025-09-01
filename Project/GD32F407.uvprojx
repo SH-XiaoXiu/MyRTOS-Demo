@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,GD32F407,DEBUG_PRINT=0</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Firmware\CMSIS\GD\GD32F4xx\Include;..\Firmware\GD32F4xx_standard_peripheral\Include;..\Firmware\CMSIS;..\Libraries;..\User;..\MyRTOS\include</IncludePath>
+              <IncludePath>..\Firmware\CMSIS\GD\GD32F4xx\Include;..\Firmware\GD32F4xx_standard_peripheral\Include;..\Firmware\CMSIS;..\Libraries;..\User;..\MyRTOS\kernel\include;..\MyRTOS\platform\GD32F4xx\include;..\MyRTOS\services\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -385,16 +385,6 @@
           <GroupName>User</GroupName>
           <Files>
             <File>
-              <FileName>gd32f4xx_it.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\gd32f4xx_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>systick.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\systick.c</FilePath>
-            </File>
-            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\main.c</FilePath>
@@ -403,6 +393,11 @@
               <FileName>MyRTOS_Config.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\MyRTOS_Config.h</FilePath>
+            </File>
+            <File>
+              <FileName>gd32f4xx_it.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\gd32f4xx_it.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -487,62 +482,77 @@
             <File>
               <FileName>MyRTOS.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\core\kernel\MyRTOS.c</FilePath>
-            </File>
-            <File>
-              <FileName>MyRTOS_IO.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MyRTOS\core\services\MyRTOS_IO.c</FilePath>
-            </File>
-            <File>
-              <FileName>MyRTOS_Log.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MyRTOS\core\services\MyRTOS_Log.c</FilePath>
-            </File>
-            <File>
-              <FileName>MyRTOS_Shell.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MyRTOS\core\services\MyRTOS_Shell.c</FilePath>
+              <FilePath>..\MyRTOS\kernel\MyRTOS.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>MyRTOS\Platform</GroupName>
+          <GroupName>MyRTOS\service</GroupName>
           <Files>
             <File>
-              <FileName>MyRTOS_Driver_Timer_GD32.c</FileName>
+              <FileName>MyRTOS_IO.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Driver_Timer_GD32.c</FilePath>
+              <FilePath>..\MyRTOS\services\MyRTOS_IO.c</FilePath>
             </File>
             <File>
-              <FileName>MyRTOS_Platform_GD32.c</FileName>
+              <FileName>MyRTOS_Log.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Platform_GD32.c</FilePath>
+              <FilePath>..\MyRTOS\services\MyRTOS_Log.c</FilePath>
             </File>
             <File>
-              <FileName>MyRTOS_Port_ARM_CM4F_GD32.c</FileName>
+              <FileName>MyRTOS_Monitor.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Port_ARM_CM4F_GD32.c</FilePath>
+              <FilePath>..\MyRTOS\services\MyRTOS_Monitor.c</FilePath>
             </File>
             <File>
-              <FileName>MyRTOS_Startup_GD32.c</FileName>
+              <FileName>MyRTOS_Shell.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Startup_GD32.c</FilePath>
+              <FilePath>..\MyRTOS\services\MyRTOS_Shell.c</FilePath>
             </File>
             <File>
-              <FileName>MyRTOS_Monitor_GD32.c</FileName>
+              <FileName>MyRTOS_Timer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Monitor_GD32.c</FilePath>
+              <FilePath>..\MyRTOS\services\MyRTOS_Timer.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>MyRTOS\platform</GroupName>
+          <Files>
+            <File>
+              <FileName>ARM_CM4F_GD32.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\ARM_CM4F_GD32.c</FilePath>
             </File>
             <File>
-              <FileName>MyRTOS_Platform_StdIO_GD32.c</FileName>
+              <FileName>platform_core.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Platform_StdIO_GD32.c</FilePath>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\platform_core.c</FilePath>
             </File>
             <File>
-              <FileName>MyRTOS_Terminal_Commands_GD32.c</FileName>
+              <FileName>platform_gd32_console.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\platform\GD32F4xx\MyRTOS_Terminal_Commands_GD32.c</FilePath>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\platform_gd32_console.c</FilePath>
+            </File>
+            <File>
+              <FileName>platform_hires_timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\platform_hires_timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>platform_hooks.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\platform_hooks.c</FilePath>
+            </File>
+            <File>
+              <FileName>platform_shell_commands.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\platform_shell_commands.c</FilePath>
+            </File>
+            <File>
+              <FileName>platform_error_handler.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\platform_error_handler.c</FilePath>
             </File>
           </Files>
         </Group>
