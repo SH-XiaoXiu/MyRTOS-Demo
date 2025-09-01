@@ -895,6 +895,45 @@ uint32_t Task_GetId(TaskHandle_t task_h) {
 }
 
 /**
+ * @brief 获取任务的名称。
+ * @param task_h 要查询的任务句柄。
+ * @return 返回指向任务名称字符串的指针。如果句柄无效，可能返回NULL或空字符串。
+ */
+char *Task_GetName(TaskHandle_t task_h) {
+    // 进行一个基本的句柄有效性检查
+    if (task_h == NULL) {
+        return "Unknown"; // 或者返回 NULL
+    }
+    return ((Task_t *) task_h)->taskName;
+}
+
+/**
+ * @brief 根据任务名称查找任务句柄。
+ * @param taskName 要查找的任务的名称字符串。
+ * @return 如果找到，则返回任务的句柄；如果未找到，则返回 NULL。
+ */
+TaskHandle_t Task_FindByName(const char *taskName) {
+    TaskHandle_t found_task = NULL;
+
+    if (taskName == NULL) {
+        return NULL;
+    }
+    // 进入临界区以安全地遍历全局任务列表
+    MyRTOS_Port_EnterCritical();
+    Task_t *p_iterator = allTaskListHead;
+    while (p_iterator != NULL) {
+        // 使用 strcmp 比较任务名称
+        if (strcmp(p_iterator->taskName, taskName) == 0) {
+            found_task = p_iterator;
+            break; // 找到后立即退出循环
+        }
+        p_iterator = p_iterator->pNextTask;
+    }
+    MyRTOS_Port_ExitCritical();
+    return found_task;
+}
+
+/**
  * @brief 创建一个消息队列
  * @param length 队列能够存储的最大项目数
  * @param itemSize 每个项目的大小（字节）
