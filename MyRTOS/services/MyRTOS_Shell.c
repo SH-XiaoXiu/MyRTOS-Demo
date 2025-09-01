@@ -15,10 +15,11 @@
 #include <ctype.h>
 
 
-
 /*===========================================================================*
  *                              Private Functions                            *
  *===========================================================================*/
+
+static TaskHandle_t shell_task_h;
 
 // 解析命令行字符串为 argc/argv
 static void parse_command(ShellInstance_t *shell) {
@@ -60,43 +61,41 @@ static void dispatch_command(ShellInstance_t *shell) {
         node = node->next;
     }
 
-    Stream_Printf(shell->config.io_stream, "Command not found: %s\n", shell->argv[0]);
+    MyRTOS_printf("Command not found: %s\n", shell->argv[0]);
 }
 
 // Shell后台任务
+// 在 MyRTOS_Shell.c 中
+
 static void Shell_Task(void *param) {
     ShellInstance_t *shell = (ShellInstance_t *) param;
     char ch;
 
-    Stream_Printf(shell->config.io_stream, "\nMyRTOS Shell Initialized.\n");
-    Stream_Write(shell->config.io_stream, shell->config.prompt, strlen(shell->config.prompt), MYRTOS_MAX_DELAY);
+    MyRTOS_printf("\nMyRTOS Shell Initialized.\n");
+    MyRTOS_printf("%s", shell->config.prompt);
 
     for (;;) {
-        // 阻塞读取一个字符
-        if (Stream_Read(shell->config.io_stream, &ch, 1, MYRTOS_MAX_DELAY) == 1) {
+        // 从自己的 stdin 读取一个字符
+        if (Stream_Read(Task_GetStdIn(NULL), &ch, 1, MYRTOS_MAX_DELAY) == 1) {
             if (ch == '\r' || ch == '\n') {
-                Stream_Printf(shell->config.io_stream, "\n"); // 回车换行
+                MyRTOS_printf("\r\n"); // 回显换行
 
-                // 解析并执行
                 shell->cmd_buffer[shell->buffer_len] = '\0';
-                parse_command(shell);
-                dispatch_command(shell);
+                if(shell->buffer_len > 0) {
+                    parse_command(shell);
+                    dispatch_command(shell);
+                }
 
-                // 重置
                 shell->buffer_len = 0;
-                Stream_Write(shell->config.io_stream, shell->config.prompt, strlen(shell->config.prompt),
-                             MYRTOS_MAX_DELAY);
-            } else if (ch == '\b' || ch == 127) {
-                // 处理退格
+                MyRTOS_printf("%s", shell->config.prompt); // 打印新提示符
+            } else if (ch == '\b' || ch == 127) { // 退格键
                 if (shell->buffer_len > 0) {
                     shell->buffer_len--;
-                    // 终端回显: 退格-空格-退格
-                    Stream_Write(shell->config.io_stream, "\b \b", 3, MYRTOS_MAX_DELAY);
+                    MyRTOS_printf("\b \b"); // 自己负责回显退格
                 }
             } else if (isprint((unsigned char) ch) && shell->buffer_len < SHELL_CMD_BUFFER_SIZE - 1) {
-                // 存入缓冲区并回显
                 shell->cmd_buffer[shell->buffer_len++] = ch;
-                Stream_Write(shell->config.io_stream, &ch, 1, MYRTOS_MAX_DELAY);
+                MyRTOS_putchar(ch); // 自己负责回显字符
             }
         }
     }
@@ -107,7 +106,7 @@ static void Shell_Task(void *param) {
  *===========================================================================*/
 
 ShellHandle_t Shell_Init(const ShellConfig_t *config) {
-    if (!config || !config->io_stream) {
+    if (!config) {
         return NULL;
     }
 
@@ -127,26 +126,34 @@ ShellHandle_t Shell_Init(const ShellConfig_t *config) {
     return shell;
 }
 
-int Shell_Start(ShellHandle_t shell_h, const char *task_name, uint8_t task_priority, uint16_t task_stack_size) {
+TaskHandle_t Shell_Start(ShellHandle_t shell_h, const char *task_name, uint8_t task_priority,
+                         uint16_t task_stack_size) {
     if (!shell_h) {
-        return -1;
+        return NULL;
     }
-    TaskHandle_t task = Task_Create(Shell_Task, task_name, task_stack_size, shell_h, task_priority);
-    return (task == NULL) ? -1 : 0;
+    shell_task_h = Task_Create(
+        Shell_Task,
+        task_name,
+        task_stack_size,
+        shell_h,
+        task_priority
+    );
+
+    return shell_task_h; // 返回任务句柄
 }
 
 StreamHandle_t Shell_GetStream(ShellHandle_t shell_h) {
     if (!shell_h) {
         return NULL;
     }
-    return shell_h->config.io_stream;
+    return Task_GetStdOut(shell_task_h);
 }
 
 int Shell_RegisterCommand(ShellHandle_t shell_h, const char *name, const char *help, ShellCommandCallback_t callback) {
     if (!shell_h || !name || !callback) {
         return -1;
     }
-    ShellInstance_t *shell = (ShellInstance_t *)shell_h;
+    ShellInstance_t *shell = (ShellInstance_t *) shell_h;
 
     // 检查命令是否已存在
     ShellCommandNode_t *current = shell->commands_head;
@@ -158,7 +165,7 @@ int Shell_RegisterCommand(ShellHandle_t shell_h, const char *name, const char *h
     }
 
     // 创建新的命令节点
-    ShellCommandNode_t *new_node = (ShellCommandNode_t *)MyRTOS_Malloc(sizeof(ShellCommandNode_t));
+    ShellCommandNode_t *new_node = (ShellCommandNode_t *) MyRTOS_Malloc(sizeof(ShellCommandNode_t));
     if (!new_node) {
         return -3; // 内存分配失败
     }
@@ -177,14 +184,15 @@ int Shell_UnregisterCommand(ShellHandle_t shell_h, const char *name) {
     if (!shell_h || !name) {
         return -1;
     }
-    ShellInstance_t *shell = (ShellInstance_t *)shell_h;
+    ShellInstance_t *shell = (ShellInstance_t *) shell_h;
 
     ShellCommandNode_t *current = shell->commands_head;
     ShellCommandNode_t *prev = NULL;
 
     while (current != NULL) {
         if (strcmp(current->name, name) == 0) {
-            if (prev == NULL) { // 是头节点
+            if (prev == NULL) {
+                // 是头节点
                 shell->commands_head = current->next;
             } else {
                 prev->next = current->next;

@@ -6,6 +6,7 @@
 #ifndef MYRTOS_SHELL_H
 #define MYRTOS_SHELL_H
 
+#include "MyRTOS.h"
 #include "MyRTOS_Service_Config.h"
 
 
@@ -54,7 +55,6 @@ typedef struct ShellCommandNode_t {
  * @brief Shell 初始化配置结构体 (用于依赖注入)。
  */
 typedef struct {
-    StreamHandle_t io_stream; // Shell 用于输入输出的流
     const char *prompt; // 命令行提示符 (例如 "> ")
 } ShellConfig_t;
 
@@ -75,9 +75,9 @@ ShellHandle_t Shell_Init(const ShellConfig_t *config);
  * @param task_name     [in] Shell任务的名称。
  * @param task_priority [in] Shell任务的优先级。
  * @param task_stack_size [in] Shell任务的栈大小。
- * @return int 0 成功, -1 失败 (如任务创建失败)。
+ * @return TaskHandle_t   成功则返回创建的任务句柄, 失败返回NULL。
  */
-int Shell_Start(ShellHandle_t shell_h, const char *task_name, uint8_t task_priority, uint16_t task_stack_size);
+TaskHandle_t Shell_Start(ShellHandle_t shell_h, const char *task_name, uint8_t task_priority, uint16_t task_stack_size);
 
 /**
  * @brief 获取与Shell实例关联的流句柄。
