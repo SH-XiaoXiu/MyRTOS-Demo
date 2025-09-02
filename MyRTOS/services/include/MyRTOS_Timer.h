@@ -50,8 +50,8 @@ int TimerService_Init(uint8_t timer_task_priority, uint16_t timer_task_stack_siz
  * @param p_timer_arg   [in] 传递给回调函数的自定义参数。
  * @return TimerHandle_t 成功则返回定时器句柄，失败则返回 NULL。
  */
-TimerHandle_t Timer_Create(const char *name, uint32_t period, uint8_t is_periodic,
-                           TimerCallback_t callback, void *p_timer_arg);
+TimerHandle_t Timer_Create(const char *name, uint32_t period, uint8_t is_periodic, TimerCallback_t callback,
+                           void *p_timer_arg);
 
 /**
  * @brief 启动一个软件定时器。

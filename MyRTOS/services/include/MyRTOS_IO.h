@@ -16,9 +16,9 @@
 #if MYRTOS_SERVICE_IO_ENABLE == 1
 
 
+#include <stdarg.h>
 #include "MyRTOS.h"
 #include "MyRTOS_Stream_Def.h"
-#include <stdarg.h>
 
 
 /*================================== 标准流 API ==================================*/
@@ -111,8 +111,13 @@ int Stream_VPrintf(StreamHandle_t stream, const char *format, va_list args);
 
 // 默认操作当前任务的标准流的便捷宏
 #define MyRTOS_printf(format, ...) Stream_Printf(Task_GetStdOut(NULL), format, ##__VA_ARGS__)
-#define MyRTOS_putchar(c)          Stream_Write(Task_GetStdOut(NULL), &(c), 1, MYRTOS_MAX_DELAY)
-#define MyRTOS_getchar()           ({ char __ch; Stream_Read(Task_GetStdIn(NULL), &__ch, 1, MYRTOS_MAX_DELAY); __ch; })
+#define MyRTOS_putchar(c) Stream_Write(Task_GetStdOut(NULL), &(c), 1, MYRTOS_MAX_DELAY)
+#define MyRTOS_getchar()                                                                                               \
+    ({                                                                                                                 \
+        char __ch;                                                                                                     \
+        Stream_Read(Task_GetStdIn(NULL), &__ch, 1, MYRTOS_MAX_DELAY);                                                  \
+        __ch;                                                                                                          \
+    })
 
 /*============================== Pipe (任务间通信流) API =============================*/
 

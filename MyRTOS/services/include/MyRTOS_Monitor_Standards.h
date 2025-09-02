@@ -8,7 +8,7 @@
 
 #include "MyRTOS_Service_Config.h"
 
-#ifndef  MYRTOS_SERVICE_MONITOR_ENABLE
+#ifndef MYRTOS_SERVICE_MONITOR_ENABLE
 #define MYRTOS_SERVICE_MONITOR_ENABLE 0
 #endif
 

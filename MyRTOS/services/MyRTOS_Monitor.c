@@ -2,9 +2,9 @@
 
 #if MYRTOS_SERVICE_MONITOR_ENABLE == 1
 
+#include <string.h>
 #include "MyRTOS_Extension.h"
 #include "MyRTOS_Port.h"
-#include <string.h>
 
 #include "MyRTOS_Kernel_Private.h"
 
@@ -57,9 +57,8 @@ static InternalTaskStats_t *find_or_alloc_stat_slot(TaskHandle_t task_h) {
 // 内核事件处理函数，被动收集所有监控数据。
 static void monitor_kernel_event_handler(const KernelEventData_t *pEventData) {
     // 运行时统计需要高分辨率计时器。
-    if (g_get_hires_timer_value == NULL &&
-        (pEventData->eventType == KERNEL_EVENT_TASK_SWITCH_OUT || pEventData->eventType ==
-         KERNEL_EVENT_TASK_SWITCH_IN)) {
+    if (g_get_hires_timer_value == NULL && (pEventData->eventType == KERNEL_EVENT_TASK_SWITCH_OUT ||
+                                            pEventData->eventType == KERNEL_EVENT_TASK_SWITCH_IN)) {
         return;
     }
 
@@ -81,9 +80,8 @@ static void monitor_kernel_event_handler(const KernelEventData_t *pEventData) {
         }
 
         case KERNEL_EVENT_TASK_SWITCH_OUT: {
-            // ==================== FIX START ====================
             uint32_t now_hires = g_get_hires_timer_value();
-            uint32_t last_hires = (uint32_t)g_last_switch_time;
+            uint32_t last_hires = (uint32_t) g_last_switch_time;
             uint32_t delta_hires;
 
             if (now_hires >= last_hires) {
@@ -152,12 +150,9 @@ int Monitor_GetTaskInfo(TaskHandle_t task_h, TaskStats_t *p_stats_out) {
 
     Task_t *tcb = (Task_t *) task_h;
 
-    // ====================== 关键修改 ======================
-    // 为了安全，先在临界区之外准备好需要的信息
     StackType_t *local_stack_base;
     uint16_t local_stack_size_words;
 
-    // --- 步骤 1: 进入一个极短的临界区，只用来复制指针和大小 ---
     MyRTOS_Port_EnterCritical();
     {
         // 直接从 TCB 填充静态信息
@@ -180,14 +175,10 @@ int Monitor_GetTaskInfo(TaskHandle_t task_h, TaskStats_t *p_stats_out) {
         local_stack_base = tcb->stack_base;
         local_stack_size_words = tcb->stackSize_words;
     }
-    MyRTOS_Port_ExitCritical(); // --- 立刻退出临界区，重新开启中断 ---
-
-
-    // --- 步骤 2: 在临界区之外，安全地执行耗时的堆栈扫描 ---
-    // 即使这里的指针是错误的，导致死循环，也只会卡住`Shell_Task`自己，
-    // 而不会因为关中断而冻结整个系统。SysTick会继续运行。
+    MyRTOS_Port_ExitCritical();
     uint32_t unused_words = 0;
-    if (local_stack_base != NULL) { // 增加一个安全检查
+    if (local_stack_base != NULL) {
+        // 增加一个安全检查
         StackType_t *stack_ptr = local_stack_base;
         while (unused_words < local_stack_size_words && *stack_ptr == 0xA5A5A5A5) {
             unused_words++;
@@ -204,7 +195,8 @@ int Monitor_GetTaskInfo(TaskHandle_t task_h, TaskStats_t *p_stats_out) {
 }
 
 void Monitor_GetHeapStats(HeapStats_t *p_stats_out) {
-    if (p_stats_out == NULL) return;
+    if (p_stats_out == NULL)
+        return;
     MyRTOS_Port_EnterCritical();
     p_stats_out->total_heap_size = MYRTOS_MEMORY_POOL_SIZE;
     p_stats_out->free_bytes_remaining = freeBytesRemaining;

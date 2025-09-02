@@ -2,8 +2,8 @@
 // Created by XiaoXiu on 9/1/2025.
 //
 
-#include "platform.h"
 #include "MyRTOS_Extension.h"
+#include "platform.h"
 
 
 /**
@@ -40,6 +40,4 @@ static void platform_kernel_event_handler(const KernelEventData_t *pEventData) {
  * @brief (内部函数) 初始化平台层的错误处理机制。
  *        由 platform_core.c 在 Platform_Init 流程中调用。
  */
-void Platform_error_handler_init(void) {
-    MyRTOS_RegisterExtension(platform_kernel_event_handler);
-}
+void Platform_error_handler_init(void) { MyRTOS_RegisterExtension(platform_kernel_event_handler); }

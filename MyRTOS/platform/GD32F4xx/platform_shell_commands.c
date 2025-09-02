@@ -2,19 +2,19 @@
 // Created by XiaoXiu on 9/1/2025.
 //
 
-#include "platform.h"
 #include "MyRTOS_Service_Config.h"
+#include "platform.h"
 
 #if (MYRTOS_SERVICE_SHELL_ENABLE == 1)
 
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 
-#include "core_cm4.h"
 #include "MyRTOS_IO.h"
 #include "MyRTOS_Monitor.h"
 #include "MyRTOS_Port.h"
 #include "MyRTOS_Shell_Private.h"
+#include "core_cm4.h"
 #include "platform_hires_timer.h"
 extern ShellHandle_t g_platform_shell_handle;
 
@@ -90,7 +90,7 @@ int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
     }
     MyRTOS_Port_ExitCritical();
 
-    //获取当前高精度时间，并计算总时间增量
+    // 获取当前高精度时间，并计算总时间增量
     uint32_t now_hires = Platform_Timer_GetHiresValue();
     uint32_t total_hires_delta;
 
@@ -110,7 +110,7 @@ int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
         }
     }
 
-    //计算任务CPU使用率
+    // 计算任务CPU使用率
     uint64_t total_task_runtime_delta = 0;
     TaskStats_t *idle_task_stats = NULL;
 
@@ -140,11 +140,11 @@ int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
 
     // 打印表头 ---
     Stream_Printf(stream, "\nMyRTOS Monitor (Uptime: %llu ms)\n", TICK_TO_MS(MyRTOS_GetTick()));
-    Stream_Printf(stream, "%-*s %-4s %-8s %-10s %-18s %-8s %s\n",
-                  COL_WIDTH_NAME, "Task Name", "ID", "State", "Prio(B/C)", "Stack (Used/Size)", "CPU%", "Runtime(us)");
+    Stream_Printf(stream, "%-*s %-4s %-8s %-10s %-18s %-8s %s\n", COL_WIDTH_NAME, "Task Name", "ID", "State",
+                  "Prio(B/C)", "Stack (Used/Size)", "CPU%", "Runtime(us)");
     Stream_Printf(stream, "%s\n", SEPARATOR_LINE);
 
-    //打印每个任务的信息
+    // 打印每个任务的信息
     for (int i = 0; i < current_stats_count; ++i) {
         TaskStats_t *s = &current_stats[i];
         char prio_str[12];
@@ -158,15 +158,13 @@ int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
         uint64_t runtime_us = s->total_runtime;
 
         if (g_is_first_ps_run) {
-            Stream_Printf(stream, "%-*s %-4u %-8s %-10s %-18s %-8s %llu\n",
-                          COL_WIDTH_NAME, s->task_name, (unsigned) Task_GetId(s->task_handle),
-                          taskStateToStr[s->state], prio_str, stack_str,
+            Stream_Printf(stream, "%-*s %-4u %-8s %-10s %-18s %-8s %llu\n", COL_WIDTH_NAME, s->task_name,
+                          (unsigned) Task_GetId(s->task_handle), taskStateToStr[s->state], prio_str, stack_str,
                           "n/a", // 首次运行不计算CPU占用率
                           runtime_us);
         } else {
-            Stream_Printf(stream, "%-*s %-4u %-8s %-10s %-18s %3u.%-1u    %llu\n",
-                          COL_WIDTH_NAME, s->task_name, (unsigned) Task_GetId(s->task_handle),
-                          taskStateToStr[s->state], prio_str, stack_str,
+            Stream_Printf(stream, "%-*s %-4u %-8s %-10s %-18s %3u.%-1u    %llu\n", COL_WIDTH_NAME, s->task_name,
+                          (unsigned) Task_GetId(s->task_handle), taskStateToStr[s->state], prio_str, stack_str,
                           s->cpu_usage_permille / 10, s->cpu_usage_permille % 10, // 打印为 xx.x%
                           runtime_us);
         }
@@ -174,7 +172,7 @@ int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
 
     Stream_Printf(stream, "%s\n", SEPARATOR_LINE);
 
-    //打印堆信息和总CPU使用率
+    // 打印堆信息和总CPU使用率
     HeapStats_t heap;
     Monitor_GetHeapStats(&heap);
     Stream_Printf(stream, "Heap Info -> Total: %-5u | Free: %-5u | Min Ever Free: %-5u\n",
@@ -187,16 +185,16 @@ int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
         if (idle_task_stats != NULL) {
             idle_permille = idle_task_stats->cpu_usage_permille;
         }
-        if (idle_permille > 1000) idle_permille = 1000; // 防止计算误差超过100%
+        if (idle_permille > 1000)
+            idle_permille = 1000; // 防止计算误差超过100%
 
         uint32_t busy_permille = 1000 - idle_permille;
 
-        Stream_Printf(stream, "CPU Usage -> Total Busy: %u.%u%% | System Idle: %u.%u%%\n",
-                      busy_permille / 10, busy_permille % 10,
-                      idle_permille / 10, idle_permille % 10);
+        Stream_Printf(stream, "CPU Usage -> Total Busy: %u.%u%% | System Idle: %u.%u%%\n", busy_permille / 10,
+                      busy_permille % 10, idle_permille / 10, idle_permille % 10);
     }
 
-    //保存当前状态，作为下一次计算的基准
+    // 保存当前状态，作为下一次计算的基准
     memcpy(g_last_stats, current_stats, sizeof(TaskStats_t) * current_stats_count);
     g_last_stats_count = current_stats_count;
     g_last_ps_hires_time = now_hires;
@@ -209,7 +207,7 @@ int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
 /**
  * @brief 向平台注册一个或多个用户自定义的Shell命令。
  */
-int Platform_RegisterShellCommands(const struct ShellCommand_t *commands, size_t command_count){
+int Platform_RegisterShellCommands(const struct ShellCommand_t *commands, size_t command_count) {
     // 强制转换类型
     const ShellCommand_t *cmd_array = (const ShellCommand_t *) commands;
     int result = 0;
@@ -221,9 +219,7 @@ int Platform_RegisterShellCommands(const struct ShellCommand_t *commands, size_t
 
     for (size_t i = 0; i < command_count; ++i) {
         // 逐个调用底层的动态注册函数
-        result = Shell_RegisterCommand(g_platform_shell_handle,
-                                       cmd_array[i].name,
-                                       cmd_array[i].help,
+        result = Shell_RegisterCommand(g_platform_shell_handle, cmd_array[i].name, cmd_array[i].help,
                                        cmd_array[i].callback);
         if (result != 0) {
             // 如果其中一个命令注册失败，立即停止并返回错误代码

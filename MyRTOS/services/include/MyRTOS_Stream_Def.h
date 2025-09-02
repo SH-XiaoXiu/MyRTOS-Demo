@@ -14,10 +14,10 @@
 #define MYRTOS_IO_ENABLE 0
 #endif
 
-#ifdef  MYRTOS_SERVICE_IO_ENABLE
+#ifdef MYRTOS_SERVICE_IO_ENABLE
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 // 前置声明流的结构体
 struct Stream_t;
@@ -50,8 +50,8 @@ typedef struct {
  * @details 所有具体的流对象都必须以此结构体作为其第一个成员，以支持统一的接口调用。
  */
 typedef struct Stream_t {
-    const StreamInterface_t *p_iface; //指向实现了此流功能的接口表
-    void *p_private_data; //指向具体流的私有数据
+    const StreamInterface_t *p_iface; // 指向实现了此流功能的接口表
+    void *p_private_data; // 指向具体流的私有数据
 } Stream_t;
 
 #endif

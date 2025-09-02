@@ -1,8 +1,8 @@
 #ifndef MYRTOS_H
 #define MYRTOS_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 #include "MyRTOS_Config.h"
 
 // -----------------------------
@@ -13,14 +13,14 @@
  * @param ms 毫秒数
  * @return 对应的系统时钟节拍数
  */
-#define MS_TO_TICKS(ms)         (((uint64_t)(ms) * MYRTOS_TICK_RATE_HZ) / 1000)
+#define MS_TO_TICKS(ms) (((uint64_t) (ms) * MYRTOS_TICK_RATE_HZ) / 1000)
 
 /**
  * @brief 将系统时钟节拍数转换为毫秒
  * @param tick 系统时钟节拍数
  * @return 对应的毫秒数
  */
-#define TICK_TO_MS(tick)        (((uint64_t)(tick) * 1000) / MYRTOS_TICK_RATE_HZ)
+#define TICK_TO_MS(tick) (((uint64_t) (tick) * 1000) / MYRTOS_TICK_RATE_HZ)
 
 // -----------------------------
 // 前置声明 (Opaque Pointers)
@@ -37,10 +37,10 @@ struct Semaphore_t;
  * @brief 任务状态枚举类型
  */
 typedef enum {
-    TASK_STATE_UNUSED = 0, //任务未使用
-    TASK_STATE_READY, //任务就绪状态
-    TASK_STATE_DELAYED, //任务延时状态
-    TASK_STATE_BLOCKED //任务阻塞状态
+    TASK_STATE_UNUSED = 0, // 任务未使用
+    TASK_STATE_READY, // 任务就绪状态
+    TASK_STATE_DELAYED, // 任务延时状态
+    TASK_STATE_BLOCKED // 任务阻塞状态
 } TaskState_t;
 
 
@@ -48,26 +48,26 @@ typedef enum {
  * @brief 内核错误类型枚举
  */
 typedef enum {
-    KERNEL_ERROR_NONE = 0, //无错误
-    KERNEL_ERROR_STACK_OVERFLOW, //栈溢出错误
-    KERNEL_ERROR_MALLOC_FAILED, //内存分配失败
-    KERNEL_ERROR_HARD_FAULT, //硬件错误
+    KERNEL_ERROR_NONE = 0, // 无错误
+    KERNEL_ERROR_STACK_OVERFLOW, // 栈溢出错误
+    KERNEL_ERROR_MALLOC_FAILED, // 内存分配失败
+    KERNEL_ERROR_HARD_FAULT, // 硬件错误
 } KernelErrorType_t;
 
 // -----------------------------
 // 核心对象句柄
 // -----------------------------
-typedef struct Task_t *TaskHandle_t; //任务句柄
-typedef struct Mutex_t *MutexHandle_t; //互斥锁句柄
-typedef void *QueueHandle_t; //队列句柄
-typedef struct Semaphore_t *SemaphoreHandle_t; //信号量句柄
+typedef struct Task_t *TaskHandle_t; // 任务句柄
+typedef struct Mutex_t *MutexHandle_t; // 互斥锁句柄
+typedef void *QueueHandle_t; // 队列句柄
+typedef struct Semaphore_t *SemaphoreHandle_t; // 信号量句柄
 
 // -----------------------------
 // 全局内核变量
 // -----------------------------
-extern TaskHandle_t currentTask; //当前运行的任务
-extern TaskHandle_t idleTask; //空闲任务
-extern volatile uint8_t g_scheduler_started; //调度器是否已启动
+extern TaskHandle_t currentTask; // 当前运行的任务
+extern TaskHandle_t idleTask; // 空闲任务
+extern volatile uint8_t g_scheduler_started; // 调度器是否已启动
 
 // =============================
 // System Core API

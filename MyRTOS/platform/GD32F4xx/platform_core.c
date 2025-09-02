@@ -2,10 +2,10 @@
 // Created by XiaoXiu on 8/31/2025.
 //
 
-#include "platform.h"
 #include "gd32f4xx.h"
 #include "gd32f4xx_misc.h"
 #include "gd32f4xx_rcu.h"
+#include "platform.h"
 
 #include "MyRTOS.h"
 
@@ -16,8 +16,8 @@
 // 模块导入
 //==============================================================================
 #if MYRTOS_SERVICE_IO_ENABLE == 1
-#include "MyRTOS_IO.h"
 #include <string.h>
+#include "MyRTOS_IO.h"
 #endif
 
 
@@ -231,11 +231,13 @@ ProgramRegistry_t g_program_registry;
 static TaskHandle_t g_current_foreground_task = NULL;
 static TaskHandle_t g_spied_task = NULL;
 
-const ProgramEntry_t g_program_table[] = {
-    {"hello", "输出HelloWorld", app_hello_main},
-    {"counter", "一个计数程序", app_counter_main,},
-    {NULL, NULL}
-};
+const ProgramEntry_t g_program_table[] = {{"hello", "输出HelloWorld", app_hello_main},
+                                          {
+                                                  "counter",
+                                                  "一个计数程序",
+                                                  app_counter_main,
+                                          },
+                                          {NULL, NULL}};
 #endif // PLATFORM_USE_PROGRAM_MANGE
 
 
@@ -248,23 +250,30 @@ const ProgramEntry_t g_program_table[] = {
  * @brief 程序管理功能实现
  */
 void ProgramRegistry_Init(ProgramRegistry_t *reg) {
-    if (!reg) return;
+    if (!reg)
+        return;
     ProgramRegistryInternal_t *internal = MyRTOS_Malloc(sizeof(ProgramRegistryInternal_t));
-    if (!internal) { while (1); }
+    if (!internal) {
+        while (1)
+            ;
+    }
     memset(internal, 0, sizeof(ProgramRegistryInternal_t));
     internal->mutex = Mutex_Create();
     if (!internal->mutex) {
         MyRTOS_Free(internal);
-        while (1);
+        while (1)
+            ;
     }
     reg->_internal = internal;
 }
 
 static char *my_strdup(const char *s) {
-    if (!s) return NULL;
+    if (!s)
+        return NULL;
     size_t len = strlen(s) + 1;
     char *new_s = MyRTOS_Malloc(len);
-    if (new_s) memcpy(new_s, s, len);
+    if (new_s)
+        memcpy(new_s, s, len);
     return new_s;
 }
 
@@ -351,10 +360,15 @@ void ProgramRegistry_SignalShutdown(ProgramRegistry_t *reg, TaskHandle_t handle)
 
 // 辅助函数
 static void cleanup_launch_info(LaunchInfo_t *info) {
-    if (!info) return;
-    for (int i = 0; i < info->argc; ++i) { MyRTOS_Free(info->argv[i]); }
+    if (!info)
+        return;
+    for (int i = 0; i < info->argc; ++i) {
+        MyRTOS_Free(info->argv[i]);
+    }
     MyRTOS_Free(info->argv);
-    if (info->stdout_pipe_to_delete) { Pipe_Delete(info->stdout_pipe_to_delete); }
+    if (info->stdout_pipe_to_delete) {
+        Pipe_Delete(info->stdout_pipe_to_delete);
+    }
     MyRTOS_Free(info);
 }
 
@@ -377,7 +391,8 @@ bool Program_ShouldShutdown(void) {
  * @brief 任务清理函数
  */
 static void cleanup_task_resources(TaskHandle_t task_to_clean) {
-    if (!task_to_clean) return;
+    if (!task_to_clean)
+        return;
 
     MyRTOS_printf("\n[Platform] 正在清理任务资源: %s\n", Task_GetName(task_to_clean));
 
@@ -394,7 +409,7 @@ static void cleanup_task_resources(TaskHandle_t task_to_clean) {
         Task_Delete(task_to_clean);
     }
 
-    //无论任务如何结束，都持有info指针并可以安全地清理资源
+    // 无论任务如何结束，都持有info指针并可以安全地清理资源
     cleanup_launch_info(info);
 }
 
@@ -407,13 +422,19 @@ static void cleanup_foreground_task(void) {
 }
 
 void platform_on_back_command(void) {
-    if (g_current_foreground_task) cleanup_foreground_task();
-    else if (g_spied_task) cleanup_spy_state();
+    if (g_current_foreground_task)
+        cleanup_foreground_task();
+    else if (g_spied_task)
+        cleanup_spy_state();
 }
 
 static void cleanup_spy_state() {
-    if (g_spied_task) { Task_SetStdOut(g_spied_task, g_original_task_stdout); }
-    if (g_spy_pipe) { Pipe_Delete(g_spy_pipe); }
+    if (g_spied_task) {
+        Task_SetStdOut(g_spied_task, g_original_task_stdout);
+    }
+    if (g_spy_pipe) {
+        Pipe_Delete(g_spy_pipe);
+    }
     g_spied_task = NULL;
     g_original_task_stdout = NULL;
     g_spy_pipe = NULL;
@@ -448,14 +469,20 @@ int app_counter_main(int argc, char *argv[]) {
 static void system_clock_config(void) {
     rcu_deinit();
     rcu_osci_on(RCU_HXTAL);
-    if (SUCCESS != rcu_osci_stab_wait(RCU_HXTAL)) { while (1); }
+    if (SUCCESS != rcu_osci_stab_wait(RCU_HXTAL)) {
+        while (1)
+            ;
+    }
     rcu_ahb_clock_config(RCU_AHB_CKSYS_DIV1);
     rcu_apb2_clock_config(RCU_APB2_CKAHB_DIV2);
     rcu_apb1_clock_config(RCU_APB1_CKAHB_DIV4);
     uint32_t pll_m = 8, pll_n = 336, pll_p = 2, pll_q = 7;
     rcu_pll_config(RCU_PLLSRC_HXTAL, pll_m, pll_n, pll_p, pll_q);
     rcu_osci_on(RCU_PLL_CK);
-    if (SUCCESS != rcu_osci_stab_wait(RCU_FLAG_PLLSTB)) { while (1); }
+    if (SUCCESS != rcu_osci_stab_wait(RCU_FLAG_PLLSTB)) {
+        while (1)
+            ;
+    }
     rcu_system_clock_source_config(RCU_CKSYSSRC_PLLP);
     while (RCU_SCSS_PLLP != rcu_system_clock_source_get()) {
     }
@@ -477,13 +504,20 @@ void Platform_Init(void) {
     StdIOService_Init();
     StreamHandle_t shell_input_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
     StreamHandle_t shell_output_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
-    if (!shell_input_pipe || !shell_output_pipe) { while (1); }
-    VTS_Config_t v_config = {
-        .physical_stream = Platform_Console_GetStream(), .root_input_stream = shell_input_pipe,
-        .root_output_stream = shell_output_pipe, .back_command_sequence = "back\r\n",
-        .back_command_len = strlen("back\r\n"), .on_back_command = platform_on_back_command
-    };
-    if (VTS_Init(&v_config) != 0) { while (1); }
+    if (!shell_input_pipe || !shell_output_pipe) {
+        while (1)
+            ;
+    }
+    VTS_Config_t v_config = {.physical_stream = Platform_Console_GetStream(),
+                             .root_input_stream = shell_input_pipe,
+                             .root_output_stream = shell_output_pipe,
+                             .back_command_sequence = "back\r\n",
+                             .back_command_len = strlen("back\r\n"),
+                             .on_back_command = platform_on_back_command};
+    if (VTS_Init(&v_config) != 0) {
+        while (1)
+            ;
+    }
     g_system_stdout = VTS_GetBackgroundStream();
     g_system_stderr = VTS_GetBackgroundStream();
     ShellConfig_t s_config = {.prompt = "MyRTOS> "};
@@ -522,7 +556,8 @@ void Platform_Init(void) {
 void Platform_StartScheduler(void) {
     Platform_CreateTasks_Hook();
     Task_StartScheduler(Platform_IdleTask_Hook);
-    while (1);
+    while (1)
+        ;
 }
 
 
@@ -580,7 +615,8 @@ int cmd_run(ShellHandle_t shell, int argc, char *argv[]) {
         cleanup_launch_info(launch_info);
         return -1;
     }
-    for (int i = 0; i < prog_argc; ++i) launch_info->argv[i] = my_strdup(argv[i + 1]);
+    for (int i = 0; i < prog_argc; ++i)
+        launch_info->argv[i] = my_strdup(argv[i + 1]);
 
     TaskHandle_t new_task_h = NULL;
     if (detached) {
@@ -613,7 +649,9 @@ int cmd_run(ShellHandle_t shell, int argc, char *argv[]) {
 
     if (!new_task_h) {
         MyRTOS_printf("错误: 创建任务失败。\n");
-        if (launch_info) { cleanup_launch_info(launch_info); }
+        if (launch_info) {
+            cleanup_launch_info(launch_info);
+        }
         return -1;
     }
 
@@ -688,7 +726,9 @@ int cmd_logall(ShellHandle_t shell, int argc, char *argv[]) {
     } else if (strcmp(argv[1], "off") == 0) {
         VTS_SetLogAllMode(false);
         MyRTOS_printf("已禁用 LogAll 模式。\n");
-    } else { MyRTOS_printf("无效参数。请使用 'on' 或 'off'。\n"); }
+    } else {
+        MyRTOS_printf("无效参数。请使用 'on' 或 'off'。\n");
+    }
     return 0;
 }
 

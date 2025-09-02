@@ -1,16 +1,16 @@
 #include "platform.h"
 #if (PLATFORM_USE_HIRES_TIMER == 1)
 
-#include "gd32f4xx_timer.h"
 #include "gd32f4xx_rcu.h"
+#include "gd32f4xx_timer.h"
 
 // 根据配置选择TIMER外设
 #if (PLATFORM_HIRES_TIMER_NUM == 1)
-#define HIRES_TIMER         TIMER1
-#define HIRES_TIMER_RCU     RCU_TIMER1
+#define HIRES_TIMER TIMER1
+#define HIRES_TIMER_RCU RCU_TIMER1
 #elif (PLATFORM_HIRES_TIMER_NUM == 2)
-#define HIRES_TIMER         TIMER2
-#define HIRES_TIMER_RCU     RCU_TIMER2
+#define HIRES_TIMER TIMER2
+#define HIRES_TIMER_RCU RCU_TIMER2
 // ... 为其他定时器添加宏定义 ...
 #else
 #error "Invalid PLATFORM_HIRES_TIMER_NUM selected in platform_config.h"
@@ -32,7 +32,5 @@ void Platform_HiresTimer_Init(void) {
     timer_enable(HIRES_TIMER);
 }
 
-uint32_t Platform_Timer_GetHiresValue(void) {
-    return timer_counter_read(HIRES_TIMER);
-}
+uint32_t Platform_Timer_GetHiresValue(void) { return timer_counter_read(HIRES_TIMER); }
 #endif // PLATFORM_USE_HIRES_TIMER

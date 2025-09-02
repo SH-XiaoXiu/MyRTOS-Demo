@@ -8,7 +8,7 @@
 
 #include "MyRTOS_Service_Config.h"
 
-#ifndef  MYRTOS_SERVICE_MONITOR_ENABLE
+#ifndef MYRTOS_SERVICE_MONITOR_ENABLE
 #define MYRTOS_SERVICE_MONITOR_ENABLE 0
 #endif
 
@@ -21,15 +21,15 @@
  * @brief 任务统计信息结构体 (对外暴露)。
  */
 typedef struct {
-    TaskHandle_t task_handle;           // 任务句柄
-    const char *task_name;              // 任务名称
-    TaskState_t state;                  // 当前状态 (Running, Ready, Blocked...)
-    uint8_t current_priority;           // 当前优先级 (可能因优先级继承而改变)
-    uint8_t base_priority;              // 基础优先级
-    uint32_t stack_size_bytes;          // 总栈大小 (字节)
+    TaskHandle_t task_handle; // 任务句柄
+    const char *task_name; // 任务名称
+    TaskState_t state; // 当前状态 (Running, Ready, Blocked...)
+    uint8_t current_priority; // 当前优先级 (可能因优先级继承而改变)
+    uint8_t base_priority; // 基础优先级
+    uint32_t stack_size_bytes; // 总栈大小 (字节)
     uint32_t stack_high_water_mark_bytes; // 栈历史最高使用量 (字节)，值越小表示剩余栈空间越多
-    uint64_t total_runtime;             // 总运行时间 (单位: 高精度timer ticks)
-    uint32_t cpu_usage_permille;        // CPU使用率 (千分比)，需由调用者在两个时间点上计算差值得出
+    uint64_t total_runtime; // 总运行时间 (单位: 高精度timer ticks)
+    uint32_t cpu_usage_permille; // CPU使用率 (千分比)，需由调用者在两个时间点上计算差值得出
 } TaskStats_t;
 
 
@@ -37,9 +37,9 @@ typedef struct {
  * @brief 堆内存统计信息结构体 (对外暴露)。
  */
 typedef struct {
-    size_t total_heap_size;             // 总堆大小 (字节)
-    size_t free_bytes_remaining;        // 当前剩余空闲字节数
-    size_t minimum_ever_free_bytes;     // 历史最小剩余字节数 (堆的水线)
+    size_t total_heap_size; // 总堆大小 (字节)
+    size_t free_bytes_remaining; // 当前剩余空闲字节数
+    size_t minimum_ever_free_bytes; // 历史最小剩余字节数 (堆的水线)
 } HeapStats_t;
 
 
@@ -63,7 +63,7 @@ int Monitor_Init(const MonitorConfig_t *config);
  * @brief (内核API扩展) 获取任务链表中的下一个任务句柄。
  * @details 用于遍历系统中所有任务。
  * @param previous_handle 上一个任务的
-* @return TaskHandle_t 下一个任务的句柄, 或 NULL 如果已遍历完。
+ * @return TaskHandle_t 下一个任务的句柄, 或 NULL 如果已遍历完。
  */
 TaskHandle_t Monitor_GetNextTask(TaskHandle_t previous_handle);
 

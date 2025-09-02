@@ -7,23 +7,23 @@
 #include "MyRTOS_Port.h"
 
 #ifndef MYRTOS_LOG_QUEUE_LENGTH
-#define MYRTOS_LOG_QUEUE_LENGTH    64
+#define MYRTOS_LOG_QUEUE_LENGTH 64
 #endif
 #ifndef MYRTOS_LOG_TASK_STACK_SIZE
 #define MYRTOS_LOG_TASK_STACK_SIZE 2048
 #endif
 #ifndef MYRTOS_LOG_TASK_PRIORITY
-#define MYRTOS_LOG_TASK_PRIORITY   (MYRTOS_MAX_PRIORITIES - 1) // 默认高优先级
+#define MYRTOS_LOG_TASK_PRIORITY (MYRTOS_MAX_PRIORITIES - 1) // 默认高优先级
 #endif
 #ifndef MYRTOS_LOG_FORMAT
 #define MYRTOS_LOG_FORMAT "[%5llu][%c][%s][%s] "
 #endif
 
-// 服务的内部状态 
+// 服务的内部状态
 static LogLevel_t g_log_level = LOG_LEVEL_DEBUG;
 static QueueHandle_t g_io_request_queue;
 
-// 任务实现 
+// 任务实现
 static void IOServer_Task(void *param) {
     // 重命名为更通用的名字
     (void) param;
@@ -38,13 +38,14 @@ static void IOServer_Task(void *param) {
     }
 }
 
-// 公共API实现 
+// 公共API实现
 int Log_Init(void) {
     g_io_request_queue = Queue_Create(MYRTOS_LOG_QUEUE_LENGTH, sizeof(AsyncWriteRequest_t));
-    if (!g_io_request_queue) return -1;
+    if (!g_io_request_queue)
+        return -1;
 
-    TaskHandle_t task_h = Task_Create(IOServer_Task, "IOServer", MYRTOS_LOG_TASK_STACK_SIZE, NULL,
-                                      MYRTOS_LOG_TASK_PRIORITY);
+    TaskHandle_t task_h =
+            Task_Create(IOServer_Task, "IOServer", MYRTOS_LOG_TASK_STACK_SIZE, NULL, MYRTOS_LOG_TASK_PRIORITY);
     if (!task_h) {
         Queue_Delete(g_io_request_queue);
         g_io_request_queue = NULL;
@@ -71,23 +72,29 @@ void Log_Printf(LogLevel_t level, const char *tag, const char *format, ...) {
     }
 
     const char *task_name = Task_GetName(Task_GetCurrentTaskHandle());
-    if (task_name == NULL) task_name = "NoName";
+    if (task_name == NULL)
+        task_name = "NoName";
 
     char level_char = ' ';
     switch (level) {
-        case LOG_LEVEL_ERROR: level_char = 'E';
+        case LOG_LEVEL_ERROR:
+            level_char = 'E';
             break;
-        case LOG_LEVEL_WARN: level_char = 'W';
+        case LOG_LEVEL_WARN:
+            level_char = 'W';
             break;
-        case LOG_LEVEL_INFO: level_char = 'I';
+        case LOG_LEVEL_INFO:
+            level_char = 'I';
             break;
-        case LOG_LEVEL_DEBUG: level_char = 'D';
+        case LOG_LEVEL_DEBUG:
+            level_char = 'D';
             break;
-        default: break;
+        default:
+            break;
     }
 
-    int header_len = snprintf(request.message, sizeof(request.message),
-                              MYRTOS_LOG_FORMAT, MyRTOS_GetTick(), level_char, task_name, tag);
+    int header_len = snprintf(request.message, sizeof(request.message), MYRTOS_LOG_FORMAT, MyRTOS_GetTick(), level_char,
+                              task_name, tag);
 
     if (header_len < 0 || header_len >= sizeof(request.message)) {
         header_len = 0;
@@ -98,7 +105,8 @@ void Log_Printf(LogLevel_t level, const char *tag, const char *format, ...) {
     int body_len = vsnprintf(request.message + header_len, sizeof(request.message) - header_len, format, args);
     va_end(args);
 
-    if (body_len < 0) body_len = 0;
+    if (body_len < 0)
+        body_len = 0;
 
     int total_len = header_len + body_len;
     if (total_len < (sizeof(request.message) - 2)) {
@@ -114,7 +122,8 @@ void Log_Printf(LogLevel_t level, const char *tag, const char *format, ...) {
 
 
 void MyRTOS_AsyncVprintf(StreamHandle_t stream, const char *format, va_list args) {
-    if (!g_io_request_queue || !stream) return;
+    if (!g_io_request_queue || !stream)
+        return;
 
     AsyncWriteRequest_t request;
     request.target_stream = stream;

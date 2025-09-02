@@ -70,7 +70,7 @@ typedef struct Task_t {
 } Task_t;
 
 // TCB中stack_base字段的偏移量
-#define TCB_OFFSET_STACK_BASE   offsetof(Task_t, stack_base)
+#define TCB_OFFSET_STACK_BASE offsetof(Task_t, stack_base)
 
 /**
  * @brief 队列结构体
@@ -103,5 +103,3 @@ extern TaskHandle_t allTaskListHead; // 所有任务链表头
 extern size_t freeBytesRemaining; // 剩余空闲内存字节数
 
 #endif // MYRTOS_KERNEL_PRIVATE_H
-
-

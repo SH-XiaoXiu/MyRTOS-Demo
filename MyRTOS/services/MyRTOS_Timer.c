@@ -6,9 +6,9 @@
 
 #if MYRTOS_SERVICE_TIMER_ENABLE == 1
 
-#include "MyRTOS.h"
-#include <string.h>
 #include <stdbool.h>
+#include <string.h>
+#include "MyRTOS.h"
 
 /*============================== 内部数据结构 ==============================*/
 
@@ -25,12 +25,7 @@ typedef struct Timer_t {
 } Timer_t;
 
 // 发送给定时器服务任务的命令类型
-typedef enum {
-    TIMER_CMD_START,
-    TIMER_CMD_STOP,
-    TIMER_CMD_DELETE,
-    TIMER_CMD_CHANGE_PERIOD
-} TimerCommandType_t;
+typedef enum { TIMER_CMD_START, TIMER_CMD_STOP, TIMER_CMD_DELETE, TIMER_CMD_CHANGE_PERIOD } TimerCommandType_t;
 
 // 命令结构体
 typedef struct {
@@ -68,7 +63,7 @@ static void TimerServiceTask(void *pv) {
         uint64_t now = MyRTOS_GetTick();
         uint32_t block_ticks;
 
-        // 1. 根据当前活动链表状态，计算下一次需要唤醒的时间
+        // 根据当前活动链表状态，计算下一次需要唤醒的时间
         if (g_active_timer_list_head == NULL) {
             block_ticks = MYRTOS_MAX_DELAY; // 无活动定时器，无限期阻塞
         } else if (g_active_timer_list_head->expiry_time <= now) {
@@ -77,7 +72,7 @@ static void TimerServiceTask(void *pv) {
             block_ticks = (uint32_t) (g_active_timer_list_head->expiry_time - now);
         }
 
-        // 2. 阻塞等待命令队列，或等待直到最近的定时器到期
+        // 阻塞等待命令队列，或等待直到最近的定时器到期
         if (Queue_Receive(g_timer_command_queue, &command, block_ticks) == 1) {
             // 成功收到一个新命令，处理它
             process_timer_command(&command);
@@ -87,7 +82,7 @@ static void TimerServiceTask(void *pv) {
             }
         }
 
-        // 3. 处理所有已到期的定时器
+        // 处理所有已到期的定时器
         now = MyRTOS_GetTick();
         while (g_active_timer_list_head != NULL && g_active_timer_list_head->expiry_time <= now) {
             TimerHandle_t expired_timer = g_active_timer_list_head;
@@ -113,7 +108,8 @@ static void TimerServiceTask(void *pv) {
 // 处理从队列中收到的单个命令
 static void process_timer_command(const TimerCommand_t *command) {
     TimerHandle_t timer = command->timer;
-    if (!timer) return;
+    if (!timer)
+        return;
 
     bool was_active = timer->is_active;
 
@@ -123,8 +119,10 @@ static void process_timer_command(const TimerCommand_t *command) {
             g_active_timer_list_head = timer->p_next;
         } else {
             Timer_t *iter = g_active_timer_list_head;
-            while (iter && iter->p_next != timer) iter = iter->p_next;
-            if (iter) iter->p_next = timer->p_next;
+            while (iter && iter->p_next != timer)
+                iter = iter->p_next;
+            if (iter)
+                iter->p_next = timer->p_next;
         }
         timer->is_active = false;
     }
@@ -172,15 +170,17 @@ static void insert_timer_into_active_list(TimerHandle_t timer_to_insert) {
 /*============================== 公共API实现 ===============================*/
 
 int TimerService_Init(uint8_t timer_task_priority, uint16_t timer_task_stack_size) {
-    if (g_timer_service_task_handle != NULL) return 0; // 防止重复初始化
+    if (g_timer_service_task_handle != NULL)
+        return 0; // 防止重复初始化
 
     // 创建命令队列，队列深度可配置
     g_timer_command_queue = Queue_Create(MYRTOS_TIMER_COMMAND_QUEUE_SIZE, sizeof(TimerCommand_t));
-    if (g_timer_command_queue == NULL) return -1;
+    if (g_timer_command_queue == NULL)
+        return -1;
 
     // 创建定时器服务任务
-    g_timer_service_task_handle = Task_Create(TimerServiceTask, "TimerSvc", timer_task_stack_size, NULL,
-                                              timer_task_priority);
+    g_timer_service_task_handle =
+            Task_Create(TimerServiceTask, "TimerSvc", timer_task_stack_size, NULL, timer_task_priority);
     if (g_timer_service_task_handle == NULL) {
         Queue_Delete(g_timer_command_queue);
         return -1;
@@ -206,7 +206,8 @@ TimerHandle_t Timer_Create(const char *name, uint32_t period, uint8_t is_periodi
 // 统一的命令发送函数
 static int send_command_to_timer_task(TimerHandle_t timer, TimerCommandType_t cmd, uint32_t value,
                                       uint32_t block_ticks) {
-    if (g_timer_service_task_handle == NULL || timer == NULL) return -1;
+    if (g_timer_service_task_handle == NULL || timer == NULL)
+        return -1;
     TimerCommand_t command = {.command = cmd, .timer = timer, .value = value};
     return (Queue_Send(g_timer_command_queue, &command, block_ticks) == 1) ? 0 : -1;
 }
@@ -227,8 +228,6 @@ int Timer_ChangePeriod(TimerHandle_t timer, uint32_t new_period, uint32_t block_
     return send_command_to_timer_task(timer, TIMER_CMD_CHANGE_PERIOD, new_period, block_ticks);
 }
 
-void *Timer_GetArg(TimerHandle_t timer) {
-    return timer ? timer->p_timer_arg : NULL;
-}
+void *Timer_GetArg(TimerHandle_t timer) { return timer ? timer->p_timer_arg : NULL; }
 
 #endif

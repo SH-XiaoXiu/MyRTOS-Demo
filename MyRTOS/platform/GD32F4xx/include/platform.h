@@ -6,8 +6,8 @@
 #define PLATFORM_H
 
 #include <stdint.h>
-#include "platform_config.h"
 #include "gd32f4xx.h"
+#include "platform_config.h"
 
 // 引入 MyRTOS 核心类型，以便钩子函数可以使用
 #include "MyRTOS.h"
@@ -51,7 +51,7 @@ uint32_t Platform_Timer_GetHiresValue(void);
 #endif
 
 
-#if MYRTOS_SERVICE_SHELL_ENABLE ==1
+#if MYRTOS_SERVICE_SHELL_ENABLE == 1
 struct ShellCommand_t;
 // =========================================================================
 //                            Shell 命令注册

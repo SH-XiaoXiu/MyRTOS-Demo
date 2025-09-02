@@ -1,5 +1,5 @@
 /**
-* @file  MyRTOS_VTS.h
+ * @file  MyRTOS_VTS.h
  * @brief MyRTOS 虚拟终端服务
  * @details 负责将物理终端的IO路由到当前拥有“焦点”的虚拟流。
  *          实现了类似前台/后台进程的独占式终端访问模型。
@@ -13,10 +13,10 @@
 #define MYRTOS_SERVICE_VTS_ENABLE 0
 #endif
 #if (MYRTOS_SERVICE_VTS_ENABLE == 1)
-#include "MyRTOS.h"
-#include "MyRTOS_IO.h"
 #include <stdbool.h>
 #include <stddef.h>
+#include "MyRTOS.h"
+#include "MyRTOS_IO.h"
 
 
 /**

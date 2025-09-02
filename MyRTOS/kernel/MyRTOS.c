@@ -1,12 +1,12 @@
 #include "MyRTOS.h"
-#include "MyRTOS_Port.h"
 #include <string.h>
 #include "MyRTOS_Extension.h"
 #include "MyRTOS_Kernel_Private.h"
+#include "MyRTOS_Port.h"
 
 /*===========================================================================*
-* 私有函数声明
-*===========================================================================*/
+ * 私有函数声明
+ *===========================================================================*/
 
 // 初始化内存堆
 static void heapInit(void);
@@ -48,11 +48,11 @@ static void broadcast_event(const KernelEventData_t *pEventData);
 #define HEAP_MINIMUM_BLOCK_SIZE ((sizeof(BlockLink_t) * 2))
 
 // 内存块管理结构的大小，已考虑内存对齐
-static const size_t heapStructSize = (sizeof(BlockLink_t) + (MYRTOS_HEAP_BYTE_ALIGNMENT - 1)) & ~((
-                                         (size_t) MYRTOS_HEAP_BYTE_ALIGNMENT - 1));
+static const size_t heapStructSize =
+        (sizeof(BlockLink_t) + (MYRTOS_HEAP_BYTE_ALIGNMENT - 1)) & ~(((size_t) MYRTOS_HEAP_BYTE_ALIGNMENT - 1));
 
-//内存堆管理
-// 静态分配的内存池，用于RTOS的动态内存分配
+// 内存堆管理
+//  静态分配的内存池，用于RTOS的动态内存分配
 static uint8_t rtos_memory_pool[MYRTOS_MEMORY_POOL_SIZE] __attribute__((aligned(MYRTOS_HEAP_BYTE_ALIGNMENT)));
 // 空闲内存块链表的起始哨兵节点
 static BlockLink_t start;
@@ -63,8 +63,8 @@ size_t freeBytesRemaining = 0U;
 // 用于标记内存块是否已被分配的位掩码 (最高位)
 static size_t blockAllocatedBit = 0;
 
-//内核状态
-// 调度器是否已启动的标志
+// 内核状态
+//  调度器是否已启动的标志
 volatile uint8_t g_scheduler_started = 0;
 // 临界区嵌套计数
 volatile uint32_t criticalNestingCount = 0;
@@ -167,7 +167,8 @@ static void insertBlockIntoFreeList(BlockLink_t *blockToInsert) {
 static void *rtos_malloc(const size_t wantedSize) {
     BlockLink_t *block, *previousBlock, *newBlockLink;
     void *pvReturn = NULL;
-    MyRTOS_Port_EnterCritical(); {
+    MyRTOS_Port_EnterCritical();
+    {
         // 如果堆尚未初始化，则进行初始化
         if (blockLinkEnd == NULL) {
             heapInit();
@@ -219,7 +220,8 @@ static void *rtos_malloc(const size_t wantedSize) {
  * @param pv 要释放的内存指针
  */
 static void rtos_free(void *pv) {
-    if (pv == NULL) return;
+    if (pv == NULL)
+        return;
     uint8_t *puc = (uint8_t *) pv;
     BlockLink_t *link;
     // 从用户指针回退到内存块的管理结构
@@ -243,7 +245,8 @@ static void rtos_free(void *pv) {
  * @param taskToRemove 要移除的任务句柄
  */
 static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t taskToRemove) {
-    if (taskToRemove == NULL) return;
+    if (taskToRemove == NULL)
+        return;
     // 更新前一个节点的 next 指针
     if (taskToRemove->pPrevGeneric != NULL) {
         taskToRemove->pPrevGeneric->pNextGeneric = taskToRemove->pNextGeneric;
@@ -272,7 +275,8 @@ static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t taskToRemo
  * @param newPriority 新的优先级
  */
 static void task_set_priority(TaskHandle_t task, uint8_t newPriority) {
-    if (task->priority == newPriority) return;
+    if (task->priority == newPriority)
+        return;
     // 如果任务是就绪状态，需要从旧的就绪链表移到新的就绪链表
     if (task->state == TASK_STATE_READY) {
         MyRTOS_Port_EnterCritical();
@@ -296,7 +300,8 @@ static void addTaskToSortedDelayList(TaskHandle_t task) {
     if (delayedTaskListHead == NULL || wakeUpTime < delayedTaskListHead->delay) {
         task->pNextGeneric = delayedTaskListHead;
         task->pPrevGeneric = NULL;
-        if (delayedTaskListHead != NULL) delayedTaskListHead->pPrevGeneric = task;
+        if (delayedTaskListHead != NULL)
+            delayedTaskListHead->pPrevGeneric = task;
         delayedTaskListHead = task;
     } else {
         // 遍历链表找到合适的插入位置
@@ -306,7 +311,8 @@ static void addTaskToSortedDelayList(TaskHandle_t task) {
         }
         // 插入到链表中间或尾部
         task->pNextGeneric = iterator->pNextGeneric;
-        if (iterator->pNextGeneric != NULL) iterator->pNextGeneric->pPrevGeneric = task;
+        if (iterator->pNextGeneric != NULL)
+            iterator->pNextGeneric->pPrevGeneric = task;
         iterator->pNextGeneric = task;
         task->pPrevGeneric = iterator;
     }
@@ -317,8 +323,10 @@ static void addTaskToSortedDelayList(TaskHandle_t task) {
  * @param task 要添加的任务句柄
  */
 static void addTaskToReadyList(TaskHandle_t task) {
-    if (task == NULL || task->priority >= MYRTOS_MAX_PRIORITIES) return;
-    MyRTOS_Port_EnterCritical(); {
+    if (task == NULL || task->priority >= MYRTOS_MAX_PRIORITIES)
+        return;
+    MyRTOS_Port_EnterCritical();
+    {
         // 设置对应优先级的位图标志
         topReadyPriority |= (1UL << task->priority);
         task->pNextGeneric = NULL;
@@ -328,7 +336,8 @@ static void addTaskToReadyList(TaskHandle_t task) {
             task->pPrevGeneric = NULL;
         } else {
             Task_t *pLast = readyTaskLists[task->priority];
-            while (pLast->pNextGeneric != NULL) pLast = pLast->pNextGeneric;
+            while (pLast->pNextGeneric != NULL)
+                pLast = pLast->pNextGeneric;
             pLast->pNextGeneric = task;
             task->pPrevGeneric = pLast;
         }
@@ -342,9 +351,7 @@ static void addTaskToReadyList(TaskHandle_t task) {
  * @brief 初始化一个事件列表
  * @param pEventList 指向要初始化的事件列表的指针
  */
-static void eventListInit(EventList_t *pEventList) {
-    pEventList->head = NULL;
-}
+static void eventListInit(EventList_t *pEventList) { pEventList->head = NULL; }
 
 /**
  * @brief 将任务按优先级插入到事件等待列表中
@@ -373,7 +380,8 @@ static void eventListInsert(EventList_t *pEventList, TaskHandle_t taskToInsert) 
  * @param taskToRemove 要移除的任务
  */
 static void eventListRemove(TaskHandle_t taskToRemove) {
-    if (taskToRemove->pEventList == NULL) return;
+    if (taskToRemove->pEventList == NULL)
+        return;
     EventList_t *pEventList = taskToRemove->pEventList;
     // 如果任务是事件列表的头节点
     if (pEventList->head == taskToRemove) {
@@ -406,8 +414,8 @@ static void broadcast_event(const KernelEventData_t *pEventData) {
 }
 
 /*===========================================================================*
-* 公开接口实现
-*===========================================================================*/
+ * 公开接口实现
+ *===========================================================================*/
 
 /**
  * @brief 初始化RTOS内核
@@ -435,13 +443,15 @@ void MyRTOS_Init(void) {
 void Task_StartScheduler(void (*idle_task_func)(void *)) {
     // 必须提供一个有效的空闲任务函数
     if (idle_task_func == NULL) {
-        while (1);
+        while (1)
+            ;
     }
     // 创建空闲任务，其优先级为最低
     idleTask = Task_Create(idle_task_func, "IDLE", 128, NULL, 0);
     if (idleTask == NULL) {
         // 如果空闲任务创建失败，系统无法继续
-        while (1);
+        while (1)
+            ;
     }
     // 标记调度器已启动
     g_scheduler_started = 1;
@@ -497,9 +507,7 @@ int MyRTOS_Tick_Handler(void) {
  * @brief 检查调度器是否正在运行
  * @return 如果调度器已启动，返回1，否则返回0
  */
-uint8_t MyRTOS_Schedule_IsRunning(void) {
-    return g_scheduler_started;
-}
+uint8_t MyRTOS_Schedule_IsRunning(void) { return g_scheduler_started; }
 
 /**
  * @brief 报告一个内核级错误
@@ -565,7 +573,8 @@ void *schedule_next_task(void) {
             nextTaskToRun->pNextGeneric->pPrevGeneric = NULL;
             Task_t *pLast = readyTaskLists[highestPriority];
             if (pLast != NULL) {
-                while (pLast->pNextGeneric != NULL) pLast = pLast->pNextGeneric;
+                while (pLast->pNextGeneric != NULL)
+                    pLast = pLast->pNextGeneric;
                 pLast->pNextGeneric = nextTaskToRun;
                 nextTaskToRun->pPrevGeneric = pLast;
                 nextTaskToRun->pNextGeneric = NULL;
@@ -584,7 +593,8 @@ void *schedule_next_task(void) {
         KernelEventData_t eventData = {.eventType = KERNEL_EVENT_TASK_SWITCH_IN, .task = currentTask};
         broadcast_event(&eventData);
     }
-    if (currentTask == NULL) return NULL; // 理论上不应发生，因为总有idleTask
+    if (currentTask == NULL)
+        return NULL; // 理论上不应发生，因为总有idleTask
     // 返回新任务的堆栈指针给移植层
     return currentTask->sp;
 }
@@ -594,9 +604,7 @@ void *schedule_next_task(void) {
  * @note  通常在任务状态发生改变后（例如，从延迟变为就绪）调用，以确保最高优先级的任务能够运行。
  *        在RTOS的API内部，这通常通过 `MyRTOS_Port_Yield()` 实现。
  */
-void MyRTOS_Schedule(void) {
-    schedule_next_task();
-}
+void MyRTOS_Schedule(void) { schedule_next_task(); }
 
 // =============================
 // Memory Management API
@@ -610,10 +618,7 @@ void MyRTOS_Schedule(void) {
 void *MyRTOS_Malloc(size_t wantedSize) {
     void *pv = rtos_malloc(wantedSize);
     // 广播内存分配事件
-    KernelEventData_t eventData = {
-        .eventType = KERNEL_EVENT_MALLOC,
-        .mem = {.ptr = pv, .size = wantedSize}
-    };
+    KernelEventData_t eventData = {.eventType = KERNEL_EVENT_MALLOC, .mem = {.ptr = pv, .size = wantedSize}};
     broadcast_event(&eventData);
     return pv;
 }
@@ -627,10 +632,8 @@ void MyRTOS_Free(void *pv) {
     if (pv) {
         // 在释放前获取块大小以用于事件广播
         BlockLink_t *link = (BlockLink_t *) ((uint8_t *) pv - heapStructSize);
-        KernelEventData_t eventData = {
-            .eventType = KERNEL_EVENT_FREE,
-            .mem = {.ptr = pv, .size = (link->blockSize & ~blockAllocatedBit)}
-        };
+        KernelEventData_t eventData = {.eventType = KERNEL_EVENT_FREE,
+                                       .mem = {.ptr = pv, .size = (link->blockSize & ~blockAllocatedBit)}};
         broadcast_event(&eventData);
     }
     rtos_free(pv);
@@ -647,10 +650,12 @@ void MyRTOS_Free(void *pv) {
  */
 TaskHandle_t Task_Create(void (*func)(void *), const char *taskName, uint16_t stack_size, void *param,
                          uint8_t priority) {
-    if (priority >= MYRTOS_MAX_PRIORITIES || func == NULL) return NULL;
+    if (priority >= MYRTOS_MAX_PRIORITIES || func == NULL)
+        return NULL;
     // 为任务控制块（TCB）分配内存
     Task_t *t = MyRTOS_Malloc(sizeof(Task_t));
-    if (t == NULL) return NULL;
+    if (t == NULL)
+        return NULL;
     // 为任务堆栈分配内存
     StackType_t *stack = MyRTOS_Malloc(stack_size * sizeof(StackType_t));
     if (stack == NULL) {
@@ -696,13 +701,15 @@ TaskHandle_t Task_Create(void (*func)(void *), const char *taskName, uint16_t st
     }
     // 调用移植层代码初始化任务堆栈（模拟CPU上下文）
     t->sp = MyRTOS_Port_InitialiseStack(stack + stack_size, func, param);
-    MyRTOS_Port_EnterCritical(); {
+    MyRTOS_Port_EnterCritical();
+    {
         // 将新任务添加到全局任务列表中
         if (allTaskListHead == NULL) {
             allTaskListHead = t;
         } else {
             Task_t *p = allTaskListHead;
-            while (p->pNextTask != NULL) p = p->pNextTask;
+            while (p->pNextTask != NULL)
+                p = p->pNextTask;
             p->pNextTask = t;
         }
         // 将新任务添加到就绪列表
@@ -723,7 +730,8 @@ TaskHandle_t Task_Create(void (*func)(void *), const char *taskName, uint16_t st
 int Task_Delete(TaskHandle_t task_h) {
     Task_t *task_to_delete = (task_h == NULL) ? currentTask : task_h;
     // 不允许删除空闲任务
-    if (task_to_delete == idleTask || task_to_delete == NULL) return -1;
+    if (task_to_delete == idleTask || task_to_delete == NULL)
+        return -1;
     uint32_t deleted_task_id = task_to_delete->taskId;
     // 广播任务删除事件
     KernelEventData_t eventData = {.eventType = KERNEL_EVENT_TASK_DELETE, .task = task_to_delete};
@@ -751,8 +759,10 @@ int Task_Delete(TaskHandle_t task_h) {
         curr = curr->pNextTask;
     }
     if (curr != NULL) {
-        if (prev == NULL) allTaskListHead = curr->pNextTask;
-        else prev->pNextTask = curr->pNextTask;
+        if (prev == NULL)
+            allTaskListHead = curr->pNextTask;
+        else
+            prev->pNextTask = curr->pNextTask;
     }
     void *stack_to_free = task_to_delete->stack_base;
     // 如果是删除自身
@@ -779,8 +789,10 @@ int Task_Delete(TaskHandle_t task_h) {
  * @param tick 要延迟的系统滴答数
  */
 void Task_Delay(uint32_t tick) {
-    if (tick == 0 || g_scheduler_started == 0) return;
-    MyRTOS_Port_EnterCritical(); {
+    if (tick == 0 || g_scheduler_started == 0)
+        return;
+    MyRTOS_Port_EnterCritical();
+    {
         // 从就绪链表中移除当前任务
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         // 计算唤醒时间并设置任务状态
@@ -801,7 +813,8 @@ void Task_Delay(uint32_t tick) {
  */
 int Task_Notify(TaskHandle_t task_h) {
     int trigger_yield = 0;
-    MyRTOS_Port_EnterCritical(); {
+    MyRTOS_Port_EnterCritical();
+    {
         // 检查目标任务是否正在等待通知
         if (task_h->is_waiting_notification && task_h->state == TASK_STATE_BLOCKED) {
             task_h->is_waiting_notification = 0;
@@ -825,9 +838,11 @@ int Task_Notify(TaskHandle_t task_h) {
  * @return 成功返回0，失败返回-1
  */
 int Task_NotifyFromISR(TaskHandle_t task_h, int *higherPriorityTaskWoken) {
-    if (higherPriorityTaskWoken == NULL) return -1;
+    if (higherPriorityTaskWoken == NULL)
+        return -1;
     *higherPriorityTaskWoken = 0;
-    MyRTOS_Port_EnterCritical(); {
+    MyRTOS_Port_EnterCritical();
+    {
         if (task_h->is_waiting_notification && task_h->state == TASK_STATE_BLOCKED) {
             task_h->is_waiting_notification = 0;
             addTaskToReadyList(task_h);
@@ -845,7 +860,8 @@ int Task_NotifyFromISR(TaskHandle_t task_h, int *higherPriorityTaskWoken) {
  * @note  任务将一直阻塞，直到 `Task_Notify` 或 `Task_NotifyFromISR` 被调用
  */
 void Task_Wait(void) {
-    MyRTOS_Port_EnterCritical(); {
+    MyRTOS_Port_EnterCritical();
+    {
         // 从就绪链表移除
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         // 设置等待通知标志和阻塞状态
@@ -862,26 +878,20 @@ void Task_Wait(void) {
  * @param task_h 目标任务的句柄
  * @return 返回任务的状态 (TaskState_t)
  */
-TaskState_t Task_GetState(TaskHandle_t task_h) {
-    return task_h ? ((Task_t *) task_h)->state : TASK_STATE_UNUSED;
-}
+TaskState_t Task_GetState(TaskHandle_t task_h) { return task_h ? ((Task_t *) task_h)->state : TASK_STATE_UNUSED; }
 
 /**
  * @brief 获取任务的当前优先级
  * @param task_h 目标任务的句柄
  * @return 返回任务的优先级
  */
-uint8_t Task_GetPriority(TaskHandle_t task_h) {
-    return task_h ? ((Task_t *) task_h)->priority : 0;
-}
+uint8_t Task_GetPriority(TaskHandle_t task_h) { return task_h ? ((Task_t *) task_h)->priority : 0; }
 
 /**
  * @brief 获取当前正在运行的任务的句柄
  * @return 返回当前任务的句柄
  */
-TaskHandle_t Task_GetCurrentTaskHandle(void) {
-    return currentTask;
-}
+TaskHandle_t Task_GetCurrentTaskHandle(void) { return currentTask; }
 
 /**
  * @brief 获取任务的唯一ID
@@ -889,7 +899,8 @@ TaskHandle_t Task_GetCurrentTaskHandle(void) {
  * @return 返回任务的ID
  */
 uint32_t Task_GetId(TaskHandle_t task_h) {
-    if (!task_h) return (uint32_t) -1;
+    if (!task_h)
+        return (uint32_t) -1;
     return ((Task_t *) task_h)->taskId;
 }
 
@@ -939,10 +950,12 @@ TaskHandle_t Task_FindByName(const char *taskName) {
  * @return 成功则返回队列句柄，失败则返回NULL
  */
 QueueHandle_t Queue_Create(uint32_t length, uint32_t itemSize) {
-    if (length == 0 || itemSize == 0) return NULL;
+    if (length == 0 || itemSize == 0)
+        return NULL;
     // 分配队列控制结构内存
     Queue_t *queue = MyRTOS_Malloc(sizeof(Queue_t));
-    if (queue == NULL) return NULL;
+    if (queue == NULL)
+        return NULL;
     // 分配队列存储区内存
     queue->storage = (uint8_t *) MyRTOS_Malloc(length * itemSize);
     if (queue->storage == NULL) {
@@ -967,8 +980,10 @@ QueueHandle_t Queue_Create(uint32_t length, uint32_t itemSize) {
  */
 void Queue_Delete(QueueHandle_t delQueue) {
     Queue_t *queue = delQueue;
-    if (queue == NULL) return;
-    MyRTOS_Port_EnterCritical(); {
+    if (queue == NULL)
+        return;
+    MyRTOS_Port_EnterCritical();
+    {
         // 唤醒所有等待发送的任务
         while (queue->sendEventList.head != NULL) {
             Task_t *taskToWake = queue->sendEventList.head;
@@ -997,7 +1012,8 @@ void Queue_Delete(QueueHandle_t delQueue) {
  */
 int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
     Queue_t *pQueue = queue;
-    if (pQueue == NULL) return 0;
+    if (pQueue == NULL)
+        return 0;
     while (1) {
         MyRTOS_Port_EnterCritical();
         // 情况1: 有任务正在等待接收数据
@@ -1048,7 +1064,8 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
         MyRTOS_Port_ExitCritical();
         MyRTOS_Port_Yield(); // 触发调度，任务进入阻塞
         // 任务被唤醒后，检查是否是正常唤醒（而不是超时）
-        if (currentTask->pEventList == NULL) continue; // 如果是正常唤醒，pEventList会被设为NULL，循环重试发送
+        if (currentTask->pEventList == NULL)
+            continue; // 如果是正常唤醒，pEventList会被设为NULL，循环重试发送
         // 如果是超时唤醒
         MyRTOS_Port_EnterCritical();
         eventListRemove(currentTask);
@@ -1066,7 +1083,8 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
  */
 int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
     Queue_t *pQueue = queue;
-    if (pQueue == NULL) return 0;
+    if (pQueue == NULL)
+        return 0;
     while (1) {
         MyRTOS_Port_EnterCritical();
         // 情况1: 队列中有数据
@@ -1113,7 +1131,8 @@ int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
         MyRTOS_Port_ExitCritical();
         MyRTOS_Port_Yield(); // 触发调度，任务进入阻塞
         // 任务被唤醒后，检查是否是正常唤醒（数据已被直接拷贝到buffer）
-        if (currentTask->pEventList == NULL) return 1;
+        if (currentTask->pEventList == NULL)
+            return 1;
         // 如果是超时唤醒
         MyRTOS_Port_EnterCritical();
         eventListRemove(currentTask);
@@ -1155,9 +1174,10 @@ void Mutex_Delete(MutexHandle_t mutex) {
         return;
     }
 
-    MyRTOS_Port_EnterCritical(); {
-        //唤醒所有正在等待该锁的任务
-        // 遍历事件列表，将所有等待的任务移回到就绪列表
+    MyRTOS_Port_EnterCritical();
+    {
+        // 唤醒所有正在等待该锁的任务
+        //  遍历事件列表，将所有等待的任务移回到就绪列表
         while (mutex->eventList.head != NULL) {
             Task_t *taskToWake = mutex->eventList.head;
             // 从事件列表中移除任务。eventListRemove 会处理好 taskToWake->pEventList 的清理
@@ -1170,15 +1190,15 @@ void Mutex_Delete(MutexHandle_t mutex) {
             // 将被唤醒的任务重新添加到就绪列表中
             addTaskToReadyList(taskToWake);
         }
-        //如果锁当前被持有，则从持有者任务中断开链接
+        // 如果锁当前被持有，则从持有者任务中断开链接
         TaskHandle_t owner_tcb = mutex->owner_tcb;
         if (owner_tcb != NULL) {
             // 在任务持有的互斥锁链表中查找并移除此锁，以防止悬空指针
-            //要删除的锁是链表头
+            // 要删除的锁是链表头
             if (owner_tcb->held_mutexes_head == mutex) {
                 owner_tcb->held_mutexes_head = mutex->next_held_mutex;
             }
-            //要删除的锁在链表中间或末尾
+            // 要删除的锁在链表中间或末尾
             else {
                 Mutex_t *p_iterator = owner_tcb->held_mutexes_head;
                 // 遍历链表找到要删除锁的前一个节点
@@ -1242,7 +1262,8 @@ int Mutex_Lock_Timeout(MutexHandle_t mutex, uint32_t block_ticks) {
         MyRTOS_Port_ExitCritical();
         MyRTOS_Port_Yield(); // 触发调度，进入阻塞
         // 任务被唤醒后
-        if (mutex->owner_tcb == currentTask) return 1; // 检查是否已成为新的持有者
+        if (mutex->owner_tcb == currentTask)
+            return 1; // 检查是否已成为新的持有者
         // 如果是超时唤醒
         if (currentTask->pEventList != NULL) {
             MyRTOS_Port_EnterCritical();
@@ -1257,9 +1278,7 @@ int Mutex_Lock_Timeout(MutexHandle_t mutex, uint32_t block_ticks) {
  * @brief 获取一个互斥锁（永久等待）
  * @param mutex 目标互斥锁句柄
  */
-void Mutex_Lock(MutexHandle_t mutex) {
-    Mutex_Lock_Timeout(mutex, MYRTOS_MAX_DELAY);
-}
+void Mutex_Lock(MutexHandle_t mutex) { Mutex_Lock_Timeout(mutex, MYRTOS_MAX_DELAY); }
 
 /**
  * @brief 释放一个互斥锁
@@ -1278,8 +1297,10 @@ void Mutex_Unlock(MutexHandle_t mutex) {
         currentTask->held_mutexes_head = mutex->next_held_mutex;
     } else {
         Mutex_t *p_iterator = currentTask->held_mutexes_head;
-        while (p_iterator != NULL && p_iterator->next_held_mutex != mutex) p_iterator = p_iterator->next_held_mutex;
-        if (p_iterator != NULL) p_iterator->next_held_mutex = mutex->next_held_mutex;
+        while (p_iterator != NULL && p_iterator->next_held_mutex != mutex)
+            p_iterator = p_iterator->next_held_mutex;
+        if (p_iterator != NULL)
+            p_iterator->next_held_mutex = mutex->next_held_mutex;
     }
     mutex->next_held_mutex = NULL;
     // 优先级恢复：将任务优先级恢复到其基础优先级，或其仍然持有的其他互斥锁所要求的最高优先级
@@ -1305,7 +1326,8 @@ void Mutex_Unlock(MutexHandle_t mutex) {
         mutex->next_held_mutex = taskToWake->held_mutexes_head;
         taskToWake->held_mutexes_head = mutex;
         addTaskToReadyList(taskToWake);
-        if (taskToWake->priority > currentTask->priority) trigger_yield = 1;
+        if (taskToWake->priority > currentTask->priority)
+            trigger_yield = 1;
     }
     MyRTOS_Port_ExitCritical();
     if (trigger_yield)
@@ -1329,7 +1351,8 @@ void Mutex_Lock_Recursive(MutexHandle_t mutex) {
     // 首次获取该锁
     Mutex_Lock(mutex);
     MyRTOS_Port_EnterCritical();
-    if (mutex->owner_tcb == currentTask) mutex->recursion_count = 1;
+    if (mutex->owner_tcb == currentTask)
+        mutex->recursion_count = 1;
     MyRTOS_Port_ExitCritical();
 }
 
@@ -1361,7 +1384,8 @@ void Mutex_Unlock_Recursive(MutexHandle_t mutex) {
  * @return 成功则返回信号量句柄，失败则返回NULL
  */
 SemaphoreHandle_t Semaphore_Create(uint32_t maxCount, uint32_t initialCount) {
-    if (maxCount == 0 || initialCount > maxCount) return NULL;
+    if (maxCount == 0 || initialCount > maxCount)
+        return NULL;
     Semaphore_t *semaphore = MyRTOS_Malloc(sizeof(Semaphore_t));
     if (semaphore != NULL) {
         semaphore->count = initialCount;
@@ -1376,7 +1400,8 @@ SemaphoreHandle_t Semaphore_Create(uint32_t maxCount, uint32_t initialCount) {
  * @param semaphore 要删除的信号量句柄
  */
 void Semaphore_Delete(SemaphoreHandle_t semaphore) {
-    if (semaphore == NULL) return;
+    if (semaphore == NULL)
+        return;
     MyRTOS_Port_EnterCritical();
     // 唤醒所有等待该信号量的任务
     while (semaphore->eventList.head != NULL) {
@@ -1395,7 +1420,8 @@ void Semaphore_Delete(SemaphoreHandle_t semaphore) {
  * @return 成功获取返回1，失败或超时返回0
  */
 int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks) {
-    if (semaphore == NULL) return 0;
+    if (semaphore == NULL)
+        return 0;
     while (1) {
         MyRTOS_Port_EnterCritical();
         // 情况1: 信号量计数大于0，成功获取
@@ -1421,7 +1447,8 @@ int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks) {
         MyRTOS_Port_ExitCritical();
         MyRTOS_Port_Yield(); // 触发调度，进入阻塞
         // 被唤醒后，检查是否是正常唤醒
-        if (currentTask->pEventList == NULL) return 1;
+        if (currentTask->pEventList == NULL)
+            return 1;
         // 如果是超时唤醒
         MyRTOS_Port_EnterCritical();
         eventListRemove(currentTask);
@@ -1436,7 +1463,8 @@ int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks) {
  * @return 成功释放返回1，失败（例如信号量已达最大值）返回0
  */
 int Semaphore_Give(SemaphoreHandle_t semaphore) {
-    if (semaphore == NULL) return 0;
+    if (semaphore == NULL)
+        return 0;
     int trigger_yield = 0;
     MyRTOS_Port_EnterCritical();
     // 如果有任务在等待信号量，则直接唤醒一个，而不增加计数值
@@ -1448,7 +1476,8 @@ int Semaphore_Give(SemaphoreHandle_t semaphore) {
             taskToWake->delay = 0;
         }
         addTaskToReadyList(taskToWake);
-        if (taskToWake->priority > currentTask->priority) trigger_yield = 1;
+        if (taskToWake->priority > currentTask->priority)
+            trigger_yield = 1;
     } else {
         // 如果没有任务等待，则增加计数值
         if (semaphore->count < semaphore->maxCount) {
@@ -1472,7 +1501,8 @@ int Semaphore_Give(SemaphoreHandle_t semaphore) {
  * @return 成功返回1，失败返回0
  */
 int Semaphore_GiveFromISR(SemaphoreHandle_t semaphore, int *pxHigherPriorityTaskWoken) {
-    if (semaphore == NULL || pxHigherPriorityTaskWoken == NULL) return 0;
+    if (semaphore == NULL || pxHigherPriorityTaskWoken == NULL)
+        return 0;
     *pxHigherPriorityTaskWoken = 0;
     int result = 0;
     MyRTOS_Port_EnterCritical();

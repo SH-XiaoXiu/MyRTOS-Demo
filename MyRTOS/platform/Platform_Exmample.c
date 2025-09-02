@@ -1,10 +1,10 @@
-//平台移植层最小示例代码
+// 平台移植层最小示例代码
 
 #if 0
 
 #include "MyRTOS.h"
-#include "MyRTOS_Port.h"
 #include "MyRTOS_Kernel_Private.h"
+#include "MyRTOS_Port.h"
 
 extern TaskHandle_t currentTask;
 

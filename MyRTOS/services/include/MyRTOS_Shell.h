@@ -10,7 +10,7 @@
 #include "MyRTOS_Service_Config.h"
 
 
-#ifndef  MYRTOS_SERVICE_SHELL_ENABLE
+#ifndef MYRTOS_SERVICE_SHELL_ENABLE
 #define MYRTOS_SERVICE_SHELL_ENABLE 0
 #endif
 

@@ -1,11 +1,11 @@
 #include "platform.h"
 #if (PLATFORM_USE_CONSOLE == 1)
 
+#include "MyRTOS_Port.h"
 #include "gd32f4xx_gpio.h"
 #include "gd32f4xx_misc.h"
-#include "gd32f4xx_usart.h"
 #include "gd32f4xx_rcu.h"
-#include "MyRTOS_Port.h"
+#include "gd32f4xx_usart.h"
 
 // --- 内部数据和宏定义 ---
 static char g_rx_buffer[PLATFORM_CONSOLE_RX_BUFFER_SIZE];
@@ -15,17 +15,17 @@ static SemaphoreHandle_t g_rx_semaphore = NULL;
 
 // 根据配置选择USART外设
 #if (PLATFORM_CONSOLE_USART_NUM == 0)
-#define CONSOLE_USART       USART0
-#define CONSOLE_RCU_USART   RCU_USART0
-#define CONSOLE_RCU_GPIO    RCU_GPIOA
-#define CONSOLE_GPIO_PORT   GPIOA
-#define CONSOLE_TX_PIN      GPIO_PIN_9
-#define CONSOLE_RX_PIN      GPIO_PIN_10
-#define CONSOLE_GPIO_AF     GPIO_AF_7
-#define CONSOLE_IRQn        USART0_IRQn
-#define CONSOLE_IRQHandler  USART0_IRQHandler
+#define CONSOLE_USART USART0
+#define CONSOLE_RCU_USART RCU_USART0
+#define CONSOLE_RCU_GPIO RCU_GPIOA
+#define CONSOLE_GPIO_PORT GPIOA
+#define CONSOLE_TX_PIN GPIO_PIN_9
+#define CONSOLE_RX_PIN GPIO_PIN_10
+#define CONSOLE_GPIO_AF GPIO_AF_7
+#define CONSOLE_IRQn USART0_IRQn
+#define CONSOLE_IRQHandler USART0_IRQHandler
 #elif (PLATFORM_CONSOLE_USART_NUM == 1)
-//USART1 添加类似的宏定义 ...
+// USART1 添加类似的宏定义 ...
 #else
 #error "Invalid PLATFORM_CONSOLE_USART_NUM selected in platform_config.h"
 #endif
@@ -38,7 +38,7 @@ void Platform_fault_putchar(char c) {
     while ((RESET == usart_flag_get(USART0, USART_FLAG_TBE)) && (timeout > 0)) {
         timeout--;
     }
-    //超时了，尝试强行发送
+    // 超时了，尝试强行发送
     usart_data_transmit(USART0, (uint8_t) c);
     // 如果需要确保发送完成，可以再加一个带超时的等待
     timeout = 0x000FFFFF;
@@ -78,9 +78,9 @@ static size_t console_stream_write(StreamHandle_t stream, const void *buffer, si
 }
 
 static const StreamInterface_t g_console_stream_interface = {
-    .read = console_stream_read,
-    .write = console_stream_write,
-    .control = NULL,
+        .read = console_stream_read,
+        .write = console_stream_write,
+        .control = NULL,
 };
 static Stream_t g_console_stream_instance;
 
@@ -106,13 +106,9 @@ void Platform_Console_HwInit(void) {
     g_console_stream_instance.p_private_data = NULL;
 }
 
-void Platform_Console_OSInit(void) {
-    g_rx_semaphore = Semaphore_Create(PLATFORM_CONSOLE_RX_BUFFER_SIZE, 0);
-}
+void Platform_Console_OSInit(void) { g_rx_semaphore = Semaphore_Create(PLATFORM_CONSOLE_RX_BUFFER_SIZE, 0); }
 
-StreamHandle_t Platform_Console_GetStream(void) {
-    return &g_console_stream_instance;
-}
+StreamHandle_t Platform_Console_GetStream(void) { return &g_console_stream_instance; }
 
 // --- 中断处理函数 ---
 void CONSOLE_IRQHandler(void) {

@@ -1,37 +1,37 @@
 /**
  * @file  main.c
- * @brief MyRTOS Ê¾Àı³ÌĞò
+ * @brief MyRTOS ç¤ºä¾‹ç¨‹åº
  * @author XiaoXiu
  * @date  2025-08-31
-*/
+ */
+#include "MyRTOS.h"
+#include "MyRTOS_IO.h"
+#include "MyRTOS_Log.h"
+#include "MyRTOS_Port.h"
+#include "MyRTOS_Timer.h"
 #include "gd32f4xx_exti.h"
 #include "gd32f4xx_gpio.h"
 #include "gd32f4xx_misc.h"
 #include "gd32f4xx_rcu.h"
 #include "gd32f4xx_syscfg.h"
 #include "platform.h"
-#include "MyRTOS.h"
-#include "MyRTOS_IO.h"
-#include "MyRTOS_Log.h"
-#include "MyRTOS_Port.h"
-#include "MyRTOS_Timer.h"
 
 /*===========================================================================*
- *                            ÈÎÎñÓÅÏÈ¼¶¶¨Òå                                 *
+ *                            ä»»åŠ¡ä¼˜å…ˆçº§å®šä¹‰                                 *
  *===========================================================================*/
-#define BACKGROUND_TASK_PRIO       1
-#define CONSUMER_PRIO              2
-#define PRINTER_TASK_PRIO          2
-#define COLLABORATION_TASKS_PRIO   3
-#define PRODUCER_PRIO              3
-#define TIMER_TEST_TASK_PRIO       3
-#define ISR_TEST_TASK_PRIO         4
-#define HIGH_PRIO_TASK_PRIO        5
-#define INTERRUPT_TASK_PRIO        6
-#define INSPECTOR_PRIO             7
+#define BACKGROUND_TASK_PRIO 1
+#define CONSUMER_PRIO 2
+#define PRINTER_TASK_PRIO 2
+#define COLLABORATION_TASKS_PRIO 3
+#define PRODUCER_PRIO 3
+#define TIMER_TEST_TASK_PRIO 3
+#define ISR_TEST_TASK_PRIO 4
+#define HIGH_PRIO_TASK_PRIO 5
+#define INTERRUPT_TASK_PRIO 6
+#define INSPECTOR_PRIO 7
 
 /*===========================================================================*
- *                          È«¾Ö¾ä±úºÍÊı¾İ½á¹¹                               *
+ *                          å…¨å±€å¥æŸ„å’Œæ•°æ®ç»“æ„                               *
  *===========================================================================*/
 static QueueHandle_t product_queue;
 static MutexHandle_t recursive_lock;
@@ -52,16 +52,16 @@ typedef struct {
 } Product_t;
 
 /*===========================================================================*
- *                       ÈÎÎñºÍ»Øµ÷º¯ÊıÊµÏÖ                                  *
+ *                       ä»»åŠ¡å’Œå›è°ƒå‡½æ•°å®ç°                                  *
  *===========================================================================*/
 void perio_timer_cb(TimerHandle_t timer) {
     (void) timer;
-    LOG_D("¶¨Ê±Æ÷»Øµ÷", "ÖÜÆÚĞÔ¶¨Ê±Æ÷(10Ãë)´¥·¢!");
+    LOG_D("å®šæ—¶å™¨å›è°ƒ", "å‘¨æœŸæ€§å®šæ—¶å™¨(10ç§’)è§¦å‘!");
 }
 
 void single_timer_cb(TimerHandle_t timer) {
     (void) timer;
-    LOG_D("¶¨Ê±Æ÷»Øµ÷", "Ò»´ÎĞÔ¶¨Ê±Æ÷(5Ãë)´¥·¢!");
+    LOG_D("å®šæ—¶å™¨å›è°ƒ", "ä¸€æ¬¡æ€§å®šæ—¶å™¨(5ç§’)è§¦å‘!");
 }
 
 void a_task(void *param) {
@@ -69,13 +69,13 @@ void a_task(void *param) {
     static uint16_t i = 0;
     while (1) {
         Task_Wait();
-        LOG_D("Task A", "±»»½ĞÑ£¬¿ªÊ¼¹¤×÷...");
+        LOG_D("Task A", "è¢«å”¤é†’ï¼Œå¼€å§‹å·¥ä½œ...");
         for (i = 1; i <= 5; ++i) {
-            LOG_D("Task A", "ÕıÔÚÔËĞĞ, µÚ %d ´Î", i);
+            LOG_D("Task A", "æ­£åœ¨è¿è¡Œ, ç¬¬ %d æ¬¡", i);
             Task_Delay(MS_TO_TICKS(1000));
         }
         i = 0;
-        LOG_D("Task A", "¹¤×÷Íê³É£¬»½ĞÑ Task B ²¢ÖØĞÂµÈ´ı");
+        LOG_D("Task A", "å·¥ä½œå®Œæˆï¼Œå”¤é†’ Task B å¹¶é‡æ–°ç­‰å¾…");
         Task_Notify(b_task_h);
     }
 }
@@ -85,13 +85,13 @@ void b_task(void *param) {
     static uint16_t i = 0;
     while (1) {
         Task_Wait();
-        LOG_D("Task B", "±»»½ĞÑ£¬¿ªÊ¼¹¤×÷...");
+        LOG_D("Task B", "è¢«å”¤é†’ï¼Œå¼€å§‹å·¥ä½œ...");
         for (i = 1; i <= 3; ++i) {
-            LOG_D("Task B", "ÕıÔÚÔËĞĞ, µÚ %d ´Î", i);
+            LOG_D("Task B", "æ­£åœ¨è¿è¡Œ, ç¬¬ %d æ¬¡", i);
             Task_Delay(MS_TO_TICKS(1000));
         }
         i = 0;
-        LOG_D("Task B", "¹¤×÷Íê³É£¬»½ĞÑ Task A ²¢ÖØĞÂµÈ´ı");
+        LOG_D("Task B", "å·¥ä½œå®Œæˆï¼Œå”¤é†’ Task A å¹¶é‡æ–°ç­‰å¾…");
         Task_Notify(a_task_h);
     }
 }
@@ -99,16 +99,16 @@ void b_task(void *param) {
 void c_task(void *param) {
     (void) param;
     uint16_t index = 0;
-    LOG_D("Task C", "ÒÑ´´½¨²¢¿ªÊ¼ÔËĞĞ.");
+    LOG_D("Task C", "å·²åˆ›å»ºå¹¶å¼€å§‹è¿è¡Œ.");
     while (1) {
         index++;
-        LOG_D("Task C", "ÕıÔÚÔËĞĞ, µÚ %d ´Î", index);
+        LOG_D("Task C", "æ­£åœ¨è¿è¡Œ, ç¬¬ %d æ¬¡", index);
         if (index == 5) {
-            LOG_D("Task C", "ÔËĞĞ5´ÎºóÉ¾³ı×Ô¼º.");
+            LOG_D("Task C", "è¿è¡Œ5æ¬¡ååˆ é™¤è‡ªå·±.");
             MyRTOS_Port_EnterCritical();
-            c_task_h = NULL; // ÔÚÁÙ½çÇøÄÚ°²È«µØÇå³ıÈ«¾Ö¾ä±ú
+            c_task_h = NULL; // åœ¨ä¸´ç•ŒåŒºå†…å®‰å…¨åœ°æ¸…é™¤å…¨å±€å¥æŸ„
             MyRTOS_Port_ExitCritical();
-            Task_Delete(NULL); // É¾³ı×ÔÉí
+            Task_Delete(NULL); // åˆ é™¤è‡ªèº«
         }
         Task_Delay(MS_TO_TICKS(1000));
     }
@@ -123,11 +123,11 @@ void d_task(void *param) {
         MyRTOS_Port_ExitCritical();
 
         if (!is_task_c_alive) {
-            LOG_D("Task D", "¼ì²âµ½Task C²»´æÔÚ, ×¼±¸ÖØĞÂ´´½¨...");
-            Task_Delay(MS_TO_TICKS(3000)); // µÈ´ı3ÃëÔÙ´´½¨
+            LOG_D("Task D", "æ£€æµ‹åˆ°Task Cä¸å­˜åœ¨, å‡†å¤‡é‡æ–°åˆ›å»º...");
+            Task_Delay(MS_TO_TICKS(3000)); // ç­‰å¾…3ç§’å†åˆ›å»º
             c_task_h = Task_Create(c_task, "TaskC_dynamic", 1024, NULL, COLLABORATION_TASKS_PRIO);
             if (c_task_h == NULL) {
-                LOG_E("Task D", "´´½¨Task CÊ§°Ü!");
+                LOG_E("Task D", "åˆ›å»ºTask Cå¤±è´¥!");
             }
         }
         Task_Delay(MS_TO_TICKS(1000));
@@ -146,26 +146,26 @@ void high_prio_task(void *param) {
     (void) param;
     while (1) {
         Task_Delay(MS_TO_TICKS(5000));
-        LOG_D("¸ßÓÅÏÈ¼¶ÈÎÎñ", "<<<<<<<<<< [ÇÀÕ¼ÑİÊ¾] >>>>>>>>>>");
+        LOG_D("é«˜ä¼˜å…ˆçº§ä»»åŠ¡", "<<<<<<<<<< [æŠ¢å æ¼”ç¤º] >>>>>>>>>>");
     }
 }
 
 void interrupt_handler_task(void *param) {
     (void) param;
-    // Õâ¸öÈÎÎñµÄ¹¦ÄÜÏÖÔÚÓÉÆ½Ì¨²ãÌá¹©£¬µ«ÎÒÃÇÈÔÈ»±£ÁôËüÓÃÓÚÑİÊ¾
+    // è¿™ä¸ªä»»åŠ¡çš„åŠŸèƒ½ç°åœ¨ç”±å¹³å°å±‚æä¾›ï¼Œä½†æˆ‘ä»¬ä»ç„¶ä¿ç•™å®ƒç”¨äºæ¼”ç¤º
     while (1) {
         Task_Wait();
-        LOG_D("°´¼ü´¦Àí", "ÒÑ±»ÖĞ¶Ï»½ĞÑ, ½«»½ĞÑAÈÎÎñ.");
+        LOG_D("æŒ‰é”®å¤„ç†", "å·²è¢«ä¸­æ–­å”¤é†’, å°†å”¤é†’Aä»»åŠ¡.");
         Task_Notify(a_task_h);
     }
 }
 
 void isr_test_task(void *param) {
     (void) param;
-    LOG_D("ISR²âÊÔ", "Æô¶¯²¢µÈ´ıĞÅºÅÁ¿...");
+    LOG_D("ISRæµ‹è¯•", "å¯åŠ¨å¹¶ç­‰å¾…ä¿¡å·é‡...");
     while (1) {
         if (Semaphore_Take(isr_semaphore, MYRTOS_MAX_DELAY) == 1) {
-            LOG_D("ISR²âÊÔ", "³É¹¦´Ó°´¼üÖĞ¶Ï»ñÈ¡ĞÅºÅÁ¿!");
+            LOG_D("ISRæµ‹è¯•", "æˆåŠŸä»æŒ‰é”®ä¸­æ–­è·å–ä¿¡å·é‡!");
         }
     }
 }
@@ -176,11 +176,11 @@ void producer_task(void *param) {
     while (1) {
         product.id++;
         product.data += 10;
-        LOG_D("Éú²úÕß", "Éú²ú²úÆ· ID %lu", product.id);
+        LOG_D("ç”Ÿäº§è€…", "ç”Ÿäº§äº§å“ ID %lu", product.id);
         if (Queue_Send(product_queue, &product, MS_TO_TICKS(100)) == 1) {
-            LOG_D("Éú²úÕß", "²úÆ· ID %lu ÒÑ·¢ËÍ", product.id);
+            LOG_D("ç”Ÿäº§è€…", "äº§å“ ID %lu å·²å‘é€", product.id);
         } else {
-            LOG_D("Éú²úÕß", "¶ÓÁĞÒÑÂú, ·¢ËÍ²úÆ· ID %lu Ê§°Ü", product.id);
+            LOG_D("ç”Ÿäº§è€…", "é˜Ÿåˆ—å·²æ»¡, å‘é€äº§å“ ID %lu å¤±è´¥", product.id);
         }
         Task_Delay(MS_TO_TICKS(2000));
     }
@@ -190,9 +190,9 @@ void consumer_task(void *param) {
     (void) param;
     Product_t received_product;
     while (1) {
-        LOG_D("Ïû·ÑÕß", "µÈ´ı²úÆ·...");
+        LOG_D("æ¶ˆè´¹è€…", "ç­‰å¾…äº§å“...");
         if (Queue_Receive(product_queue, &received_product, MYRTOS_MAX_DELAY) == 1) {
-            LOG_D("Ïû·ÑÕß", "½ÓÊÕµ½²úÆ· ID %lu, Êı¾İ: %lu", received_product.id, received_product.data);
+            LOG_D("æ¶ˆè´¹è€…", "æ¥æ”¶åˆ°äº§å“ ID %lu, æ•°æ®: %lu", received_product.id, received_product.data);
         }
     }
 }
@@ -201,9 +201,9 @@ void inspector_task(void *param) {
     (void) param;
     Product_t received_product;
     while (1) {
-        LOG_D("ÖÊ¼ìÔ±", "µÈ´ıÀ¹½Ø²úÆ·...");
+        LOG_D("è´¨æ£€å‘˜", "ç­‰å¾…æ‹¦æˆªäº§å“...");
         if (Queue_Receive(product_queue, &received_product, MYRTOS_MAX_DELAY) == 1) {
-            LOG_D("ÖÊ¼ìÔ±", "À¹½Øµ½²úÆ· ID %lu, Ïú»Ù!", received_product.id);
+            LOG_D("è´¨æ£€å‘˜", "æ‹¦æˆªåˆ°äº§å“ ID %lu, é”€æ¯!", received_product.id);
         }
         Task_Delay(MS_TO_TICKS(5000));
     }
@@ -212,20 +212,20 @@ void inspector_task(void *param) {
 void recursive_test_task(void *param) {
     (void) param;
     while (1) {
-        LOG_D("µİ¹éËø", "¿ªÊ¼²âÊÔ...");
+        LOG_D("é€’å½’é”", "å¼€å§‹æµ‹è¯•...");
         Mutex_Lock_Recursive(recursive_lock);
-        LOG_D("µİ¹éËø", "Ö÷Ñ­»·¼ÓËø (µÚ1²ã)");
+        LOG_D("é€’å½’é”", "ä¸»å¾ªç¯åŠ é” (ç¬¬1å±‚)");
         Task_Delay(MS_TO_TICKS(500));
 
         Mutex_Lock_Recursive(recursive_lock);
-        LOG_D("µİ¹éËø", "Ç¶Ì×¼ÓËø (µÚ2²ã)");
+        LOG_D("é€’å½’é”", "åµŒå¥—åŠ é” (ç¬¬2å±‚)");
         Task_Delay(MS_TO_TICKS(500));
         Mutex_Unlock_Recursive(recursive_lock);
-        LOG_D("µİ¹éËø", "Ç¶Ì×½âËø (µÚ2²ã)");
+        LOG_D("é€’å½’é”", "åµŒå¥—è§£é” (ç¬¬2å±‚)");
 
         Mutex_Unlock_Recursive(recursive_lock);
-        LOG_D("µİ¹éËø", "Ö÷Ñ­»·½âËø (µÚ1²ã)");
-        LOG_D("µİ¹éËø", "²âÊÔÍê³É, µÈ´ı3Ãë");
+        LOG_D("é€’å½’é”", "ä¸»å¾ªç¯è§£é” (ç¬¬1å±‚)");
+        LOG_D("é€’å½’é”", "æµ‹è¯•å®Œæˆ, ç­‰å¾…3ç§’");
         Task_Delay(MS_TO_TICKS(3000));
     }
 }
@@ -234,7 +234,7 @@ void timer_test_task(void *param) {
     (void) param;
     while (1) {
         uint32_t count = Platform_Timer_GetHiresValue();
-        LOG_D("¸ß¾«¶ÈÊ±ÖÓ", "µ±Ç°¼ÆÊıÖµ = %lu", count);
+        LOG_D("é«˜ç²¾åº¦æ—¶é’Ÿ", "å½“å‰è®¡æ•°å€¼ = %lu", count);
         Task_Delay(MS_TO_TICKS(2000));
     }
 }
@@ -242,11 +242,11 @@ void timer_test_task(void *param) {
 void printer_task(void *param) {
     const char *taskName = (const char *) param;
     while (1) {
-        LOG_D(taskName, "ÕıÔÚµÈ´ı´òÓ¡»ú...");
+        LOG_D(taskName, "æ­£åœ¨ç­‰å¾…æ‰“å°æœº...");
         if (Semaphore_Take(printer_semaphore, MYRTOS_MAX_DELAY) == 1) {
-            LOG_D(taskName, "»ñÈ¡µ½´òÓ¡»ú, ¿ªÊ¼´òÓ¡ (ºÄÊ±3Ãë)...");
+            LOG_D(taskName, "è·å–åˆ°æ‰“å°æœº, å¼€å§‹æ‰“å° (è€—æ—¶3ç§’)...");
             Task_Delay(MS_TO_TICKS(3000));
-            LOG_D(taskName, "´òÓ¡Íê³É, ÊÍ·Å´òÓ¡»ú.");
+            LOG_D(taskName, "æ‰“å°å®Œæˆ, é‡Šæ”¾æ‰“å°æœº.");
             Semaphore_Give(printer_semaphore);
         }
         Task_Delay(MS_TO_TICKS(500 + (Task_GetId(Task_GetCurrentTaskHandle()) * 300)));
@@ -254,34 +254,34 @@ void printer_task(void *param) {
 }
 
 /*===========================================================================*
- *                        ÓÃ»§×Ô¶¨ÒåShellÃüÁî                                *
+ *                        ç”¨æˆ·è‡ªå®šä¹‰Shellå‘½ä»¤                                *
  *===========================================================================*/
 int cmd_114514(ShellHandle_t shell_h, int argc, char *argv[]) {
     (void) argc;
     (void) argv;
-    Stream_Printf(Shell_GetStream(shell_h), "ºÙºÙºÙ£¡£¡£¡\n");
+    Stream_Printf(Shell_GetStream(shell_h), "å˜¿å˜¿å˜¿ï¼ï¼ï¼\n");
     return 0;
 }
 
 const ShellCommand_t g_user_commands[] = {
-    {"114514", "Ò»¸öºÜ³ôµÄÖ¸Áî", cmd_114514},
+        {"114514", "ä¸€ä¸ªå¾ˆè‡­çš„æŒ‡ä»¤", cmd_114514},
 };
 const size_t g_user_command_count = sizeof(g_user_commands) / sizeof(g_user_commands[0]);
 
 /*===========================================================================*
- *                   Æ½Ì¨¹³×Óº¯Êı (Platform Hooks)                       *
+ *                   å¹³å°é’©å­å‡½æ•° (Platform Hooks)                       *
  *===========================================================================*/
 
 /**
- * @brief ³õÊ¼»¯Óë°å¼¶Ïà¹ØµÄÓ²¼ş (BSP)¡£
+ * @brief åˆå§‹åŒ–ä¸æ¿çº§ç›¸å…³çš„ç¡¬ä»¶ (BSP)ã€‚
  */
 void Platform_BSP_Init_Hook(void) {
-    // LED GPIO ³õÊ¼»¯
+    // LED GPIO åˆå§‹åŒ–
     rcu_periph_clock_enable(RCU_GPIOB);
     gpio_mode_set(GPIOB, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_2);
     gpio_output_options_set(GPIOB, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_2);
 
-    // °´¼üÖĞ¶Ï³õÊ¼»¯ (PA0)
+    // æŒ‰é”®ä¸­æ–­åˆå§‹åŒ– (PA0)
     rcu_periph_clock_enable(RCU_GPIOA);
     rcu_periph_clock_enable(RCU_SYSCFG);
     gpio_mode_set(GPIOA, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO_PIN_0);
@@ -291,7 +291,7 @@ void Platform_BSP_Init_Hook(void) {
 }
 
 /**
- * @brief ×¢²áÓÃ»§×Ô¼ºµÄShellÃüÁî¡£
+ * @brief æ³¨å†Œç”¨æˆ·è‡ªå·±çš„Shellå‘½ä»¤ã€‚
  */
 void Platform_AppSetup_Hook(ShellHandle_t shell_h) {
     if (shell_h) {
@@ -301,18 +301,20 @@ void Platform_AppSetup_Hook(ShellHandle_t shell_h) {
 }
 
 /**
- * @brief ´´½¨ËùÓĞµÄÓ¦ÓÃ³ÌĞòÈÎÎñ¡£
+ * @brief åˆ›å»ºæ‰€æœ‰çš„åº”ç”¨ç¨‹åºä»»åŠ¡ã€‚
  */
 void Platform_CreateTasks_Hook(void) {
     // LOG_D("Hook", "Platform_CreateTasks_Hook: Creating application tasks...");
 
-    // --- Èí¼ş¶¨Ê±Æ÷²âÊÔ ---
-    single_timer_h = Timer_Create("µ¥´Î¶¨Ê±Æ÷", MS_TO_TICKS(5000), 0, single_timer_cb, NULL);
-    perio_timer_h = Timer_Create("ÖÜÆÚ¶¨Ê±Æ÷", MS_TO_TICKS(10000), 1, perio_timer_cb, NULL);
-    if (single_timer_h) Timer_Start(single_timer_h, 0);
-    if (perio_timer_h) Timer_Start(perio_timer_h, 0);
+    // --- è½¯ä»¶å®šæ—¶å™¨æµ‹è¯• ---
+    single_timer_h = Timer_Create("å•æ¬¡å®šæ—¶å™¨", MS_TO_TICKS(5000), 0, single_timer_cb, NULL);
+    perio_timer_h = Timer_Create("å‘¨æœŸå®šæ—¶å™¨", MS_TO_TICKS(10000), 1, perio_timer_cb, NULL);
+    if (single_timer_h)
+        Timer_Start(single_timer_h, 0);
+    if (perio_timer_h)
+        Timer_Start(perio_timer_h, 0);
 
-    // --- ¶ÓÁĞ²âÊÔ ---
+    // --- é˜Ÿåˆ—æµ‹è¯• ---
     product_queue = Queue_Create(3, sizeof(Product_t));
     if (product_queue) {
         consumer_task_h = Task_Create(consumer_task, "Consumer", 256, NULL, CONSUMER_PRIO);
@@ -320,7 +322,7 @@ void Platform_CreateTasks_Hook(void) {
         inspector_task_h = Task_Create(inspector_task, "Inspector", 256, NULL, INSPECTOR_PRIO);
     }
 
-    // --- ĞÅºÅÁ¿²âÊÔ (´òÓ¡»ú) ---
+    // --- ä¿¡å·é‡æµ‹è¯• (æ‰“å°æœº) ---
     printer_semaphore = Semaphore_Create(2, 2);
     if (printer_semaphore) {
         printer_task1_h = Task_Create(printer_task, "PrinterTask1", 256, (void *) "PrinterTask1", PRINTER_TASK_PRIO);
@@ -328,13 +330,13 @@ void Platform_CreateTasks_Hook(void) {
         printer_task3_h = Task_Create(printer_task, "PrinterTask3", 256, (void *) "PrinterTask3", PRINTER_TASK_PRIO);
     }
 
-    // --- ÖĞ¶Ï°²È«API²âÊÔ ---
+    // --- ä¸­æ–­å®‰å…¨APIæµ‹è¯• ---
     isr_semaphore = Semaphore_Create(10, 0);
     if (isr_semaphore) {
         isr_test_task_h = Task_Create(isr_test_task, "ISR_Test", 256, NULL, ISR_TEST_TASK_PRIO);
     }
 
-    // --- »¥³âËøºÍĞ­×÷ÈÎÎñ ---
+    // --- äº’æ–¥é”å’Œåä½œä»»åŠ¡ ---
     recursive_lock = Mutex_Create();
     if (recursive_lock) {
         recursive_task_h = Task_Create(recursive_test_task, "RecursiveTask", 128, NULL, COLLABORATION_TASKS_PRIO);
@@ -342,16 +344,16 @@ void Platform_CreateTasks_Hook(void) {
     //
     a_task_h = Task_Create(a_task, "TaskA", 128, NULL, COLLABORATION_TASKS_PRIO);
     b_task_h = Task_Create(b_task, "TaskB", 128, NULL, COLLABORATION_TASKS_PRIO);
-    // d_task_h = Task_Create(d_task, "TaskD_Creator", 256, NULL, COLLABORATION_TASKS_PRIO); //Ì«ËûÂè³ÔÄÚ´æÁË ÓĞÊ±ºò´´½¨µÄË²¼ä run Ö¸ÁîÅÜ²»ÁË ÏÈ×¢ÊÍÁË
+    // d_task_h = Task_Create(d_task, "TaskD_Creator", 256, NULL, COLLABORATION_TASKS_PRIO); //å¤ªä»–å¦ˆåƒå†…å­˜äº†
+    // æœ‰æ—¶å€™åˆ›å»ºçš„ç¬é—´ run æŒ‡ä»¤è·‘ä¸äº† å…ˆæ³¨é‡Šäº†
     background_task_h = Task_Create(background_blinky_task, "BG_Blinky_PB0", 64, NULL, BACKGROUND_TASK_PRIO);
     high_prio_task_h = Task_Create(high_prio_task, "HighPrioTask", 256, NULL, HIGH_PRIO_TASK_PRIO);
     interrupt_task_h = Task_Create(interrupt_handler_task, "KeyHandlerTask", 128, NULL, INTERRUPT_TASK_PRIO);
     timer_test_task_h = Task_Create(timer_test_task, "TimerTest", 512, NULL, TIMER_TEST_TASK_PRIO);
 }
 
-
 /*===========================================================================*
- *                            ÖĞ¶Ï·şÎñ³ÌĞò                                   *
+ *                            ä¸­æ–­æœåŠ¡ç¨‹åº                                   *
  *===========================================================================*/
 void EXTI0_IRQHandler(void) {
     if (exti_interrupt_flag_get(EXTI_0) != RESET) {
@@ -369,23 +371,22 @@ void EXTI0_IRQHandler(void) {
     }
 }
 
-
 /*===========================================================================*
- *                             Ö÷Èë¿Úµã                                      *
+ *                             ä¸»å…¥å£ç‚¹                                      *
  *===========================================================================*/
 int main(void) {
-    //³õÊ¼»¯Æ½Ì¨²ã (Ëü»á´¦ÀíËùÓĞµ×²ãÏ¸½ÚºÍRTOS·şÎñ)
+    // åˆå§‹åŒ–å¹³å°å±‚ (å®ƒä¼šå¤„ç†æ‰€æœ‰åº•å±‚ç»†èŠ‚å’ŒRTOSæœåŠ¡)
     Platform_Init();
 
-    //´òÓ¡ĞÅÏ¢
-    LOG_I("Main", "=========   MyRTOS ÑİÊ¾   =========");
-    LOG_I("Main", "|  ×÷Õß: XiaoXiu");
-    LOG_I("Main", "|  °´ÏÂÓÃ»§°´¼ü¿É´¥·¢ÖĞ¶Ï");
+    // æ‰“å°ä¿¡æ¯
+    LOG_I("Main", "=========   MyRTOS æ¼”ç¤º   =========");
+    LOG_I("Main", "|  ä½œè€…: XiaoXiu");
+    LOG_I("Main", "|  æŒ‰ä¸‹ç”¨æˆ·æŒ‰é”®å¯è§¦å‘ä¸­æ–­");
     LOG_I("Main", "===============================================");
-    LOG_I("Main", "ÏµÍ³Æô¶¯ÖĞ...");
+    LOG_I("Main", "ç³»ç»Ÿå¯åŠ¨ä¸­...");
 
-    //Æô¶¯RTOSµ÷¶ÈÆ÷ Í¨¹ıÆ½Ì¨Æô¶¯
-    //×Ô¼ºÂã»úÊ¹ÓÃ Task_StartScheduler
+    // å¯åŠ¨RTOSè°ƒåº¦å™¨ é€šè¿‡å¹³å°å¯åŠ¨
+    // è‡ªå·±è£¸æœºä½¿ç”¨ Task_StartScheduler
     Platform_StartScheduler();
-    return 0; // ÓÀÔ¶²»»áÖ´ĞĞµ½ÕâÀï
+    return 0; // æ°¸è¿œä¸ä¼šæ‰§è¡Œåˆ°è¿™é‡Œ
 }

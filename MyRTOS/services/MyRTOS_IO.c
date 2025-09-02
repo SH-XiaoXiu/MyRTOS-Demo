@@ -7,10 +7,10 @@
 #if MYRTOS_SERVICE_IO_ENABLE == 1
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include "MyRTOS_Extension.h"
+#include <string.h>
 #include "MyRTOS_Config.h"
+#include "MyRTOS_Extension.h"
 
 /*============================== 内部数据结构 ==============================*/
 
@@ -111,39 +111,48 @@ int StdIOService_Init(void) {
 }
 
 StreamHandle_t Task_GetStdIn(TaskHandle_t task_h) {
-    if (!task_h) task_h = Task_GetCurrentTaskHandle();
+    if (!task_h)
+        task_h = Task_GetCurrentTaskHandle();
     TaskStdIO_t *stdio = find_task_stdio(task_h);
     return stdio ? stdio->std_in : g_system_stdin;
 }
 
 StreamHandle_t Task_GetStdOut(TaskHandle_t task_h) {
-    if (!task_h) task_h = Task_GetCurrentTaskHandle();
+    if (!task_h)
+        task_h = Task_GetCurrentTaskHandle();
     TaskStdIO_t *stdio = find_task_stdio(task_h);
     return stdio ? stdio->std_out : g_system_stdout;
 }
 
 StreamHandle_t Task_GetStdErr(TaskHandle_t task_h) {
-    if (!task_h) task_h = Task_GetCurrentTaskHandle();
+    if (!task_h)
+        task_h = Task_GetCurrentTaskHandle();
     TaskStdIO_t *stdio = find_task_stdio(task_h);
     return stdio ? stdio->std_err : g_system_stderr;
 }
 
 void Task_SetStdIn(TaskHandle_t task_h, StreamHandle_t new_stdin) {
-    if (!task_h) task_h = Task_GetCurrentTaskHandle();
+    if (!task_h)
+        task_h = Task_GetCurrentTaskHandle();
     TaskStdIO_t *stdio = find_task_stdio(task_h);
-    if (stdio) stdio->std_in = new_stdin;
+    if (stdio)
+        stdio->std_in = new_stdin;
 }
 
 void Task_SetStdOut(TaskHandle_t task_h, StreamHandle_t new_stdout) {
-    if (!task_h) task_h = Task_GetCurrentTaskHandle();
+    if (!task_h)
+        task_h = Task_GetCurrentTaskHandle();
     TaskStdIO_t *stdio = find_task_stdio(task_h);
-    if (stdio) stdio->std_out = new_stdout;
+    if (stdio)
+        stdio->std_out = new_stdout;
 }
 
 void Task_SetStdErr(TaskHandle_t task_h, StreamHandle_t new_stderr) {
-    if (!task_h) task_h = Task_GetCurrentTaskHandle();
+    if (!task_h)
+        task_h = Task_GetCurrentTaskHandle();
     TaskStdIO_t *stdio = find_task_stdio(task_h);
-    if (stdio) stdio->std_err = new_stderr;
+    if (stdio)
+        stdio->std_err = new_stderr;
 }
 
 /*=========================== 流式 I/O 操作 API 实现 ===========================*/
@@ -220,24 +229,25 @@ static size_t pipe_write(StreamHandle_t stream, const void *buffer, size_t bytes
 
 // 定义Pipe流的虚函数表
 static const StreamInterface_t g_pipe_stream_interface = {
-    .read = pipe_read,
-    .write = pipe_write,
-    .control = NULL, // Pipe不支持control方法
+        .read = pipe_read,
+        .write = pipe_write,
+        .control = NULL, // Pipe不支持control方法
 };
 
 StreamHandle_t Pipe_Create(size_t buffer_size) {
-    // 1. 分配流基类结构体内存
+    // 分配流基类结构体内存
     StreamHandle_t stream = (StreamHandle_t) MyRTOS_Malloc(sizeof(Stream_t));
-    if (!stream) return NULL;
+    if (!stream)
+        return NULL;
 
-    // 2. 分配Pipe私有数据结构内存
+    // 分配Pipe私有数据结构内存
     PipePrivateData_t *pipe_data = (PipePrivateData_t *) MyRTOS_Malloc(sizeof(PipePrivateData_t));
     if (!pipe_data) {
         MyRTOS_Free(stream);
         return NULL;
     }
 
-    // 3. 创建底层的字节队列
+    // 创建底层的字节队列
     pipe_data->queue = Queue_Create(buffer_size, sizeof(uint8_t));
     if (!pipe_data->queue) {
         MyRTOS_Free(pipe_data);
@@ -245,7 +255,7 @@ StreamHandle_t Pipe_Create(size_t buffer_size) {
         return NULL;
     }
 
-    // 4. 组装流对象：关联接口表和私有数据
+    // 组装流对象：关联接口表和私有数据
     stream->p_iface = &g_pipe_stream_interface;
     stream->p_private_data = pipe_data;
 

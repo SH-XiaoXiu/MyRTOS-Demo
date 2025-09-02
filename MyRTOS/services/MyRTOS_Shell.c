@@ -8,11 +8,11 @@
 
 #if MYRTOS_SERVICE_SHELL_ENABLE == 1
 
+#include <ctype.h>
+#include <string.h>
+#include "MyRTOS.h"
 #include "MyRTOS_IO.h"
 #include "MyRTOS_Shell_Private.h"
-#include "MyRTOS.h"
-#include <string.h>
-#include <ctype.h>
 
 
 /*===========================================================================*
@@ -81,7 +81,7 @@ static void Shell_Task(void *param) {
                 MyRTOS_printf("\r\n"); // 回显换行
 
                 shell->cmd_buffer[shell->buffer_len] = '\0';
-                if(shell->buffer_len > 0) {
+                if (shell->buffer_len > 0) {
                     parse_command(shell);
                     dispatch_command(shell);
                 }
@@ -131,13 +131,7 @@ TaskHandle_t Shell_Start(ShellHandle_t shell_h, const char *task_name, uint8_t t
     if (!shell_h) {
         return NULL;
     }
-    shell_task_h = Task_Create(
-        Shell_Task,
-        task_name,
-        task_stack_size,
-        shell_h,
-        task_priority
-    );
+    shell_task_h = Task_Create(Shell_Task, task_name, task_stack_size, shell_h, task_priority);
 
     return shell_task_h; // 返回任务句柄
 }

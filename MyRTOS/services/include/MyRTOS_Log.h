@@ -5,10 +5,10 @@
 #ifndef MYRTOS_LOG_H
 #define MYRTOS_LOG_H
 
-#include "MyRTOS_Service_Config.h"
+#include <stdarg.h>
 #include "MyRTOS.h"
 #include "MyRTOS_IO.h"
-#include <stdarg.h>
+#include "MyRTOS_Service_Config.h"
 
 #if (MYRTOS_SERVICE_LOG_ENABLE == 1)
 
@@ -26,14 +26,14 @@ typedef enum {
 #endif
 
 
-//异步IO请求结构体
+// 异步IO请求结构体
 typedef struct {
     StreamHandle_t target_stream; // 目标流
-    char           message[MYRTOS_LOG_MSG_MAX_SIZE]; // 消息内容
+    char message[MYRTOS_LOG_MSG_MAX_SIZE]; // 消息内容
 } AsyncWriteRequest_t;
 
 
-// 公共 API 
+// 公共 API
 
 /**
  * @brief 初始化异步日志/IO服务。
@@ -49,7 +49,7 @@ int Log_Init(void);
  */
 void Log_SetLevel(LogLevel_t level);
 
-// 日志打印宏 (给应用开发者使用的便捷接口) 
+// 日志打印宏 (给应用开发者使用的便捷接口)
 
 #ifndef MYRTOS_LOG_MAX_LEVEL
 #define MYRTOS_LOG_MAX_LEVEL LOG_LEVEL_DEBUG
@@ -59,28 +59,36 @@ void Log_SetLevel(LogLevel_t level);
 #if (MYRTOS_LOG_MAX_LEVEL >= LOG_LEVEL_ERROR)
 #define LOG_E(tag, format, ...) Log_Printf(LOG_LEVEL_ERROR, tag, format, ##__VA_ARGS__)
 #else
-#define LOG_E(tag, format, ...) do {} while(0)
+#define LOG_E(tag, format, ...)                                                                                        \
+    do {                                                                                                               \
+    } while (0)
 #endif
 
 #if (MYRTOS_LOG_MAX_LEVEL >= LOG_LEVEL_WARN)
-#define LOG_W(tag, format, ...) Log_Printf(LOG_LEVEL_WARN,  tag, format, ##__VA_ARGS__)
+#define LOG_W(tag, format, ...) Log_Printf(LOG_LEVEL_WARN, tag, format, ##__VA_ARGS__)
 #else
-#define LOG_W(tag, format, ...) do {} while(0)
+#define LOG_W(tag, format, ...)                                                                                        \
+    do {                                                                                                               \
+    } while (0)
 #endif
 
 #if (MYRTOS_LOG_MAX_LEVEL >= LOG_LEVEL_INFO)
-#define LOG_I(tag, format, ...) Log_Printf(LOG_LEVEL_INFO,  tag, format, ##__VA_ARGS__)
+#define LOG_I(tag, format, ...) Log_Printf(LOG_LEVEL_INFO, tag, format, ##__VA_ARGS__)
 #else
-#define LOG_I(tag, format, ...) do {} while(0)
+#define LOG_I(tag, format, ...)                                                                                        \
+    do {                                                                                                               \
+    } while (0)
 #endif
 
 #if (MYRTOS_LOG_MAX_LEVEL >= LOG_LEVEL_DEBUG)
 #define LOG_D(tag, format, ...) Log_Printf(LOG_LEVEL_DEBUG, tag, format, ##__VA_ARGS__)
 #else
-#define LOG_D(tag, format, ...) do {} while(0)
+#define LOG_D(tag, format, ...)                                                                                        \
+    do {                                                                                                               \
+    } while (0)
 #endif
 
-// 底层打印函数 
+// 底层打印函数
 
 /**
  * @brief (底层函数) 供日志宏调用，将格式化的日志消息作为IO请求发送到队列。

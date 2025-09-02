@@ -24,7 +24,7 @@ typedef enum {
     // 内存管理事件
     KERNEL_EVENT_MALLOC, // 内存分配后
     KERNEL_EVENT_FREE, // 内存释放后
-    //这里是一些钩子事件
+    // 这里是一些钩子事件
     KERNEL_EVENT_HOOK_MALLOC_FAILED, // 内存分配失败
     KERNEL_EVENT_HOOK_STACK_OVERFLOW,
     KERNEL_EVENT_ERROR_HARD_FAULT
@@ -32,7 +32,6 @@ typedef enum {
     // KERNEL_EVENT_QUEUE_SEND,
     // KERNEL_EVENT_QUEUE_RECEIVE,
 } KernelEventType_t;
-
 
 
 /**
@@ -51,7 +50,7 @@ typedef struct {
     } mem;
 
     void *p_context_data;
-    //可以扩展更多上下文数据
+    // 可以扩展更多上下文数据
 } KernelEventData_t;
 
 

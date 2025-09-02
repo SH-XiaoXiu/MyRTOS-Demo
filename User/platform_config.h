@@ -11,46 +11,46 @@
 //                   可执行程序 配置
 // =========================================================================
 #if (MYRTOS_SERVICE_SHELL_ENABLE == 1)
-#define PLATFORM_PROGRAM_LAUNCH_STACK            64 // 启动任务栈大小
+#define PLATFORM_PROGRAM_LAUNCH_STACK 64 // 启动任务栈大小
 #endif
 
 
 // =========================================================================
 //                   调试控制台 (Console) 配置
 // =========================================================================
-#define PLATFORM_USE_CONSOLE             1 // 自动使能平台控制台
+#define PLATFORM_USE_CONSOLE 1 // 自动使能平台控制台
 
-//选择使用的USART外设 作为全局标准IO
-#define PLATFORM_CONSOLE_USART_NUM       0
-//波特率
-#define PLATFORM_CONSOLE_BAUDRATE        115200U
+// 选择使用的USART外设 作为全局标准IO
+#define PLATFORM_CONSOLE_USART_NUM 0
+// 波特率
+#define PLATFORM_CONSOLE_BAUDRATE 115200U
 
-//中断和缓冲区 ---
-#define PLATFORM_CONSOLE_RX_BUFFER_SIZE  128
-#define PLATFORM_CONSOLE_IRQ_PRIORITY    5
+// 中断和缓冲区 ---
+#define PLATFORM_CONSOLE_RX_BUFFER_SIZE 128
+#define PLATFORM_CONSOLE_IRQ_PRIORITY 5
 
 
 // =========================================================================
 //                   高精度定时器 (Monitor Service) 配置
 // =========================================================================
 #if (MYRTOS_SERVICE_MONITOR_ENABLE == 1)
-#define PLATFORM_USE_HIRES_TIMER         1 // 自动使能高精度定时器
+#define PLATFORM_USE_HIRES_TIMER 1 // 自动使能高精度定时器
 
-//选择用作高精度时基的通用定时器 ---
-// 推荐使用32位定时器，如 TIMER1, TIMER2, TIMER3, TIMER4 (在GD32中对应宏为1,2,3,4)
-#define PLATFORM_HIRES_TIMER_NUM         1
+// 选择用作高精度时基的通用定时器 ---
+//  推荐使用32位定时器，如 TIMER1, TIMER2, TIMER3, TIMER4 (在GD32中对应宏为1,2,3,4)
+#define PLATFORM_HIRES_TIMER_NUM 1
 
-//频率 (Hz) ---
-// 1MHz (1 tick = 1us) 是一个很好的选择，便于调试
-#define PLATFORM_HIRES_TIMER_FREQ_HZ     1000000U
+// 频率 (Hz) ---
+//  1MHz (1 tick = 1us) 是一个很好的选择，便于调试
+#define PLATFORM_HIRES_TIMER_FREQ_HZ 1000000U
 #else
-#define PLATFORM_USE_HIRES_TIMER         0
+#define PLATFORM_USE_HIRES_TIMER 0
 #endif
 
 // =========================================================================
 //                   平台 Hook  配置
 // =========================================================================
-#define PLATFORM_USE_ERROR_HOOK             1
+#define PLATFORM_USE_ERROR_HOOK 1
 
 // =========================================================================
 //                   平台 Shell  配置

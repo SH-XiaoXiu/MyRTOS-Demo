@@ -3,13 +3,13 @@
 
 #include <stdint.h>
 
-//平台无关的数据结构
+// 平台无关的数据结构
 typedef uint32_t StackType_t; // CPU栈的自然宽度
 typedef int32_t BaseType_t; // CPU的有符号最优宽度
 typedef uint32_t UBaseType_t; // CPU的无符号最优宽度
 
 
-//移植层函数原型
+// 移植层函数原型
 /**
  * @brief 初始化任务的栈帧。
  * @param pxTopOfStack 任务栈的最高地址。
