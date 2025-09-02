@@ -9,12 +9,12 @@
 #include "gd32f4xx_misc.h"
 #include "gd32f4xx_rcu.h"
 #include "gd32f4xx_syscfg.h"
-#include "platform.h"     // 唯一的平台头文件
-#include "MyRTOS.h"       // RTOS 核心 API
+#include "platform.h"
+#include "MyRTOS.h"
 #include "MyRTOS_IO.h"
-#include "MyRTOS_Log.h"     // 日志宏
+#include "MyRTOS_Log.h"
 #include "MyRTOS_Port.h"
-#include "MyRTOS_Timer.h"   // 定时器服务 API
+#include "MyRTOS_Timer.h"
 
 /*===========================================================================*
  *                            任务优先级定义                                 *
@@ -342,7 +342,7 @@ void Platform_CreateTasks_Hook(void) {
     //
     a_task_h = Task_Create(a_task, "TaskA", 128, NULL, COLLABORATION_TASKS_PRIO);
     b_task_h = Task_Create(b_task, "TaskB", 128, NULL, COLLABORATION_TASKS_PRIO);
-    d_task_h = Task_Create(d_task, "TaskD_Creator", 256, NULL, COLLABORATION_TASKS_PRIO);
+    // d_task_h = Task_Create(d_task, "TaskD_Creator", 256, NULL, COLLABORATION_TASKS_PRIO); //太他妈吃内存了 有时候创建的瞬间 run 指令跑不了 先注释了
     background_task_h = Task_Create(background_blinky_task, "BG_Blinky_PB0", 64, NULL, BACKGROUND_TASK_PRIO);
     high_prio_task_h = Task_Create(high_prio_task, "HighPrioTask", 256, NULL, HIGH_PRIO_TASK_PRIO);
     interrupt_task_h = Task_Create(interrupt_handler_task, "KeyHandlerTask", 128, NULL, INTERRUPT_TASK_PRIO);
