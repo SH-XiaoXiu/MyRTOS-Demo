@@ -81,6 +81,9 @@
 #error "配置错误: Shell模块 (MYRTOS_SHELL_ENABLE) 依赖于 IO流模块 (MYRTOS_IO_ENABLE)!"
 #endif
 
+#if defined(MYRTOS_SERVICE_VTS_ENABLE) && !defined(MYRTOS_SERVICE_IO_ENABLE)
+#error "配置错误: 虚拟终端模块 (MYRTOS_VTS_ENABLE) 依赖于 IO流模块 (MYRTOS_IO_ENABLE)!"
+#endif
 
 /*==================================================================================================
  *                                      空宏定义

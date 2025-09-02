@@ -12,11 +12,12 @@
 // =========================================================================
 #if (MYRTOS_SERVICE_SHELL_ENABLE == 1)
 #define PLATFORM_PROGRAM_LAUNCH_STACK            64 // 启动任务栈大小
+#endif
+
 
 // =========================================================================
 //                   调试控制台 (Console) 配置
 // =========================================================================
-#if (MYRTOS_SERVICE_IO_ENABLE == 1 || MYRTOS_SERVICE_LOG_ENABLE == 1)
 #define PLATFORM_USE_CONSOLE             1 // 自动使能平台控制台
 
 //选择使用的USART外设 作为全局标准IO
@@ -27,9 +28,6 @@
 //中断和缓冲区 ---
 #define PLATFORM_CONSOLE_RX_BUFFER_SIZE  128
 #define PLATFORM_CONSOLE_IRQ_PRIORITY    5
-#else
-#define PLATFORM_USE_CONSOLE             0
-#endif
 
 
 // =========================================================================
@@ -48,5 +46,23 @@
 #else
 #define PLATFORM_USE_HIRES_TIMER         0
 #endif
+
+// =========================================================================
+//                   平台 Hook  配置
+// =========================================================================
+#define PLATFORM_USE_ERROR_HOOK             1
+
+// =========================================================================
+//                   平台 Shell  配置
+// =========================================================================
+#if MYRTOS_SERVICE_SHELL_ENABLE == 1
+#define PLATFORM_USE_DEFAULT_COMMANDS 1
+#define PLATFORM_USE_PROGRAM_MANGE 1
+#define MAX_REGISTERED_PROGRAMS 16
+#else
+#define PLATFORM_USE_DEFAULT_COMMANDS 0
+#define PLATFORM_USE_PROGRAM_MANGE 0
+#endif
+
 
 #endif // PLATFORM_CONFIG_H
