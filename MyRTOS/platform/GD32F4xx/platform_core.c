@@ -61,6 +61,7 @@ typedef int (*ProgramMain_t)(int argc, char *argv[]);
 
 typedef struct {
     const char *name;
+    const char *description;
     ProgramMain_t main_func;
 } ProgramEntry_t;
 
@@ -231,8 +232,8 @@ static TaskHandle_t g_current_foreground_task = NULL;
 static TaskHandle_t g_spied_task = NULL;
 
 const ProgramEntry_t g_program_table[] = {
-    {"hello", app_hello_main},
-    {"counter", app_counter_main},
+    {"hello", "输出HelloWorld", app_hello_main},
+    {"counter", "一个计数程序", app_counter_main,},
     {NULL, NULL}
 };
 #endif // PLATFORM_USE_PROGRAM_MANGE
@@ -694,7 +695,7 @@ int cmd_logall(ShellHandle_t shell, int argc, char *argv[]) {
 int cmd_ls(ShellHandle_t shell, int argc, char *argv[]) {
     MyRTOS_printf("可用程序：\n");
     for (int i = 0; g_program_table[i].name != NULL; ++i)
-        MyRTOS_printf("  %s\n", g_program_table[i].name);
+        MyRTOS_printf("%s - %s\n", g_program_table[i].name, g_program_table[i].description);
     return 0;
 }
 #endif // PLATFORM_USE_DEFAULT_COMMANDS
