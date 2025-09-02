@@ -102,85 +102,85 @@ BaseType_t MyRTOS_Port_StartScheduler(void) {
 
 void SVC_Handler(void) __attribute__((naked)) {
     __asm volatile(" ldr r0, =currentTask      \n" // 将 currentTask 的地址加载到 r0
-                   " ldr r0, [r0]              \n" // 从 currentTask 地址中读取当前任务的 TCB 指针
-                   " ldr r0, [r0]              \n" // 从 TCB 中读取任务的栈指针 (sp)
+        " ldr r0, [r0]              \n" // 从 currentTask 地址中读取当前任务的 TCB 指针
+        " ldr r0, [r0]              \n" // 从 TCB 中读取任务的栈指针 (sp)
 
-                   " ldmia r0!, {r1, r4-r11}   \n" // 从栈中恢复 EXC_RETURN 到 r1，以及 R4-R11 寄存器
-                   " mov lr, r1                \n" // 将 EXC_RETURN 值移动到链接寄存器 LR
+        " ldmia r0!, {r1, r4-r11}   \n" // 从栈中恢复 EXC_RETURN 到 r1，以及 R4-R11 寄存器
+        " mov lr, r1                \n" // 将 EXC_RETURN 值移动到链接寄存器 LR
 
-                   " msr psp, r0               \n" // 更新 PSP（进程栈指针）为任务的栈指针
-                   " isb                       \n" // 指令同步屏障，确保 PSP 更新完成
+        " msr psp, r0               \n" // 更新 PSP（进程栈指针）为任务的栈指针
+        " isb                       \n" // 指令同步屏障，确保 PSP 更新完成
 
-                   " movs r0, #2               \n" // 设置 CONTROL 寄存器值为 2（使用 PSP 作为当前栈指针）
-                   " msr control, r0           \n" // 写入 CONTROL 寄存器
-                   " isb                       \n" // 指令同步屏障，确保 CONTROL 更新完成
+        " movs r0, #2               \n" // 设置 CONTROL 寄存器值为 2（使用 PSP 作为当前栈指针）
+        " msr control, r0           \n" // 写入 CONTROL 寄存器
+        " isb                       \n" // 指令同步屏障，确保 CONTROL 更新完成
 
-                   " bx lr                     \n" // 异常返回，硬件自动恢复剩余寄存器（R0-R3、R12、LR、PC、xPSR）
+        " bx lr                     \n" // 异常返回，硬件自动恢复剩余寄存器（R0-R3、R12、LR、PC、xPSR）
     );
 }
 
 void PendSV_Handler(void) __attribute__((naked)) {
     __asm volatile(" mrs r0, psp                       \n" // 获取当前任务的PSP到r0
-                   " isb                               \n"
+        " isb                               \n"
 
-                   " ldr r2, =currentTask              \n"
-                   " ldr r3, [r2]                      \n" // r3 = 当前TCB指针（即将切换出去的任务）
+        " ldr r2, =currentTask              \n"
+        " ldr r3, [r2]                      \n" // r3 = 当前TCB指针（即将切换出去的任务）
 
-                   /*********************************************************************
-                    *                     栈溢出检查                                     *
-                    * 检查即将切换出去的任务的栈。
-                    *********************************************************************/
-                   " ldr r1, [r3, %0]                  \n" // r1 = tcb->stack_base，使用偏移宏
-                   " cmp r0, r1                        \n" // 比较当前SP(r0)与stack_base(r1)
-                   " bge .L_no_overflow                \n" // 如果SP >= stack_base，则安全，跳转。
+        /*********************************************************************
+         *                     栈溢出检查                                     *
+         * 检查即将切换出去的任务的栈。
+         *********************************************************************/
+        " ldr r1, [r3, %0]                  \n" // r1 = tcb->stack_base，使用偏移宏
+        " cmp r0, r1                        \n" // 比较当前SP(r0)与stack_base(r1)
+        " bge .L_no_overflow                \n" // 如果SP >= stack_base，则安全，跳转。
 
-                   // --- 检测到溢出 ---
-                   " mov r0, r3                        \n" // 传递违规任务的句柄(TCB指针)作为第一个参数
-                   " bl Stack_Overflow_Report\n" // 调用C处理函数。此函数将停止运行，不会返回。
+        // --- 检测到溢出 ---
+        " mov r0, r3                        \n" // 传递违规任务的句柄(TCB指针)作为第一个参数
+        " bl Stack_Overflow_Report\n" // 调用C处理函数。此函数将停止运行，不会返回。
 
-                   ".L_no_overflow:"
-                   /*********************************************************************
-                    *                   保存即将切换出去任务的上下文                     *
-                    *********************************************************************/
+        ".L_no_overflow:"
+        /*********************************************************************
+         *                   保存即将切换出去任务的上下文                     *
+         *********************************************************************/
 
-                   " tst lr, #0x10                     \n" // 检查是否需要保存FPU上下文
-                   " it eq                             \n"
-                   " vstmdbeq r0!, {s16-s31}           \n" // 如果使用了FPU，则保存S16-S31
+        " tst lr, #0x10                     \n" // 检查是否需要保存FPU上下文
+        " it eq                             \n"
+        " vstmdbeq r0!, {s16-s31}           \n" // 如果使用了FPU，则保存S16-S31
 
-                   " mov r1, lr                        \n" // 保存EXC_RETURN值
-                   " stmdb r0!, {r1, r4-r11}           \n" // 保存软件管理的寄存器(R4-R11, EXC_RETURN)
+        " mov r1, lr                        \n" // 保存EXC_RETURN值
+        " stmdb r0!, {r1, r4-r11}           \n" // 保存软件管理的寄存器(R4-R11, EXC_RETURN)
 
-                   " str r0, [r3]                      \n" // 将最终的栈指针保存回即将切换出去任务的TCB
+        " str r0, [r3]                      \n" // 将最终的栈指针保存回即将切换出去任务的TCB
 
-                   /*********************************************************************
-                    *                      调用内核调度器                                *
-                    * 调用公共的、抽象的调度器API。此调用将更新'currentTask'全局变量，
-                    * 使其指向下一个要运行的任务。
-                    *********************************************************************/
-                   " bl MyRTOS_Schedule                \n"
+        /*********************************************************************
+         *                      调用内核调度器                                *
+         * 调用公共的、抽象的调度器API。此调用将更新'currentTask'全局变量，
+         * 使其指向下一个要运行的任务。
+         *********************************************************************/
+        " bl MyRTOS_Schedule                \n"
 
-                   /*********************************************************************
-                    *                   恢复即将切换进来任务的上下文                     *
-                    *********************************************************************/
+        /*********************************************************************
+         *                   恢复即将切换进来任务的上下文                     *
+         *********************************************************************/
 
-                   " ldr r2, =currentTask              \n"
-                   " ldr r2, [r2]                      \n" // r2 = 新TCB指针（即将切换进来的任务）
-                   " ldr r0, [r2]                      \n" // r0 = 新任务保存的栈指针
+        " ldr r2, =currentTask              \n"
+        " ldr r2, [r2]                      \n" // r2 = 新TCB指针（即将切换进来的任务）
+        " ldr r0, [r2]                      \n" // r0 = 新任务保存的栈指针
 
-                   " ldmia r0!, {r1, r4-r11}           \n" // 恢复软件管理的寄存器
-                   " mov lr, r1                        \n" // 将EXC_RETURN值恢复到LR寄存器
+        " ldmia r0!, {r1, r4-r11}           \n" // 恢复软件管理的寄存器
+        " mov lr, r1                        \n" // 将EXC_RETURN值恢复到LR寄存器
 
-                   " tst lr, #0x10                     \n" // 检查是否需要恢复FPU上下文
-                   " it eq                             \n"
-                   " vldmiaeq r0!, {s16-s31}           \n" // 如果新任务需要，则恢复S16-S31
+        " tst lr, #0x10                     \n" // 检查是否需要恢复FPU上下文
+        " it eq                             \n"
+        " vldmiaeq r0!, {s16-s31}           \n" // 如果新任务需要，则恢复S16-S31
 
-                   " msr psp, r0                       \n" // 更新进程栈指针
-                   " isb                               \n"
-                   " bx lr                             \n" // 异常返回，从栈中恢复PC、PSR、R0-R3、R12
+        " msr psp, r0                       \n" // 更新进程栈指针
+        " isb                               \n"
+        " bx lr                             \n" // 异常返回，从栈中恢复PC、PSR、R0-R3、R12
 
-                   : /* 无输出操作数 */
-                   : "i"(TCB_OFFSET_STACK_BASE) /* 输入操作数0: stack_base偏移常量 */
-                   : "r0", "r1", "r2", "r3", "memory" /* 被破坏的寄存器 */
+        : /* 无输出操作数 */
+        : "i"(TCB_OFFSET_STACK_BASE) /* 输入操作数0: stack_base偏移常量 */
+        : "r0", "r1", "r2", "r3", "memory" /* 被破坏的寄存器 */
     );
 }
 
@@ -196,10 +196,10 @@ void SysTick_Handler(void) {
 // 系统异常处理器的入口
 void HardFault_Handler(void) __attribute__((naked)) {
     __asm volatile(" tst lr, #4                                \n"
-                   " ite eq                                    \n"
-                   " mrseq r0, msp                             \n"
-                   " mrsne r0, psp                             \n"
-                   " b HardFault_Report                 \n");
+        " ite eq                                    \n"
+        " mrseq r0, msp                             \n"
+        " mrsne r0, psp                             \n"
+        " b HardFault_Report                 \n");
 }
 
 
@@ -209,8 +209,7 @@ void HardFault_Report(uint32_t *pulFaultStackAddress) {
     } else {
         Platform_HardFault_Hook(pulFaultStackAddress);
     }
-    while (1)
-        ;
+    while (1);
 }
 
 
@@ -220,6 +219,5 @@ void Stack_Overflow_Report(TaskHandle_t pxTask) {
     } else {
         Platform_StackOverflow_Hook(pxTask);
     }
-    while (1)
-        ;
+    while (1);
 }

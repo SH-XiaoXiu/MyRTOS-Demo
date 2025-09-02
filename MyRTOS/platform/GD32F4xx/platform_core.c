@@ -231,13 +231,11 @@ ProgramRegistry_t g_program_registry;
 static TaskHandle_t g_current_foreground_task = NULL;
 static TaskHandle_t g_spied_task = NULL;
 
-const ProgramEntry_t g_program_table[] = {{"hello", "输出HelloWorld", app_hello_main},
-                                          {
-                                                  "counter",
-                                                  "一个计数程序",
-                                                  app_counter_main,
-                                          },
-                                          {NULL, NULL}};
+const ProgramEntry_t g_program_table[] = {
+    {"hello", "输出HelloWorld", app_hello_main},
+    {"counter", "一个计数程序", app_counter_main,},
+    {NULL, NULL}
+};
 #endif // PLATFORM_USE_PROGRAM_MANGE
 
 
@@ -254,15 +252,13 @@ void ProgramRegistry_Init(ProgramRegistry_t *reg) {
         return;
     ProgramRegistryInternal_t *internal = MyRTOS_Malloc(sizeof(ProgramRegistryInternal_t));
     if (!internal) {
-        while (1)
-            ;
+        while (1);
     }
     memset(internal, 0, sizeof(ProgramRegistryInternal_t));
     internal->mutex = Mutex_Create();
     if (!internal->mutex) {
         MyRTOS_Free(internal);
-        while (1)
-            ;
+        while (1);
     }
     reg->_internal = internal;
 }
@@ -470,8 +466,7 @@ static void system_clock_config(void) {
     rcu_deinit();
     rcu_osci_on(RCU_HXTAL);
     if (SUCCESS != rcu_osci_stab_wait(RCU_HXTAL)) {
-        while (1)
-            ;
+        while (1);
     }
     rcu_ahb_clock_config(RCU_AHB_CKSYS_DIV1);
     rcu_apb2_clock_config(RCU_APB2_CKAHB_DIV2);
@@ -480,8 +475,7 @@ static void system_clock_config(void) {
     rcu_pll_config(RCU_PLLSRC_HXTAL, pll_m, pll_n, pll_p, pll_q);
     rcu_osci_on(RCU_PLL_CK);
     if (SUCCESS != rcu_osci_stab_wait(RCU_FLAG_PLLSTB)) {
-        while (1)
-            ;
+        while (1);
     }
     rcu_system_clock_source_config(RCU_CKSYSSRC_PLLP);
     while (RCU_SCSS_PLLP != rcu_system_clock_source_get()) {
@@ -505,18 +499,18 @@ void Platform_Init(void) {
     StreamHandle_t shell_input_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
     StreamHandle_t shell_output_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
     if (!shell_input_pipe || !shell_output_pipe) {
-        while (1)
-            ;
+        while (1);
     }
-    VTS_Config_t v_config = {.physical_stream = Platform_Console_GetStream(),
-                             .root_input_stream = shell_input_pipe,
-                             .root_output_stream = shell_output_pipe,
-                             .back_command_sequence = "back\r\n",
-                             .back_command_len = strlen("back\r\n"),
-                             .on_back_command = platform_on_back_command};
+    VTS_Config_t v_config = {
+        .physical_stream = Platform_Console_GetStream(),
+        .root_input_stream = shell_input_pipe,
+        .root_output_stream = shell_output_pipe,
+        .back_command_sequence = "back\r\n",
+        .back_command_len = strlen("back\r\n"),
+        .on_back_command = platform_on_back_command
+    };
     if (VTS_Init(&v_config) != 0) {
-        while (1)
-            ;
+        while (1);
     }
     g_system_stdout = VTS_GetBackgroundStream();
     g_system_stderr = VTS_GetBackgroundStream();
@@ -556,8 +550,7 @@ void Platform_Init(void) {
 void Platform_StartScheduler(void) {
     Platform_CreateTasks_Hook();
     Task_StartScheduler(Platform_IdleTask_Hook);
-    while (1)
-        ;
+    while (1);
 }
 
 

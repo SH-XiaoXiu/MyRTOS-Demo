@@ -16,7 +16,8 @@ __attribute__((weak)) void Platform_BSP_Init_Hook(void) {
     // 默认不做任何事
 }
 
-__attribute__((weak)) void Platform_AppSetup_Hook(ShellHandle_t shell_h) {}
+__attribute__((weak)) void Platform_AppSetup_Hook(ShellHandle_t shell_h) {
+}
 
 __attribute__((weak)) void Platform_CreateTasks_Hook(void) {
     // 默认不做任何事
@@ -57,8 +58,7 @@ __attribute__((weak)) void Platform_HardFault_Hook(uint32_t *pulFaultStackAddres
     fault_print_string("\r\n  LR  = ");
     fault_print_hex(pulFaultStackAddress[5]);
     fault_print_string("\r\nSystem Halted.\r\n");
-    while (1)
-        ;
+    while (1);
 }
 
 __attribute__((weak)) void Platform_StackOverflow_Hook(TaskHandle_t pxTask) {
@@ -68,8 +68,7 @@ __attribute__((weak)) void Platform_StackOverflow_Hook(TaskHandle_t pxTask) {
     fault_print_string("\r\nSystem Halted.\r\n");
     fault_print_string("\r\nTask:\r\n");
     fault_print_string(Task_GetName(pxTask));
-    while (1)
-        ;
+    while (1);
 }
 
 __attribute__((weak)) void Platform_MallocFailed_Hook(size_t wantedSize) {

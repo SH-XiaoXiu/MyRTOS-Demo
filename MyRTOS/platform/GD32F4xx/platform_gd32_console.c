@@ -78,9 +78,9 @@ static size_t console_stream_write(StreamHandle_t stream, const void *buffer, si
 }
 
 static const StreamInterface_t g_console_stream_interface = {
-        .read = console_stream_read,
-        .write = console_stream_write,
-        .control = NULL,
+    .read = console_stream_read,
+    .write = console_stream_write,
+    .control = NULL,
 };
 static Stream_t g_console_stream_instance;
 

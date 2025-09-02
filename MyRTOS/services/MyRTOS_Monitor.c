@@ -153,8 +153,7 @@ int Monitor_GetTaskInfo(TaskHandle_t task_h, TaskStats_t *p_stats_out) {
     StackType_t *local_stack_base;
     uint16_t local_stack_size_words;
 
-    MyRTOS_Port_EnterCritical();
-    {
+    MyRTOS_Port_EnterCritical(); {
         // 直接从 TCB 填充静态信息
         p_stats_out->task_handle = task_h;
         p_stats_out->task_name = tcb->taskName;

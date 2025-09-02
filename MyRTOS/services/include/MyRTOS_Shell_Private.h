@@ -1,4 +1,3 @@
-
 #ifndef MYRTOS_SHELL_PRIVATE_H
 #define MYRTOS_SHELL_PRIVATE_H
 

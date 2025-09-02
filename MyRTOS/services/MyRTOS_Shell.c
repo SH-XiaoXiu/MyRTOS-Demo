@@ -88,7 +88,8 @@ static void Shell_Task(void *param) {
 
                 shell->buffer_len = 0;
                 MyRTOS_printf("%s", shell->config.prompt); // 打印新提示符
-            } else if (ch == '\b' || ch == 127) { // 退格键
+            } else if (ch == '\b' || ch == 127) {
+                // 退格键
                 if (shell->buffer_len > 0) {
                     shell->buffer_len--;
                     MyRTOS_printf("\b \b"); // 自己负责回显退格

@@ -74,8 +74,7 @@ static void vts_forward_output(VTS_Instance_t *vts, StreamHandle_t stream, char 
 }
 
 static void vts_drain_stream(StreamHandle_t stream, char *buffer, size_t buffer_size) {
-    while (Stream_Read(stream, buffer, buffer_size, 0) > 0)
-        ;
+    while (Stream_Read(stream, buffer, buffer_size, 0) > 0);
 }
 
 

@@ -229,9 +229,9 @@ static size_t pipe_write(StreamHandle_t stream, const void *buffer, size_t bytes
 
 // 定义Pipe流的虚函数表
 static const StreamInterface_t g_pipe_stream_interface = {
-        .read = pipe_read,
-        .write = pipe_write,
-        .control = NULL, // Pipe不支持control方法
+    .read = pipe_read,
+    .write = pipe_write,
+    .control = NULL, // Pipe不支持control方法
 };
 
 StreamHandle_t Pipe_Create(size_t buffer_size) {

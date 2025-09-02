@@ -167,8 +167,7 @@ static void insertBlockIntoFreeList(BlockLink_t *blockToInsert) {
 static void *rtos_malloc(const size_t wantedSize) {
     BlockLink_t *block, *previousBlock, *newBlockLink;
     void *pvReturn = NULL;
-    MyRTOS_Port_EnterCritical();
-    {
+    MyRTOS_Port_EnterCritical(); {
         // 如果堆尚未初始化，则进行初始化
         if (blockLinkEnd == NULL) {
             heapInit();
@@ -325,8 +324,7 @@ static void addTaskToSortedDelayList(TaskHandle_t task) {
 static void addTaskToReadyList(TaskHandle_t task) {
     if (task == NULL || task->priority >= MYRTOS_MAX_PRIORITIES)
         return;
-    MyRTOS_Port_EnterCritical();
-    {
+    MyRTOS_Port_EnterCritical(); {
         // 设置对应优先级的位图标志
         topReadyPriority |= (1UL << task->priority);
         task->pNextGeneric = NULL;
@@ -443,15 +441,13 @@ void MyRTOS_Init(void) {
 void Task_StartScheduler(void (*idle_task_func)(void *)) {
     // 必须提供一个有效的空闲任务函数
     if (idle_task_func == NULL) {
-        while (1)
-            ;
+        while (1);
     }
     // 创建空闲任务，其优先级为最低
     idleTask = Task_Create(idle_task_func, "IDLE", 128, NULL, 0);
     if (idleTask == NULL) {
         // 如果空闲任务创建失败，系统无法继续
-        while (1)
-            ;
+        while (1);
     }
     // 标记调度器已启动
     g_scheduler_started = 1;
@@ -632,8 +628,10 @@ void MyRTOS_Free(void *pv) {
     if (pv) {
         // 在释放前获取块大小以用于事件广播
         BlockLink_t *link = (BlockLink_t *) ((uint8_t *) pv - heapStructSize);
-        KernelEventData_t eventData = {.eventType = KERNEL_EVENT_FREE,
-                                       .mem = {.ptr = pv, .size = (link->blockSize & ~blockAllocatedBit)}};
+        KernelEventData_t eventData = {
+            .eventType = KERNEL_EVENT_FREE,
+            .mem = {.ptr = pv, .size = (link->blockSize & ~blockAllocatedBit)}
+        };
         broadcast_event(&eventData);
     }
     rtos_free(pv);
@@ -701,8 +699,7 @@ TaskHandle_t Task_Create(void (*func)(void *), const char *taskName, uint16_t st
     }
     // 调用移植层代码初始化任务堆栈（模拟CPU上下文）
     t->sp = MyRTOS_Port_InitialiseStack(stack + stack_size, func, param);
-    MyRTOS_Port_EnterCritical();
-    {
+    MyRTOS_Port_EnterCritical(); {
         // 将新任务添加到全局任务列表中
         if (allTaskListHead == NULL) {
             allTaskListHead = t;
@@ -791,8 +788,7 @@ int Task_Delete(TaskHandle_t task_h) {
 void Task_Delay(uint32_t tick) {
     if (tick == 0 || g_scheduler_started == 0)
         return;
-    MyRTOS_Port_EnterCritical();
-    {
+    MyRTOS_Port_EnterCritical(); {
         // 从就绪链表中移除当前任务
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         // 计算唤醒时间并设置任务状态
@@ -813,8 +809,7 @@ void Task_Delay(uint32_t tick) {
  */
 int Task_Notify(TaskHandle_t task_h) {
     int trigger_yield = 0;
-    MyRTOS_Port_EnterCritical();
-    {
+    MyRTOS_Port_EnterCritical(); {
         // 检查目标任务是否正在等待通知
         if (task_h->is_waiting_notification && task_h->state == TASK_STATE_BLOCKED) {
             task_h->is_waiting_notification = 0;
@@ -841,8 +836,7 @@ int Task_NotifyFromISR(TaskHandle_t task_h, int *higherPriorityTaskWoken) {
     if (higherPriorityTaskWoken == NULL)
         return -1;
     *higherPriorityTaskWoken = 0;
-    MyRTOS_Port_EnterCritical();
-    {
+    MyRTOS_Port_EnterCritical(); {
         if (task_h->is_waiting_notification && task_h->state == TASK_STATE_BLOCKED) {
             task_h->is_waiting_notification = 0;
             addTaskToReadyList(task_h);
@@ -860,8 +854,7 @@ int Task_NotifyFromISR(TaskHandle_t task_h, int *higherPriorityTaskWoken) {
  * @note  任务将一直阻塞，直到 `Task_Notify` 或 `Task_NotifyFromISR` 被调用
  */
 void Task_Wait(void) {
-    MyRTOS_Port_EnterCritical();
-    {
+    MyRTOS_Port_EnterCritical(); {
         // 从就绪链表移除
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         // 设置等待通知标志和阻塞状态
@@ -982,8 +975,7 @@ void Queue_Delete(QueueHandle_t delQueue) {
     Queue_t *queue = delQueue;
     if (queue == NULL)
         return;
-    MyRTOS_Port_EnterCritical();
-    {
+    MyRTOS_Port_EnterCritical(); {
         // 唤醒所有等待发送的任务
         while (queue->sendEventList.head != NULL) {
             Task_t *taskToWake = queue->sendEventList.head;
@@ -1174,8 +1166,7 @@ void Mutex_Delete(MutexHandle_t mutex) {
         return;
     }
 
-    MyRTOS_Port_EnterCritical();
-    {
+    MyRTOS_Port_EnterCritical(); {
         // 唤醒所有正在等待该锁的任务
         //  遍历事件列表，将所有等待的任务移回到就绪列表
         while (mutex->eventList.head != NULL) {

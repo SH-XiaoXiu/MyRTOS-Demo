@@ -264,7 +264,7 @@ int cmd_114514(ShellHandle_t shell_h, int argc, char *argv[]) {
 }
 
 const ShellCommand_t g_user_commands[] = {
-        {"114514", "一个很臭的指令", cmd_114514},
+    {"114514", "一个很臭的指令", cmd_114514},
 };
 const size_t g_user_command_count = sizeof(g_user_commands) / sizeof(g_user_commands[0]);
 
