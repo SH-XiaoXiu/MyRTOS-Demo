@@ -8,6 +8,11 @@
 #include "MyRTOS_Config.h"
 #include "MyRTOS_Service_Config.h"
 
+// =========================================================================
+//                   可执行程序 配置
+// =========================================================================
+#if (MYRTOS_SERVICE_SHELL_ENABLE == 1)
+#define PLATFORM_PROGRAM_LAUNCH_STACK            64 // 启动任务栈大小
 
 // =========================================================================
 //                   调试控制台 (Console) 配置
@@ -46,4 +51,5 @@
 #endif
 
 #endif // PLATFORM_CONFIG_H
+
 #endif
