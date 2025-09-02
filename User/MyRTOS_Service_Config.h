@@ -60,9 +60,11 @@
 
 #if MYRTOS_SERVICE_VTS_ENABLE == 1
 #define VTS_TASK_PRIORITY       5
-#define VTS_TASK_STACK_SIZE     1024
+#define VTS_TASK_STACK_SIZE     256
 #define VTS_RW_BUFFER_SIZE      128
 #define VTS_PIPE_BUFFER_SIZE    512
+#define VTS_MAX_BACK_CMD_LEN  16  // "back"命令序列的最大长度
+#define VTS_RW_BUFFER_SIZE    128 // 内部读写缓冲区大小
 #endif
 
 

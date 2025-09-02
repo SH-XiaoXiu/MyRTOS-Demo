@@ -16,6 +16,11 @@
 #include "MyRTOS_Shell.h"
 #include "MyRTOS_VTS.h"
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+// å¤–éƒ¨å®šä¹‰ 
 void Platform_Console_HwInit(void);
 
 void Platform_Console_OSInit(void);
@@ -24,260 +29,513 @@ void Platform_HiresTimer_Init(void);
 
 void Platform_error_handler_init(void);
 
-static void system_clock_config(void);
-#if (MYRTOS_SERVICE_SHELL_ENABLE == 1 && MYRTOS_SERVICE_VTS_ENABLE == 1)
-void Platform_RegisterVTSCommands(ShellHandle_t shell_h, const VTS_Handles_t *handles);
-#endif
 
+void platform_register_default_commands(ShellHandle_t shell_h);
 
-// È«¾Ö±äÁ¿
+//==============================================================================
+// ç±»å‹å®šä¹‰ 
+//==============================================================================
+typedef int (*ProgramMain_t)(int argc, char *argv[]);
+
+typedef struct {
+    const char *name;
+    ProgramMain_t main_func;
+} ProgramEntry_t;
+
+typedef struct {
+    ProgramMain_t main_func;
+    int argc;
+    char **argv;
+    StreamHandle_t stdin_stream;
+    StreamHandle_t stdout_stream;
+    StreamHandle_t stderr_stream;
+    StreamHandle_t stdout_pipe_to_delete;
+} LaunchInfo_t;
+
+//==============================================================================
+// Program Registry æ¨¡å—å®ç°
+//==============================================================================
+#define MAX_REGISTERED_PROGRAMS 16
+
+typedef struct {
+    char *name;
+    TaskHandle_t handle;
+    volatile bool shutdown_requested;
+    // [FIX] å°†ä»»åŠ¡ä¸å…¶èµ„æº(LaunchInfo)æ˜ç¡®ç»‘å®š
+    LaunchInfo_t *launch_info;
+} ProgramInfo_t;
+
+typedef struct {
+    ProgramInfo_t entries[MAX_REGISTERED_PROGRAMS];
+    int count;
+    MutexHandle_t mutex;
+} ProgramRegistryInternal_t;
+
+typedef struct {
+    void *_internal;
+} ProgramRegistry_t;
+
+void ProgramRegistry_Init(ProgramRegistry_t *reg) {
+    if (!reg) return;
+    ProgramRegistryInternal_t *internal = MyRTOS_Malloc(sizeof(ProgramRegistryInternal_t));
+    if (!internal) { while (1); }
+    memset(internal, 0, sizeof(ProgramRegistryInternal_t));
+    internal->mutex = Mutex_Create();
+    if (!internal->mutex) {
+        MyRTOS_Free(internal);
+        while (1);
+    }
+    reg->_internal = internal;
+}
+
+static char *my_strdup(const char *s) {
+    if (!s) return NULL;
+    size_t len = strlen(s) + 1;
+    char *new_s = MyRTOS_Malloc(len);
+    if (new_s) memcpy(new_s, s, len);
+    return new_s;
+}
+
+int ProgramRegistry_Register(ProgramRegistry_t *reg, const char *name, TaskHandle_t handle, LaunchInfo_t *info) {
+    ProgramRegistryInternal_t *internal = (ProgramRegistryInternal_t *) reg->_internal;
+    Mutex_Lock(internal->mutex);
+    if (internal->count >= MAX_REGISTERED_PROGRAMS) {
+        Mutex_Unlock(internal->mutex);
+        return -1;
+    }
+    int index = -1;
+    for (int i = 0; i < MAX_REGISTERED_PROGRAMS; ++i) {
+        if (internal->entries[i].handle == NULL) {
+            index = i;
+            break;
+        }
+    }
+    if (index == -1) {
+        Mutex_Unlock(internal->mutex);
+        return -1;
+    }
+    internal->entries[index].name = my_strdup(name);
+    if (!internal->entries[index].name) {
+        Mutex_Unlock(internal->mutex);
+        return -1;
+    }
+    internal->entries[index].handle = handle;
+    internal->entries[index].shutdown_requested = false;
+    internal->entries[index].launch_info = info; // ç»‘å®šèµ„æº
+    internal->count++;
+    Mutex_Unlock(internal->mutex);
+    return 0;
+}
+
+TaskHandle_t ProgramRegistry_Find(ProgramRegistry_t *reg, const char *name) {
+    ProgramRegistryInternal_t *internal = (ProgramRegistryInternal_t *) reg->_internal;
+    TaskHandle_t found_handle = NULL;
+    Mutex_Lock(internal->mutex);
+    for (int i = 0; i < MAX_REGISTERED_PROGRAMS; ++i) {
+        if (internal->entries[i].handle != NULL && strcmp(internal->entries[i].name, name) == 0) {
+            found_handle = internal->entries[i].handle;
+            break;
+        }
+    }
+    Mutex_Unlock(internal->mutex);
+    return found_handle;
+}
+
+/**
+ * @brief ä»æ³¨å†Œè¡¨ä¸­ç§»é™¤ä¸€ä¸ªä»»åŠ¡æ¡ç›®ï¼Œå¹¶è¿”å›å…¶å…³è”çš„èµ„æºæŒ‡é’ˆ
+ * @return LaunchInfo_t* æŒ‡å‘éœ€è¦è¢«æ¸…ç†çš„èµ„æºï¼Œå¦‚æœæœªæ‰¾åˆ°åˆ™è¿”å›NULL
+ */
+LaunchInfo_t *ProgramRegistry_Unregister(ProgramRegistry_t *reg, TaskHandle_t handle) {
+    ProgramRegistryInternal_t *internal = (ProgramRegistryInternal_t *) reg->_internal;
+    LaunchInfo_t *info_to_return = NULL;
+    Mutex_Lock(internal->mutex);
+    for (int i = 0; i < MAX_REGISTERED_PROGRAMS; ++i) {
+        if (internal->entries[i].handle == handle) {
+            MyRTOS_Free(internal->entries[i].name);
+            info_to_return = internal->entries[i].launch_info;
+            internal->entries[i].name = NULL;
+            internal->entries[i].handle = NULL;
+            internal->entries[i].shutdown_requested = false;
+            internal->entries[i].launch_info = NULL;
+            internal->count--;
+            break;
+        }
+    }
+    Mutex_Unlock(internal->mutex);
+    return info_to_return;
+}
+
+void ProgramRegistry_SignalShutdown(ProgramRegistry_t *reg, TaskHandle_t handle) {
+    ProgramRegistryInternal_t *internal = (ProgramRegistryInternal_t *) reg->_internal;
+    Mutex_Lock(internal->mutex);
+    for (int i = 0; i < MAX_REGISTERED_PROGRAMS; ++i) {
+        if (internal->entries[i].handle == handle) {
+            internal->entries[i].shutdown_requested = true;
+            break;
+        }
+    }
+    Mutex_Unlock(internal->mutex);
+}
+
+// å…¨å±€å˜é‡ 
 extern StreamHandle_t g_system_stdin;
 extern StreamHandle_t g_system_stdout;
 extern StreamHandle_t g_system_stderr;
-
-#if (MYRTOS_SERVICE_SHELL_ENABLE == 1)
 ShellHandle_t g_platform_shell_handle = NULL;
+ProgramRegistry_t g_program_registry;
+static TaskHandle_t g_current_foreground_task = NULL;
+static TaskHandle_t g_spied_task = NULL;
+static StreamHandle_t g_original_task_stdout = NULL;
+static StreamHandle_t g_spy_pipe = NULL;
 
-void platform_register_default_commands(ShellHandle_t shell_h);
-#endif
+// è¾…åŠ©å‡½æ•° 
+static void cleanup_launch_info(LaunchInfo_t *info) {
+    if (!info) return;
+    for (int i = 0; i < info->argc; ++i) { MyRTOS_Free(info->argv[i]); }
+    MyRTOS_Free(info->argv);
+    if (info->stdout_pipe_to_delete) { Pipe_Delete(info->stdout_pipe_to_delete); }
+    MyRTOS_Free(info);
+}
 
-#if (MYRTOS_SERVICE_SHELL_ENABLE == 1 && MYRTOS_SERVICE_VTS_ENABLE == 1)
-// ÓÃÓÚ±£´æShellÈÎÎñÔ­Ê¼µÄstdout£¬ÒÔ±ãÔÚshowallÄ£Ê½ºó»Ö¸´
-static StreamHandle_t g_shell_original_stdout = NULL;
-#endif
+// å¯æ‰§è¡Œç¨‹åºå®šä¹‰ 
+bool Program_ShouldShutdown(void);
 
+int app_hello_main(int argc, char *argv[]) {
+    MyRTOS_printf("Hello from 'hello' app!\n");
+    return 0;
+}
 
+int app_counter_main(int argc, char *argv[]) {
+    int i = 0;
+    while (!Program_ShouldShutdown()) {
+        MyRTOS_printf("Counter: %d\n", i++);
+        Task_Delay(MS_TO_TICKS(1000));
+    }
+    MyRTOS_printf("Counter task shutting down gracefully.\n");
+    return 0;
+}
+
+const ProgramEntry_t g_program_table[] = {
+    {"hello", app_hello_main},
+    {"counter", app_counter_main},
+    {NULL, NULL}
+};
+bool Program_ShouldShutdown(void) {
+    ProgramRegistryInternal_t *internal = (ProgramRegistryInternal_t *) g_program_registry._internal;
+    TaskHandle_t self = Task_GetCurrentTaskHandle();
+    bool should_shutdown = false;
+    Mutex_Lock(internal->mutex);
+    for (int i = 0; i < MAX_REGISTERED_PROGRAMS; ++i) {
+        if (internal->entries[i].handle == self) {
+            should_shutdown = internal->entries[i].shutdown_requested;
+            break;
+        }
+    }
+    Mutex_Unlock(internal->mutex);
+    return should_shutdown;
+}
+
+// å‘½ä»¤å¤„ç†å‡½æ•°å£°æ˜ 
+int cmd_run(ShellHandle_t shell, int argc, char *argv[]);
+
+int cmd_kill(ShellHandle_t shell, int argc, char *argv[]);
+
+int cmd_shell(ShellHandle_t shell, int argc, char *argv[]);
+
+int cmd_log(ShellHandle_t shell, int argc, char *argv[]);
+
+int cmd_logall(ShellHandle_t shell, int argc, char *argv[]);
+
+int cmd_ls(ShellHandle_t shell, int argc, char *argv[]);
+
+//==============================================================================
+// ä½œä¸šæ§åˆ¶ä¸VTSå›è°ƒ 
+//==============================================================================
+static void cleanup_spy_state() {
+    if (g_spied_task) { Task_SetStdOut(g_spied_task, g_original_task_stdout); }
+    if (g_spy_pipe) { Pipe_Delete(g_spy_pipe); }
+    g_spied_task = NULL;
+    g_original_task_stdout = NULL;
+    g_spy_pipe = NULL;
+}
+
+/**
+ * @brief [FIXED] æœ€ç»ˆçš„ã€å¥å£®çš„ä»»åŠ¡æ¸…ç†å‡½æ•°
+ */
+static void cleanup_task_resources(TaskHandle_t task_to_clean) {
+    if (!task_to_clean) return;
+
+    MyRTOS_printf("\n[Platform] æ­£åœ¨æ¸…ç†ä»»åŠ¡èµ„æº: %s\n", Task_GetName(task_to_clean));
+
+    // ä»æ³¨å†Œè¡¨ä¸­åŸå­åœ°ç§»é™¤ä»»åŠ¡å¹¶è·å–å…¶èµ„æºæŒ‡é’ˆ
+    LaunchInfo_t *info = ProgramRegistry_Unregister(&g_program_registry, task_to_clean);
+
+    // å°è¯•ä¼˜é›…å…³é—­
+    ProgramRegistry_SignalShutdown(&g_program_registry, task_to_clean);
+    Task_Delay(MS_TO_TICKS(100));
+
+    // å¦‚æœä»»åŠ¡ä»åœ¨ï¼Œå¼ºåˆ¶åˆ é™¤
+    if (Task_GetState(task_to_clean) != TASK_STATE_UNUSED) {
+        MyRTOS_printf("[Platform] ä»»åŠ¡æœªæ­£å¸¸é€€å‡º å¼ºåˆ¶åˆ é™¤\n");
+        Task_Delete(task_to_clean);
+    }
+
+    //æ— è®ºä»»åŠ¡å¦‚ä½•ç»“æŸï¼Œéƒ½æŒæœ‰infoæŒ‡é’ˆå¹¶å¯ä»¥å®‰å…¨åœ°æ¸…ç†èµ„æº
+    cleanup_launch_info(info);
+}
+
+static void cleanup_foreground_task(void) {
+    if (g_current_foreground_task) {
+        TaskHandle_t task = g_current_foreground_task;
+        g_current_foreground_task = NULL; // ç«‹å³æ¸…é™¤
+        cleanup_task_resources(task);
+    }
+}
+
+void platform_on_back_command(void) {
+    if (g_current_foreground_task) cleanup_foreground_task();
+    else if (g_spied_task) cleanup_spy_state();
+}
+
+// å¹³å°åˆå§‹åŒ–ä¸å¯åŠ¨ 
 static void system_clock_config(void) {
     rcu_deinit();
     rcu_osci_on(RCU_HXTAL);
-    // µÈ´ıHXTAL ÎÈ¶¨
-    if (SUCCESS != rcu_osci_stab_wait(RCU_HXTAL)) {
-        while (1);
-    }
-    // ÅäÖÃ AHB, APB1, APB2 ×ÜÏßµÄ·ÖÆµÏµÊı
+    if (SUCCESS != rcu_osci_stab_wait(RCU_HXTAL)) { while (1); }
     rcu_ahb_clock_config(RCU_AHB_CKSYS_DIV1);
     rcu_apb2_clock_config(RCU_APB2_CKAHB_DIV2);
     rcu_apb1_clock_config(RCU_APB1_CKAHB_DIV4);
-
-    // ÅäÖÃÖ÷PLL²ÎÊı: 168MHz = (8MHz / 8) * 336 / 2
-    uint32_t pll_m = 8;
-    uint32_t pll_n = 336; // for 168MHz
-    uint32_t pll_p = 2;
-    uint32_t pll_q = 7;
+    uint32_t pll_m = 8, pll_n = 336, pll_p = 2, pll_q = 7;
     rcu_pll_config(RCU_PLLSRC_HXTAL, pll_m, pll_n, pll_p, pll_q);
-    // Ê¹ÄÜÖ÷PLL
     rcu_osci_on(RCU_PLL_CK);
-    // µÈ´ıPLLÎÈ¶¨
-    if (SUCCESS != rcu_osci_stab_wait(RCU_FLAG_PLLSTB)) {
-        while (1);
-    }
-    // ÇĞ»»ÏµÍ³Ê±ÖÓÔ´µ½Ö÷PLL
+    if (SUCCESS != rcu_osci_stab_wait(RCU_FLAG_PLLSTB)) { while (1); }
     rcu_system_clock_source_config(RCU_CKSYSSRC_PLLP);
-    // µÈ´ıÇĞ»»Íê³É
     while (RCU_SCSS_PLLP != rcu_system_clock_source_get()) {
     }
 }
 
+
 void Platform_Init(void) {
-    //ºËĞÄÓ²¼şºÍÔçÆÚ¹³×Ó
-    // system_clock_config();
     nvic_priority_group_set(NVIC_PRIGROUP_PRE4_SUB0);
     Platform_EarlyInit_Hook();
-
-    //Æ½Ì¨Çı¶¯³õÊ¼»¯
-#if (PLATFORM_USE_CONSOLE == 1)
     Platform_Console_HwInit();
-#endif
-#if (PLATFORM_USE_HIRES_TIMER == 1)
     Platform_HiresTimer_Init();
-#endif
     Platform_BSP_Init_Hook();
-
-    //RTOSÄÚºËºÍ·şÎñ»ù´¡³õÊ¼»¯
     MyRTOS_Init();
+    ProgramRegistry_Init(&g_program_registry);
     Platform_error_handler_init();
-#if (PLATFORM_USE_CONSOLE == 1)
     Platform_Console_OSInit();
-#endif
-#if (MYRTOS_SERVICE_IO_ENABLE == 1)
     StdIOService_Init();
-#endif
-
-    //¸ù¾İÅäÖÃ¾ö¶¨IOÁ÷µÄÁ¬½Ó·½Ê½
-#if (MYRTOS_SERVICE_VTS_ENABLE == 1)
-    //ÆôÓÃVTS£¬¹¹½¨¸ß¼¶½»»¥ÏµÍ³
-    StreamHandle_t physical_stream = Platform_Console_GetStream();
-    static VTS_Handles_t vts_handles; // Ê¹ÓÃstaticÊ¹ÆäÔÚº¯Êı½áÊøºóÒÀÈ»ÓĞĞ§
-
-    if (VTS_Init(physical_stream, &vts_handles) != 0) {
-        while (1); // VTS ³õÊ¼»¯Ê§°ÜÊÇÖÂÃü´íÎó
-    }
-    g_shell_original_stdout = vts_handles.primary_output_stream;
-    // ÉèÖÃÏµÍ³Ä¬ÈÏ±ê×¼Êä³öÎªVTSµÄºóÌ¨Á÷
-    g_system_stdout = vts_handles.background_stream;
-    g_system_stderr = vts_handles.background_stream;
-
-#if (MYRTOS_SERVICE_SHELL_ENABLE == 1)
-    // ³õÊ¼»¯Shell·şÎñ
-    ShellConfig_t shell_config = {.prompt = "MyRTOS> "};
-    g_platform_shell_handle = Shell_Init(&shell_config);
+    StreamHandle_t shell_input_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
+    StreamHandle_t shell_output_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
+    if (!shell_input_pipe || !shell_output_pipe) { while (1); }
+    VTS_Config_t v_config = {
+        .physical_stream = Platform_Console_GetStream(), .root_input_stream = shell_input_pipe,
+        .root_output_stream = shell_output_pipe, .back_command_sequence = "back\r\n",
+        .back_command_len = strlen("back\r\n"), .on_back_command = platform_on_back_command
+    };
+    if (VTS_Init(&v_config) != 0) { while (1); }
+    g_system_stdout = VTS_GetBackgroundStream();
+    g_system_stderr = VTS_GetBackgroundStream();
+    ShellConfig_t s_config = {.prompt = "MyRTOS> "};
+    g_platform_shell_handle = Shell_Init(&s_config);
     if (g_platform_shell_handle) {
         TaskHandle_t shell_task_h = Shell_Start(g_platform_shell_handle, "Shell", 4, 4096);
         if (shell_task_h) {
-            // ½«ShellÈÎÎñµÄIOÖØ¶¨Ïòµ½VTSµÄ primary Í¨µÀ
-            Task_SetStdIn(shell_task_h, vts_handles.primary_input_stream);
-            Task_SetStdOut(shell_task_h, vts_handles.primary_output_stream);
-            Task_SetStdErr(shell_task_h, vts_handles.primary_output_stream);
-            // ×¢²áÄ¬ÈÏÃüÁîºÍVTS¿ØÖÆÃüÁî
+            Task_SetStdIn(shell_task_h, shell_input_pipe);
+            Task_SetStdOut(shell_task_h, shell_output_pipe);
+            Task_SetStdErr(shell_task_h, shell_output_pipe);
             platform_register_default_commands(g_platform_shell_handle);
-            Platform_RegisterVTSCommands(g_platform_shell_handle, &vts_handles);
+            Shell_RegisterCommand(g_platform_shell_handle, "run", "è¿è¡Œä¸€ä¸ªç¨‹åº", cmd_run);
+            Shell_RegisterCommand(g_platform_shell_handle, "kill", "æ€æ­»ä¸€ä¸ªç¨‹åº", cmd_kill);
+            Shell_RegisterCommand(g_platform_shell_handle, "shell", "åˆ‡æ¢åˆ°shell", cmd_shell);
+            Shell_RegisterCommand(g_platform_shell_handle, "log", "ç›‘å¬æ—¥å¿—", cmd_log);
+            Shell_RegisterCommand(g_platform_shell_handle, "logall", "æŸ¥çœ‹æ‰€æœ‰æ—¥å¿—", cmd_logall);
+            Shell_RegisterCommand(g_platform_shell_handle, "ls", "åˆ—å‡ºæ‰€æœ‰ç¨‹åº", cmd_ls);
         }
     }
-#endif // MYRTOS_SERVICE_SHELL_ENABLE
-
-#else
-    //½ûÓÃVTS£¬»ù´¡Ö±Á¬Ä£Ê½
-    StreamHandle_t physical_stream = Platform_Console_GetStream();
-    g_system_stdin = physical_stream;
-    g_system_stdout = physical_stream;
-    g_system_stderr = physical_stream;
-
-#if (MYRTOS_SERVICE_SHELL_ENABLE == 1)
-    ShellConfig_t shell_config = {.prompt = "MyRTOS> "};
-    g_platform_shell_handle = Shell_Init(&shell_config);
-    if (g_platform_shell_handle) {
-        // »ñÈ¡´´½¨µÄÈÎÎñ¾ä±ú
-        TaskHandle_t shell_task_h = Shell_Start(g_platform_shell_handle, "Shell", 4, 4096);
-        if (shell_task_h) {
-            //ÏÔÊ½µØÉèÖÃ(»òÈ·ÈÏ)ÆäIOÁ÷ ÕâÑù¸üºÃ ÎÒÓĞ½àñ±
-            Task_SetStdIn(shell_task_h, g_system_stdin);
-            Task_SetStdOut(shell_task_h, g_system_stdout);
-            Task_SetStdErr(shell_task_h, g_system_stderr);
-            platform_register_default_commands(g_platform_shell_handle);
-        }
-    }
-#endif // MYRTOS_SERVICE_SHELL_ENABLE
-
-#endif // MYRTOS_SERVICE_VTS_ENABLE
-
-    //³õÊ¼»¯ÆäËû·şÎñ
-#if (MYRTOS_SERVICE_LOG_ENABLE == 1)
     Log_Init();
-#endif
-#if (MYRTOS_SERVICE_MONITOR_ENABLE == 1)
-    MonitorConfig_t monitor_config = {.get_hires_timer_value = Platform_Timer_GetHiresValue};
-    Monitor_Init(&monitor_config);
-#endif
-#if (MYRTOS_SERVICE_TIMER_ENABLE == 1)
+    MonitorConfig_t m_config = {.get_hires_timer_value = Platform_Timer_GetHiresValue};
+    Monitor_Init(&m_config);
     TimerService_Init(MYRTOS_MAX_PRIORITIES - 2, 2048);
-#endif
-
-    //µ÷ÓÃÓ¦ÓÃ²ãÉèÖÃ¹³×Ó
     Platform_AppSetup_Hook(g_platform_shell_handle);
 }
 
 void Platform_StartScheduler(void) {
-    // ÈÃÓÃ»§´´½¨ËùÓĞµÄÓ¦ÓÃ³ÌĞòÈÎÎñ
     Platform_CreateTasks_Hook();
-    // Æô¶¯RTOSµ÷¶ÈÆ÷
     Task_StartScheduler(Platform_IdleTask_Hook);
-
     while (1);
 }
 
-/**
- *VTS ¿ØÖÆÃüÁîµÄ×¢²áÓëÊµÏÖ (½öµ±VTSÆôÓÃÊ±)
-*/
-#if (MYRTOS_SERVICE_SHELL_ENABLE == 1 && MYRTOS_SERVICE_VTS_ENABLE == 1)
+//==============================================================================
+// Shell å‘½ä»¤å®ç° 
+//==============================================================================
 
-static TaskHandle_t g_spied_task = NULL; // ÕıÔÚ±»¼àÌıµÄÈÎÎñ
-static StreamHandle_t g_original_task_stdout = NULL; // ËüÔ­Ê¼µÄ stdout
-static StreamHandle_t g_spy_pipe = NULL; // ÓÃÓÚ¼àÌıµÄÁÙÊ±¹ÜµÀ
+static void program_task_entry(void *param) {
+    LaunchInfo_t *info = (LaunchInfo_t *) param;
+    TaskHandle_t self = Task_GetCurrentTaskHandle();
+    Task_SetStdIn(self, info->stdin_stream);
+    Task_SetStdOut(self, info->stdout_stream);
+    Task_SetStdErr(self, info->stderr_stream);
 
+    info->main_func(info->argc, info->argv);
 
-// ÃüÁî´¦Àíº¯ÊıµÄÇ°ÖÃÉùÃ÷
-int cmd_fg(ShellHandle_t shell_h, int argc, char *argv[]);
-
-int cmd_bg(ShellHandle_t shell_h, int argc, char *argv[]);
-
-int cmd_showall(ShellHandle_t shell_h, int argc, char *argv[]);
-
-int cmd_log(ShellHandle_t shell_h, int argc, char *argv[]);
-
-
-// ÓÃÓÚ±£´æVTS¾ä±ú£¬ÒÔ±ãShellÃüÁî¿ÉÒÔ·ÃÎÊËüÃÇ
-static VTS_Handles_t g_cmd_vts_handles;
-
-void Platform_RegisterVTSCommands(ShellHandle_t shell_h, const VTS_Handles_t *handles) {
-    if (!shell_h || !handles) return;
-    g_cmd_vts_handles = *handles;
-    Shell_RegisterCommand(shell_h, "fg", "Focus on the shared background stream", cmd_fg);
-    Shell_RegisterCommand(shell_h, "bg", "Focus back on the shell (detaches any spy)", cmd_bg);
-    Shell_RegisterCommand(shell_h, "log", "Spy on a specific task's output. Usage: log <task_name>", cmd_log);
+    // æ­£å¸¸é€€å‡ºæ¸…ç†è·¯å¾„ 
+    ProgramRegistry_Unregister(&g_program_registry, self); // æ³¨é”€è‡ªå·±
+    if (self == g_current_foreground_task) {
+        g_current_foreground_task = NULL;
+        VTS_ReturnToRootFocus();
+    }
+    cleanup_launch_info(info); // æ¸…ç†è‡ªå·±çš„èµ„æº
+    Task_Delete(NULL); // è‡ªæˆ‘é”€æ¯
 }
 
-static void cleanup_spy_state(void) {
-    if (g_spied_task) {
-        // »Ö¸´±»¼àÌıÈÎÎñµÄÔ­Ê¼stdout
-        Task_SetStdOut(g_spied_task, g_original_task_stdout);
-        g_spied_task = NULL;
-        g_original_task_stdout = NULL;
+int cmd_run(ShellHandle_t shell, int argc, char *argv[]) {
+    if (argc < 2) {
+        MyRTOS_printf("ç”¨æ³•: run <ç¨‹åºå> [å‚æ•°] [-d]\n");
+        return -1;
     }
-    if (g_spy_pipe) {
-        // Ïú»ÙÁÙÊ±µÄspy pipe
-        Pipe_Delete(g_spy_pipe);
-        g_spy_pipe = NULL;
+    bool detached = (argc > 2 && strcmp(argv[argc - 1], "-d") == 0);
+    int prog_argc = detached ? argc - 2 : argc - 1;
+    const char *prog_name = argv[1];
+    ProgramMain_t main_func = NULL;
+    for (int i = 0; g_program_table[i].name != NULL; ++i)
+        if (strcmp(g_program_table[i].name, prog_name) == 0)
+            main_func = g_program_table[i].main_func;
+    if (!main_func) {
+        MyRTOS_printf("é”™è¯¯: æœªæ‰¾åˆ°ç¨‹åº '%s'ã€‚\n", prog_name);
+        return -1;
     }
+
+    LaunchInfo_t *launch_info = MyRTOS_Malloc(sizeof(LaunchInfo_t));
+    if (!launch_info) {
+        MyRTOS_printf("é”™è¯¯: å†…å­˜åˆ†é…å¤±è´¥ã€‚\n");
+        return -1;
+    }
+    memset(launch_info, 0, sizeof(LaunchInfo_t));
+    launch_info->main_func = main_func;
+    launch_info->argc = prog_argc;
+    launch_info->argv = MyRTOS_Malloc(sizeof(char *) * prog_argc);
+    if (!launch_info->argv) {
+        MyRTOS_printf("é”™è¯¯: å†…å­˜åˆ†é…å¤±è´¥ã€‚\n");
+        cleanup_launch_info(launch_info);
+        return -1;
+    }
+    for (int i = 0; i < prog_argc; ++i) launch_info->argv[i] = my_strdup(argv[i + 1]);
+
+    TaskHandle_t new_task_h = NULL;
+    if (detached) {
+        launch_info->stdin_stream = NULL;
+        launch_info->stdout_stream = g_system_stdout;
+        launch_info->stderr_stream = g_system_stderr;
+        new_task_h = Task_Create(program_task_entry, prog_name, PLATFORM_PROGRAM_LAUNCH_STACK, launch_info, 3);
+    } else {
+        cleanup_foreground_task();
+        cleanup_spy_state();
+        StreamHandle_t prog_output = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
+        if (!prog_output) {
+            MyRTOS_printf("é”™è¯¯: åˆ›å»ºç®¡é“å¤±è´¥ã€‚\n");
+            cleanup_launch_info(launch_info);
+            return -1;
+        }
+        launch_info->stdin_stream = NULL;
+        launch_info->stdout_stream = prog_output;
+        launch_info->stderr_stream = prog_output;
+        launch_info->stdout_pipe_to_delete = prog_output;
+        new_task_h = Task_Create(program_task_entry, prog_name, PLATFORM_PROGRAM_LAUNCH_STACK, launch_info, 3);
+        if (new_task_h) {
+            g_current_foreground_task = new_task_h;
+            VTS_SetFocus(prog_output);
+        } else {
+            cleanup_launch_info(launch_info);
+            launch_info = NULL;
+        }
+    }
+
+    if (!new_task_h) {
+        MyRTOS_printf("é”™è¯¯: åˆ›å»ºä»»åŠ¡å¤±è´¥ã€‚\n");
+        if (launch_info) { cleanup_launch_info(launch_info); }
+        return -1;
+    }
+
+    ProgramRegistry_Register(&g_program_registry, prog_name, new_task_h, launch_info);
+    MyRTOS_printf("å·²å¯åŠ¨%sä»»åŠ¡ '%s' (å¥æŸ„: %p)\n", detached ? "åå°" : "å‰å°", prog_name, new_task_h);
+    return 0;
 }
 
+int cmd_kill(ShellHandle_t shell, int argc, char *argv[]) {
+    if (argc != 2) {
+        MyRTOS_printf("ç”¨æ³•: kill <ä»»åŠ¡å>\n");
+        return -1;
+    }
+    TaskHandle_t task_to_kill = ProgramRegistry_Find(&g_program_registry, argv[1]);
+    if (!task_to_kill) {
+        MyRTOS_printf("é”™è¯¯: æœªæ‰¾åˆ°ä»»åŠ¡ '%s'ã€‚\n", argv[1]);
+        return -1;
+    }
 
-int cmd_log(ShellHandle_t shell_h, int argc, char *argv[]) {
+    if (task_to_kill == g_current_foreground_task) {
+        VTS_ReturnToRootFocus();
+        cleanup_foreground_task();
+    } else {
+        cleanup_task_resources(task_to_kill);
+    }
+    return 0;
+}
+
+int cmd_shell(ShellHandle_t shell, int argc, char *argv[]) {
+    cleanup_spy_state();
+    cleanup_foreground_task();
+    VTS_ReturnToRootFocus();
+    MyRTOS_printf("Focus returned to Shell.\n");
+    return 0;
+}
+
+int cmd_log(ShellHandle_t shell, int argc, char *argv[]) {
     if (argc != 2) {
         MyRTOS_printf("Usage: log <task_name>\n");
         return -1;
     }
     cleanup_spy_state();
-
+    cleanup_foreground_task();
     TaskHandle_t target_task = Task_FindByName(argv[1]);
     if (!target_task) {
         MyRTOS_printf("Task '%s' not found.\n", argv[1]);
         return -1;
     }
-
-    g_spy_pipe = Pipe_Create(1024);
+    g_spy_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
     if (!g_spy_pipe) {
         MyRTOS_printf("Error: Failed to create spy pipe.\n");
         return -1;
     }
-
     MyRTOS_Port_EnterCritical();
     g_original_task_stdout = Task_GetStdOut(target_task);
     Task_SetStdOut(target_task, g_spy_pipe);
     g_spied_task = target_task;
     MyRTOS_Port_ExitCritical();
-
+    MyRTOS_printf("Spying on task '%s'. Type 'back' or 'shell' to return.\n", argv[1]);
     VTS_SetFocus(g_spy_pipe);
-    MyRTOS_printf("Spying on task '%s'. Use 'bg' to return to shell.\n", argv[1]);
     return 0;
 }
 
-int cmd_fg(ShellHandle_t shell_h, int argc, char *argv[]) {
-    (void) argc;
-    (void) argv;
-    cleanup_spy_state();
-    MyRTOS_printf("Focusing on shared background stream...\n");
-    VTS_SetFocus(g_cmd_vts_handles.background_stream);
+int cmd_logall(ShellHandle_t shell, int argc, char *argv[]) {
+    if (argc != 2) {
+        MyRTOS_printf("ç”¨æ³•ï¼šlogall <on|off>\n");
+        return -1;
+    }
+    if (strcmp(argv[1], "on") == 0) {
+        VTS_SetLogAllMode(true);
+        MyRTOS_printf("å·²å¯ç”¨ LogAll æ¨¡å¼ã€‚\n");
+    } else if (strcmp(argv[1], "off") == 0) {
+        VTS_SetLogAllMode(false);
+        MyRTOS_printf("å·²ç¦ç”¨ LogAll æ¨¡å¼ã€‚\n");
+    } else { MyRTOS_printf("æ— æ•ˆå‚æ•°ã€‚è¯·ä½¿ç”¨ 'on' æˆ– 'off'ã€‚\n"); }
     return 0;
 }
 
-int cmd_bg(ShellHandle_t shell_h, int argc, char *argv[]) {
-    (void) argc;
-    (void) argv;
-    cleanup_spy_state();
-
-    VTS_SetFocus(g_cmd_vts_handles.primary_output_stream);
-    MyRTOS_printf("Focus back on shell.\n");
+int cmd_ls(ShellHandle_t shell, int argc, char *argv[]) {
+    MyRTOS_printf("å¯ç”¨ç¨‹åºï¼š\n");
+    for (int i = 0; g_program_table[i].name != NULL; ++i)
+        MyRTOS_printf("  %s\n", g_program_table[i].name);
     return 0;
 }
-
-#endif // (MYRTOS_SERVICE_SHELL_ENABLE && MYRTOS_SERVICE_VTS_ENABLE)
