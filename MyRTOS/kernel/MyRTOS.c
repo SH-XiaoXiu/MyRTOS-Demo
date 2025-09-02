@@ -5,138 +5,138 @@
 #include "MyRTOS_Port.h"
 
 /*===========================================================================*
- * Ë½ÓĞº¯ÊıÉùÃ÷
+ * ç§æœ‰å‡½æ•°å£°æ˜
  *===========================================================================*/
 
-// ³õÊ¼»¯ÄÚ´æ¶Ñ
+// åˆå§‹åŒ–å†…å­˜å †
 static void heapInit(void);
 
-// ½«ÄÚ´æ¿é²åÈëµ½¿ÕÏĞÁ´±íÖĞ
+// å°†å†…å­˜å—æ’å…¥åˆ°ç©ºé—²é“¾è¡¨ä¸­
 static void insertBlockIntoFreeList(BlockLink_t *blockToInsert);
 
-// RTOSÄÚ²¿Ê¹ÓÃµÄÄÚ´æ·ÖÅäº¯Êı
+// RTOSå†…éƒ¨ä½¿ç”¨çš„å†…å­˜åˆ†é…å‡½æ•°
 static void *rtos_malloc(size_t wantedSize);
 
-// RTOSÄÚ²¿Ê¹ÓÃµÄÄÚ´æÊÍ·Åº¯Êı
+// RTOSå†…éƒ¨ä½¿ç”¨çš„å†…å­˜é‡Šæ”¾å‡½æ•°
 static void rtos_free(void *pv);
 
-// ½«ÈÎÎñÌí¼Óµ½¾ÍĞ÷Á´±í
+// å°†ä»»åŠ¡æ·»åŠ åˆ°å°±ç»ªé“¾è¡¨
 static void addTaskToReadyList(TaskHandle_t task);
 
-// ´ÓÍ¨ÓÃÁ´±íÖĞÒÆ³ıÈÎÎñ
+// ä»é€šç”¨é“¾è¡¨ä¸­ç§»é™¤ä»»åŠ¡
 static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t taskToRemove);
 
-// ÉèÖÃÈÎÎñµÄÓÅÏÈ¼¶
+// è®¾ç½®ä»»åŠ¡çš„ä¼˜å…ˆçº§
 static void task_set_priority(TaskHandle_t task, uint8_t newPriority);
 
-// ½«ÈÎÎñÌí¼Óµ½°´»½ĞÑÊ±¼äÅÅĞòµÄÑÓ³ÙÁ´±íÖĞ
+// å°†ä»»åŠ¡æ·»åŠ åˆ°æŒ‰å”¤é†’æ—¶é—´æ’åºçš„å»¶è¿Ÿé“¾è¡¨ä¸­
 static void addTaskToSortedDelayList(TaskHandle_t task);
 
-// ³õÊ¼»¯ÊÂ¼şÁĞ±í
+// åˆå§‹åŒ–äº‹ä»¶åˆ—è¡¨
 static void eventListInit(EventList_t *pEventList);
 
-// ½«ÈÎÎñ²åÈëµ½ÊÂ¼şÁĞ±í£¨°´ÓÅÏÈ¼¶ÅÅĞò£©
+// å°†ä»»åŠ¡æ’å…¥åˆ°äº‹ä»¶åˆ—è¡¨ï¼ˆæŒ‰ä¼˜å…ˆçº§æ’åºï¼‰
 static void eventListInsert(EventList_t *pEventList, TaskHandle_t taskToInsert);
 
-// ´ÓÆäËùÊôµÄÊÂ¼şÁĞ±íÖĞÒÆ³ıÈÎÎñ
+// ä»å…¶æ‰€å±çš„äº‹ä»¶åˆ—è¡¨ä¸­ç§»é™¤ä»»åŠ¡
 static void eventListRemove(TaskHandle_t taskToRemove);
 
-// ¹ã²¥ÄÚºËÊÂ¼ş¸øËùÓĞÒÑ×¢²áµÄÀ©Õ¹
+// å¹¿æ’­å†…æ ¸äº‹ä»¶ç»™æ‰€æœ‰å·²æ³¨å†Œçš„æ‰©å±•
 static void broadcast_event(const KernelEventData_t *pEventData);
 
-// ÄÚ´æ¶ÑÖĞÔÊĞíµÄ×îĞ¡ÄÚ´æ¿é´óĞ¡£¬ÖÁÉÙÄÜÈİÄÉÁ½¸öBlockLink_t½á¹¹Ìå
+// å†…å­˜å †ä¸­å…è®¸çš„æœ€å°å†…å­˜å—å¤§å°ï¼Œè‡³å°‘èƒ½å®¹çº³ä¸¤ä¸ªBlockLink_tç»“æ„ä½“
 #define HEAP_MINIMUM_BLOCK_SIZE ((sizeof(BlockLink_t) * 2))
 
-// ÄÚ´æ¿é¹ÜÀí½á¹¹µÄ´óĞ¡£¬ÒÑ¿¼ÂÇÄÚ´æ¶ÔÆë
+// å†…å­˜å—ç®¡ç†ç»“æ„çš„å¤§å°ï¼Œå·²è€ƒè™‘å†…å­˜å¯¹é½
 static const size_t heapStructSize =
         (sizeof(BlockLink_t) + (MYRTOS_HEAP_BYTE_ALIGNMENT - 1)) & ~(((size_t) MYRTOS_HEAP_BYTE_ALIGNMENT - 1));
 
-// ÄÚ´æ¶Ñ¹ÜÀí
-//  ¾²Ì¬·ÖÅäµÄÄÚ´æ³Ø£¬ÓÃÓÚRTOSµÄ¶¯Ì¬ÄÚ´æ·ÖÅä
+// å†…å­˜å †ç®¡ç†
+//  é™æ€åˆ†é…çš„å†…å­˜æ± ï¼Œç”¨äºRTOSçš„åŠ¨æ€å†…å­˜åˆ†é…
 static uint8_t rtos_memory_pool[MYRTOS_MEMORY_POOL_SIZE] __attribute__((aligned(MYRTOS_HEAP_BYTE_ALIGNMENT)));
-// ¿ÕÏĞÄÚ´æ¿éÁ´±íµÄÆğÊ¼ÉÚ±ø½Úµã
+// ç©ºé—²å†…å­˜å—é“¾è¡¨çš„èµ·å§‹å“¨å…µèŠ‚ç‚¹
 static BlockLink_t start;
-// ÄÚ´æ¶ÑµÄ½áÊøÉÚ±ø½Úµã
+// å†…å­˜å †çš„ç»“æŸå“¨å…µèŠ‚ç‚¹
 static BlockLink_t *blockLinkEnd = NULL;
-// µ±Ç°Ê£ÓàµÄ¿ÕÏĞ×Ö½ÚÊı
+// å½“å‰å‰©ä½™çš„ç©ºé—²å­—èŠ‚æ•°
 size_t freeBytesRemaining = 0U;
-// ÓÃÓÚ±ê¼ÇÄÚ´æ¿éÊÇ·ñÒÑ±»·ÖÅäµÄÎ»ÑÚÂë (×î¸ßÎ»)
+// ç”¨äºæ ‡è®°å†…å­˜å—æ˜¯å¦å·²è¢«åˆ†é…çš„ä½æ©ç  (æœ€é«˜ä½)
 static size_t blockAllocatedBit = 0;
 
-// ÄÚºË×´Ì¬
-//  µ÷¶ÈÆ÷ÊÇ·ñÒÑÆô¶¯µÄ±êÖ¾
+// å†…æ ¸çŠ¶æ€
+//  è°ƒåº¦å™¨æ˜¯å¦å·²å¯åŠ¨çš„æ ‡å¿—
 volatile uint8_t g_scheduler_started = 0;
-// ÁÙ½çÇøÇ¶Ì×¼ÆÊı
+// ä¸´ç•ŒåŒºåµŒå¥—è®¡æ•°
 volatile uint32_t criticalNestingCount = 0;
-// ÏµÍ³µÎ´ğ¼ÆÊıÆ÷
+// ç³»ç»Ÿæ»´ç­”è®¡æ•°å™¨
 static volatile uint64_t systemTickCount = 0;
-// ËùÓĞÒÑ´´½¨ÈÎÎñµÄÁ´±íÍ·
+// æ‰€æœ‰å·²åˆ›å»ºä»»åŠ¡çš„é“¾è¡¨å¤´
 TaskHandle_t allTaskListHead = NULL;
-// µ±Ç°ÕıÔÚÔËĞĞµÄÈÎÎñµÄ¾ä±ú
+// å½“å‰æ­£åœ¨è¿è¡Œçš„ä»»åŠ¡çš„å¥æŸ„
 TaskHandle_t currentTask = NULL;
-// ¿ÕÏĞÈÎÎñµÄ¾ä±ú
+// ç©ºé—²ä»»åŠ¡çš„å¥æŸ„
 TaskHandle_t idleTask = NULL;
-// ÓÃÓÚ·ÖÅäÏÂÒ»¸öÈÎÎñIDµÄ¼ÆÊıÆ÷
+// ç”¨äºåˆ†é…ä¸‹ä¸€ä¸ªä»»åŠ¡IDçš„è®¡æ•°å™¨
 static uint32_t nextTaskId = 0;
-// ÈÎÎñIDµÄÎ»Í¼£¬ÓÃÓÚ¿ìËÙ²éÕÒ¿ÉÓÃµÄID
+// ä»»åŠ¡IDçš„ä½å›¾ï¼Œç”¨äºå¿«é€ŸæŸ¥æ‰¾å¯ç”¨çš„ID
 static uint64_t taskIdBitmap = 0;
-// °´ÓÅÏÈ¼¶×éÖ¯µÄ¾ÍĞ÷ÈÎÎñÁ´±íÊı×é
+// æŒ‰ä¼˜å…ˆçº§ç»„ç»‡çš„å°±ç»ªä»»åŠ¡é“¾è¡¨æ•°ç»„
 static TaskHandle_t readyTaskLists[MYRTOS_MAX_PRIORITIES];
-// ÑÓ³ÙÈÎÎñÁ´±íµÄÍ·
+// å»¶è¿Ÿä»»åŠ¡é“¾è¡¨çš„å¤´
 static TaskHandle_t delayedTaskListHead = NULL;
-// Ò»¸öÎ»Í¼£¬ÓÃÓÚ¿ìËÙ²éÕÒµ±Ç°´æÔÚµÄ×î¸ßÓÅÏÈ¼¶µÄ¾ÍĞ÷ÈÎÎñ
+// ä¸€ä¸ªä½å›¾ï¼Œç”¨äºå¿«é€ŸæŸ¥æ‰¾å½“å‰å­˜åœ¨çš„æœ€é«˜ä¼˜å…ˆçº§çš„å°±ç»ªä»»åŠ¡
 static volatile uint32_t topReadyPriority = 0;
-// ÄÚºËÀ©Õ¹»Øµ÷º¯ÊıÊı×é
+// å†…æ ¸æ‰©å±•å›è°ƒå‡½æ•°æ•°ç»„
 static KernelExtensionCallback_t g_extensions[MAX_KERNEL_EXTENSIONS] = {NULL};
-// ÒÑ×¢²áµÄÄÚºËÀ©Õ¹ÊıÁ¿
+// å·²æ³¨å†Œçš„å†…æ ¸æ‰©å±•æ•°é‡
 static uint8_t g_extension_count = 0;
 
 /**
- * @brief ³õÊ¼»¯ÄÚ´æ¶Ñ
- * @note  ´Ëº¯Êı¸ºÔğÉèÖÃÄÚ´æ³Ø£¬´´½¨³õÊ¼µÄ¿ÕÏĞÄÚ´æ¿é£¬²¢ÉèÖÃÆğÊ¼ºÍ½áÊøÉÚ±ø½Úµã¡£
+ * @brief åˆå§‹åŒ–å†…å­˜å †
+ * @note  æ­¤å‡½æ•°è´Ÿè´£è®¾ç½®å†…å­˜æ± ï¼Œåˆ›å»ºåˆå§‹çš„ç©ºé—²å†…å­˜å—ï¼Œå¹¶è®¾ç½®èµ·å§‹å’Œç»“æŸå“¨å…µèŠ‚ç‚¹ã€‚
  */
 static void heapInit(void) {
     BlockLink_t *firstFreeBlock;
     uint8_t *alignedHeap;
     size_t address = (size_t) rtos_memory_pool;
     size_t totalHeapSize = MYRTOS_MEMORY_POOL_SIZE;
-    // È·±£¶ÑµÄÆğÊ¼µØÖ·ÊÇ¶ÔÆëµÄ
+    // ç¡®ä¿å †çš„èµ·å§‹åœ°å€æ˜¯å¯¹é½çš„
     if ((address & (MYRTOS_HEAP_BYTE_ALIGNMENT - 1)) != 0) {
         address += (MYRTOS_HEAP_BYTE_ALIGNMENT - (address & (MYRTOS_HEAP_BYTE_ALIGNMENT - 1)));
         totalHeapSize -= address - (size_t) rtos_memory_pool;
     }
     alignedHeap = (uint8_t *) address;
-    // ÉèÖÃÆğÊ¼ÉÚ±ø½Úµã
+    // è®¾ç½®èµ·å§‹å“¨å…µèŠ‚ç‚¹
     start.nextFreeBlock = (BlockLink_t *) alignedHeap;
     start.blockSize = (size_t) 0;
-    // ÉèÖÃ½áÊøÉÚ±ø½Úµã
+    // è®¾ç½®ç»“æŸå“¨å…µèŠ‚ç‚¹
     address = ((size_t) alignedHeap) + totalHeapSize - heapStructSize;
     blockLinkEnd = (BlockLink_t *) address;
     blockLinkEnd->blockSize = 0;
     blockLinkEnd->nextFreeBlock = NULL;
-    // ´´½¨µÚÒ»¸ö´óµÄ¿ÕÏĞÄÚ´æ¿é
+    // åˆ›å»ºç¬¬ä¸€ä¸ªå¤§çš„ç©ºé—²å†…å­˜å—
     firstFreeBlock = (BlockLink_t *) alignedHeap;
     firstFreeBlock->blockSize = address - (size_t) firstFreeBlock;
     firstFreeBlock->nextFreeBlock = blockLinkEnd;
-    // ³õÊ¼»¯Ê£Óà¿ÕÏĞ×Ö½ÚÊı
+    // åˆå§‹åŒ–å‰©ä½™ç©ºé—²å­—èŠ‚æ•°
     freeBytesRemaining = firstFreeBlock->blockSize;
-    // ÉèÖÃÓÃÓÚ±ê¼Ç¡°ÒÑ·ÖÅä¡±µÄÎ»£¨×î¸ßÎ»£©
+    // è®¾ç½®ç”¨äºæ ‡è®°â€œå·²åˆ†é…â€çš„ä½ï¼ˆæœ€é«˜ä½ï¼‰
     blockAllocatedBit = ((size_t) 1) << ((sizeof(size_t) * 8) - 1);
 }
 
 /**
- * @brief ½«Ò»¸öÄÚ´æ¿é²åÈëµ½¿ÕÏĞÁ´±íÖĞ
- * @note  ´Ëº¯Êı»á°´µØÖ·Ë³Ğò²åÈëÄÚ´æ¿é£¬²¢³¢ÊÔÓëÏàÁÚµÄ¿ÕÏĞ¿éºÏ²¢¡£
- * @param blockToInsert Òª²åÈëµÄÄÚ´æ¿éÖ¸Õë
+ * @brief å°†ä¸€ä¸ªå†…å­˜å—æ’å…¥åˆ°ç©ºé—²é“¾è¡¨ä¸­
+ * @note  æ­¤å‡½æ•°ä¼šæŒ‰åœ°å€é¡ºåºæ’å…¥å†…å­˜å—ï¼Œå¹¶å°è¯•ä¸ç›¸é‚»çš„ç©ºé—²å—åˆå¹¶ã€‚
+ * @param blockToInsert è¦æ’å…¥çš„å†…å­˜å—æŒ‡é’ˆ
  */
 static void insertBlockIntoFreeList(BlockLink_t *blockToInsert) {
     BlockLink_t *iterator;
     uint8_t *puc;
-    // ±éÀú¿ÕÏĞÁ´±í£¬ÕÒµ½ºÏÊÊµÄ²åÈëÎ»ÖÃ
+    // éå†ç©ºé—²é“¾è¡¨ï¼Œæ‰¾åˆ°åˆé€‚çš„æ’å…¥ä½ç½®
     for (iterator = &start; iterator->nextFreeBlock < blockToInsert; iterator = iterator->nextFreeBlock) {
-        // ¿ÕÑ­»·£¬½öÎªÒÆ¶¯µü´úÆ÷
+        // ç©ºå¾ªç¯ï¼Œä»…ä¸ºç§»åŠ¨è¿­ä»£å™¨
     }
-    // ³¢ÊÔÓëÇ°Ò»¸ö¿ÕÏĞ¿éºÏ²¢
+    // å°è¯•ä¸å‰ä¸€ä¸ªç©ºé—²å—åˆå¹¶
     puc = (uint8_t *) iterator;
     if ((puc + iterator->blockSize) == (uint8_t *) blockToInsert) {
         iterator->blockSize += blockToInsert->blockSize;
@@ -144,7 +144,7 @@ static void insertBlockIntoFreeList(BlockLink_t *blockToInsert) {
     } else {
         blockToInsert->nextFreeBlock = iterator->nextFreeBlock;
     }
-    // ³¢ÊÔÓëºóÒ»¸ö¿ÕÏĞ¿éºÏ²¢
+    // å°è¯•ä¸åä¸€ä¸ªç©ºé—²å—åˆå¹¶
     puc = (uint8_t *) blockToInsert;
     if ((puc + blockToInsert->blockSize) == (uint8_t *) iterator->nextFreeBlock) {
         if (iterator->nextFreeBlock != blockLinkEnd) {
@@ -152,46 +152,46 @@ static void insertBlockIntoFreeList(BlockLink_t *blockToInsert) {
             blockToInsert->nextFreeBlock = iterator->nextFreeBlock->nextFreeBlock;
         }
     }
-    // Èç¹ûÃ»ÓĞ·¢ÉúÇ°ÏòºÏ²¢£¬Ôò½«µ±Ç°¿éÁ´½Óµ½Á´±íÖĞ
+    // å¦‚æœæ²¡æœ‰å‘ç”Ÿå‰å‘åˆå¹¶ï¼Œåˆ™å°†å½“å‰å—é“¾æ¥åˆ°é“¾è¡¨ä¸­
     if (iterator != blockToInsert) {
         iterator->nextFreeBlock = blockToInsert;
     }
 }
 
 /**
- * @brief RTOSÄÚ²¿Ê¹ÓÃµÄÄÚ´æ·ÖÅäº¯Êı
- * @note  ÊµÏÖÁËÊ×´ÎÊÊÓ¦(First Fit)Ëã·¨À´²éÕÒºÏÊÊµÄÄÚ´æ¿é¡£
- * @param wantedSize ÇëÇó·ÖÅäµÄ×Ö½ÚÊı
- * @return ³É¹¦Ôò·µ»Ø·ÖÅäµÄÄÚ´æÖ¸Õë£¬Ê§°ÜÔò·µ»ØNULL
+ * @brief RTOSå†…éƒ¨ä½¿ç”¨çš„å†…å­˜åˆ†é…å‡½æ•°
+ * @note  å®ç°äº†é¦–æ¬¡é€‚åº”(First Fit)ç®—æ³•æ¥æŸ¥æ‰¾åˆé€‚çš„å†…å­˜å—ã€‚
+ * @param wantedSize è¯·æ±‚åˆ†é…çš„å­—èŠ‚æ•°
+ * @return æˆåŠŸåˆ™è¿”å›åˆ†é…çš„å†…å­˜æŒ‡é’ˆï¼Œå¤±è´¥åˆ™è¿”å›NULL
  */
 static void *rtos_malloc(const size_t wantedSize) {
     BlockLink_t *block, *previousBlock, *newBlockLink;
     void *pvReturn = NULL;
     MyRTOS_Port_EnterCritical();
     {
-        // Èç¹û¶ÑÉĞÎ´³õÊ¼»¯£¬Ôò½øĞĞ³õÊ¼»¯
+        // å¦‚æœå †å°šæœªåˆå§‹åŒ–ï¼Œåˆ™è¿›è¡Œåˆå§‹åŒ–
         if (blockLinkEnd == NULL) {
             heapInit();
         }
         if ((wantedSize > 0) && ((wantedSize & blockAllocatedBit) == 0)) {
-            // ¼ÆËã°üÀ¨¹ÜÀí½á¹¹ºÍ¶ÔÆëºóµÄ×Ü´óĞ¡
+            // è®¡ç®—åŒ…æ‹¬ç®¡ç†ç»“æ„å’Œå¯¹é½åçš„æ€»å¤§å°
             size_t totalSize = heapStructSize + wantedSize;
             if ((totalSize & (MYRTOS_HEAP_BYTE_ALIGNMENT - 1)) != 0) {
                 totalSize += (MYRTOS_HEAP_BYTE_ALIGNMENT - (totalSize & (MYRTOS_HEAP_BYTE_ALIGNMENT - 1)));
             }
             if (totalSize <= freeBytesRemaining) {
-                // ±éÀú¿ÕÏĞÁ´±í£¬²éÕÒ×ã¹»´óµÄÄÚ´æ¿é
+                // éå†ç©ºé—²é“¾è¡¨ï¼ŒæŸ¥æ‰¾è¶³å¤Ÿå¤§çš„å†…å­˜å—
                 previousBlock = &start;
                 block = start.nextFreeBlock;
                 while ((block->blockSize < totalSize) && (block->nextFreeBlock != NULL)) {
                     previousBlock = block;
                     block = block->nextFreeBlock;
                 }
-                // Èç¹ûÕÒµ½ÁËºÏÊÊµÄ¿é
+                // å¦‚æœæ‰¾åˆ°äº†åˆé€‚çš„å—
                 if (block != blockLinkEnd) {
                     pvReturn = (void *) (((uint8_t *) block) + heapStructSize);
                     previousBlock->nextFreeBlock = block->nextFreeBlock;
-                    // Èç¹ûÊ£Óà²¿·Ö×ã¹»´ó£¬Ôò·ÖÁÑ³ÉÒ»¸öĞÂµÄ¿ÕÏĞ¿é
+                    // å¦‚æœå‰©ä½™éƒ¨åˆ†è¶³å¤Ÿå¤§ï¼Œåˆ™åˆ†è£‚æˆä¸€ä¸ªæ–°çš„ç©ºé—²å—
                     if ((block->blockSize - totalSize) > HEAP_MINIMUM_BLOCK_SIZE) {
                         newBlockLink = (BlockLink_t *) (((uint8_t *) block) + totalSize);
                         newBlockLink->blockSize = block->blockSize - totalSize;
@@ -199,13 +199,13 @@ static void *rtos_malloc(const size_t wantedSize) {
                         insertBlockIntoFreeList(newBlockLink);
                     }
                     freeBytesRemaining -= block->blockSize;
-                    // ±ê¼Ç¸Ã¿éÎªÒÑ·ÖÅä
+                    // æ ‡è®°è¯¥å—ä¸ºå·²åˆ†é…
                     block->blockSize |= blockAllocatedBit;
                     block->nextFreeBlock = NULL;
                 }
             }
         }
-        // Èç¹û·ÖÅäÊ§°ÜÇÒÇëÇó´óĞ¡´óÓÚ0£¬±¨¸æ´íÎó
+        // å¦‚æœåˆ†é…å¤±è´¥ä¸”è¯·æ±‚å¤§å°å¤§äº0ï¼ŒæŠ¥å‘Šé”™è¯¯
         if (pvReturn == NULL && wantedSize > 0) {
             MyRTOS_ReportError(KERNEL_ERROR_MALLOC_FAILED, (void *) wantedSize);
         }
@@ -215,24 +215,24 @@ static void *rtos_malloc(const size_t wantedSize) {
 }
 
 /**
- * @brief RTOSÄÚ²¿Ê¹ÓÃµÄÄÚ´æÊÍ·Åº¯Êı
- * @note  ½«ÊÍ·ÅµÄÄÚ´æ¿éÖØĞÂ²åÈëµ½¿ÕÏĞÁ´±íÖĞ£¬²¢³¢ÊÔºÏ²¢¡£
- * @param pv ÒªÊÍ·ÅµÄÄÚ´æÖ¸Õë
+ * @brief RTOSå†…éƒ¨ä½¿ç”¨çš„å†…å­˜é‡Šæ”¾å‡½æ•°
+ * @note  å°†é‡Šæ”¾çš„å†…å­˜å—é‡æ–°æ’å…¥åˆ°ç©ºé—²é“¾è¡¨ä¸­ï¼Œå¹¶å°è¯•åˆå¹¶ã€‚
+ * @param pv è¦é‡Šæ”¾çš„å†…å­˜æŒ‡é’ˆ
  */
 static void rtos_free(void *pv) {
     if (pv == NULL)
         return;
     uint8_t *puc = (uint8_t *) pv;
     BlockLink_t *link;
-    // ´ÓÓÃ»§Ö¸Õë»ØÍËµ½ÄÚ´æ¿éµÄ¹ÜÀí½á¹¹
+    // ä»ç”¨æˆ·æŒ‡é’ˆå›é€€åˆ°å†…å­˜å—çš„ç®¡ç†ç»“æ„
     puc -= heapStructSize;
     link = (BlockLink_t *) puc;
-    // ¼ì²é¸Ã¿éÊÇ·ñÈ·ÊµÊÇÒÑ·ÖÅä×´Ì¬
+    // æ£€æŸ¥è¯¥å—æ˜¯å¦ç¡®å®æ˜¯å·²åˆ†é…çŠ¶æ€
     if (((link->blockSize & blockAllocatedBit) != 0) && (link->nextFreeBlock == NULL)) {
-        // Çå³ıÒÑ·ÖÅä±êÖ¾
+        // æ¸…é™¤å·²åˆ†é…æ ‡å¿—
         link->blockSize &= ~blockAllocatedBit;
         MyRTOS_Port_EnterCritical();
-        // ¸üĞÂÊ£Óà¿ÕÏĞ×Ö½ÚÊı²¢½«Æä²å»Ø¿ÕÏĞÁ´±í
+        // æ›´æ–°å‰©ä½™ç©ºé—²å­—èŠ‚æ•°å¹¶å°†å…¶æ’å›ç©ºé—²é“¾è¡¨
         freeBytesRemaining += link->blockSize;
         insertBlockIntoFreeList(link);
         MyRTOS_Port_ExitCritical();
@@ -240,28 +240,28 @@ static void rtos_free(void *pv) {
 }
 
 /**
- * @brief ´ÓÒ»¸öÍ¨ÓÃË«ÏòÁ´±íÖĞÒÆ³ıÈÎÎñ
- * @param ppListHead Ö¸ÏòÁ´±íÍ·Ö¸ÕëµÄÖ¸Õë
- * @param taskToRemove ÒªÒÆ³ıµÄÈÎÎñ¾ä±ú
+ * @brief ä»ä¸€ä¸ªé€šç”¨åŒå‘é“¾è¡¨ä¸­ç§»é™¤ä»»åŠ¡
+ * @param ppListHead æŒ‡å‘é“¾è¡¨å¤´æŒ‡é’ˆçš„æŒ‡é’ˆ
+ * @param taskToRemove è¦ç§»é™¤çš„ä»»åŠ¡å¥æŸ„
  */
 static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t taskToRemove) {
     if (taskToRemove == NULL)
         return;
-    // ¸üĞÂÇ°Ò»¸ö½ÚµãµÄ next Ö¸Õë
+    // æ›´æ–°å‰ä¸€ä¸ªèŠ‚ç‚¹çš„ next æŒ‡é’ˆ
     if (taskToRemove->pPrevGeneric != NULL) {
         taskToRemove->pPrevGeneric->pNextGeneric = taskToRemove->pNextGeneric;
     } else {
-        // Èç¹ûÊÇÍ·½Úµã£¬Ôò¸üĞÂÁ´±íÍ·
+        // å¦‚æœæ˜¯å¤´èŠ‚ç‚¹ï¼Œåˆ™æ›´æ–°é“¾è¡¨å¤´
         *ppListHead = taskToRemove->pNextGeneric;
     }
-    // ¸üĞÂºóÒ»¸ö½ÚµãµÄ prev Ö¸Õë
+    // æ›´æ–°åä¸€ä¸ªèŠ‚ç‚¹çš„ prev æŒ‡é’ˆ
     if (taskToRemove->pNextGeneric != NULL) {
         taskToRemove->pNextGeneric->pPrevGeneric = taskToRemove->pPrevGeneric;
     }
-    // ÇåÀíÈÎÎñ×ÔÉíµÄÁ´±íÖ¸Õë
+    // æ¸…ç†ä»»åŠ¡è‡ªèº«çš„é“¾è¡¨æŒ‡é’ˆ
     taskToRemove->pNextGeneric = NULL;
     taskToRemove->pPrevGeneric = NULL;
-    // Èç¹ûÊÇ´Ó¾ÍĞ÷Á´±íÖĞÒÆ³ı£¬ĞèÒª¼ì²éÊÇ·ñĞèÒªÇå³ıÓÅÏÈ¼¶Î»Í¼ÖĞµÄ¶ÔÓ¦Î»
+    // å¦‚æœæ˜¯ä»å°±ç»ªé“¾è¡¨ä¸­ç§»é™¤ï¼Œéœ€è¦æ£€æŸ¥æ˜¯å¦éœ€è¦æ¸…é™¤ä¼˜å…ˆçº§ä½å›¾ä¸­çš„å¯¹åº”ä½
     if (taskToRemove->state == TASK_STATE_READY) {
         if (readyTaskLists[taskToRemove->priority] == NULL) {
             topReadyPriority &= ~(1UL << taskToRemove->priority);
@@ -270,14 +270,14 @@ static void removeTaskFromList(TaskHandle_t *ppListHead, TaskHandle_t taskToRemo
 }
 
 /**
- * @brief ¶¯Ì¬¸Ä±äÈÎÎñµÄÓÅÏÈ¼¶
- * @param task Ä¿±êÈÎÎñ¾ä±ú
- * @param newPriority ĞÂµÄÓÅÏÈ¼¶
+ * @brief åŠ¨æ€æ”¹å˜ä»»åŠ¡çš„ä¼˜å…ˆçº§
+ * @param task ç›®æ ‡ä»»åŠ¡å¥æŸ„
+ * @param newPriority æ–°çš„ä¼˜å…ˆçº§
  */
 static void task_set_priority(TaskHandle_t task, uint8_t newPriority) {
     if (task->priority == newPriority)
         return;
-    // Èç¹ûÈÎÎñÊÇ¾ÍĞ÷×´Ì¬£¬ĞèÒª´Ó¾ÉµÄ¾ÍĞ÷Á´±íÒÆµ½ĞÂµÄ¾ÍĞ÷Á´±í
+    // å¦‚æœä»»åŠ¡æ˜¯å°±ç»ªçŠ¶æ€ï¼Œéœ€è¦ä»æ—§çš„å°±ç»ªé“¾è¡¨ç§»åˆ°æ–°çš„å°±ç»ªé“¾è¡¨
     if (task->state == TASK_STATE_READY) {
         MyRTOS_Port_EnterCritical();
         removeTaskFromList(&readyTaskLists[task->priority], task);
@@ -285,18 +285,18 @@ static void task_set_priority(TaskHandle_t task, uint8_t newPriority) {
         addTaskToReadyList(task);
         MyRTOS_Port_ExitCritical();
     } else {
-        // Èç¹ûÈÎÎñ²»ÊÇ¾ÍĞ÷×´Ì¬£¬Ö±½ÓĞŞ¸ÄÓÅÏÈ¼¶¼´¿É
+        // å¦‚æœä»»åŠ¡ä¸æ˜¯å°±ç»ªçŠ¶æ€ï¼Œç›´æ¥ä¿®æ”¹ä¼˜å…ˆçº§å³å¯
         task->priority = newPriority;
     }
 }
 
 /**
- * @brief ½«ÈÎÎñÌí¼Óµ½°´»½ĞÑÊ±¼äÅÅĞòµÄÑÓ³ÙÁ´±íÖĞ
- * @param task ÒªÌí¼ÓµÄÈÎÎñ¾ä±ú
+ * @brief å°†ä»»åŠ¡æ·»åŠ åˆ°æŒ‰å”¤é†’æ—¶é—´æ’åºçš„å»¶è¿Ÿé“¾è¡¨ä¸­
+ * @param task è¦æ·»åŠ çš„ä»»åŠ¡å¥æŸ„
  */
 static void addTaskToSortedDelayList(TaskHandle_t task) {
     const uint64_t wakeUpTime = task->delay;
-    // ²åÈëµ½Á´±íÍ·
+    // æ’å…¥åˆ°é“¾è¡¨å¤´
     if (delayedTaskListHead == NULL || wakeUpTime < delayedTaskListHead->delay) {
         task->pNextGeneric = delayedTaskListHead;
         task->pPrevGeneric = NULL;
@@ -304,12 +304,12 @@ static void addTaskToSortedDelayList(TaskHandle_t task) {
             delayedTaskListHead->pPrevGeneric = task;
         delayedTaskListHead = task;
     } else {
-        // ±éÀúÁ´±íÕÒµ½ºÏÊÊµÄ²åÈëÎ»ÖÃ
+        // éå†é“¾è¡¨æ‰¾åˆ°åˆé€‚çš„æ’å…¥ä½ç½®
         Task_t *iterator = delayedTaskListHead;
         while (iterator->pNextGeneric != NULL && iterator->pNextGeneric->delay <= wakeUpTime) {
             iterator = iterator->pNextGeneric;
         }
-        // ²åÈëµ½Á´±íÖĞ¼ä»òÎ²²¿
+        // æ’å…¥åˆ°é“¾è¡¨ä¸­é—´æˆ–å°¾éƒ¨
         task->pNextGeneric = iterator->pNextGeneric;
         if (iterator->pNextGeneric != NULL)
             iterator->pNextGeneric->pPrevGeneric = task;
@@ -319,18 +319,18 @@ static void addTaskToSortedDelayList(TaskHandle_t task) {
 }
 
 /**
- * @brief ½«ÈÎÎñÌí¼Óµ½ÏàÓ¦ÓÅÏÈ¼¶µÄ¾ÍĞ÷Á´±íÄ©Î²
- * @param task ÒªÌí¼ÓµÄÈÎÎñ¾ä±ú
+ * @brief å°†ä»»åŠ¡æ·»åŠ åˆ°ç›¸åº”ä¼˜å…ˆçº§çš„å°±ç»ªé“¾è¡¨æœ«å°¾
+ * @param task è¦æ·»åŠ çš„ä»»åŠ¡å¥æŸ„
  */
 static void addTaskToReadyList(TaskHandle_t task) {
     if (task == NULL || task->priority >= MYRTOS_MAX_PRIORITIES)
         return;
     MyRTOS_Port_EnterCritical();
     {
-        // ÉèÖÃ¶ÔÓ¦ÓÅÏÈ¼¶µÄÎ»Í¼±êÖ¾
+        // è®¾ç½®å¯¹åº”ä¼˜å…ˆçº§çš„ä½å›¾æ ‡å¿—
         topReadyPriority |= (1UL << task->priority);
         task->pNextGeneric = NULL;
-        // ½«ÈÎÎñÌí¼Óµ½¾ÍĞ÷Á´±íÄ©Î²
+        // å°†ä»»åŠ¡æ·»åŠ åˆ°å°±ç»ªé“¾è¡¨æœ«å°¾
         if (readyTaskLists[task->priority] == NULL) {
             readyTaskLists[task->priority] = task;
             task->pPrevGeneric = NULL;
@@ -341,31 +341,31 @@ static void addTaskToReadyList(TaskHandle_t task) {
             pLast->pNextGeneric = task;
             task->pPrevGeneric = pLast;
         }
-        // ¸üĞÂÈÎÎñ×´Ì¬
+        // æ›´æ–°ä»»åŠ¡çŠ¶æ€
         task->state = TASK_STATE_READY;
     }
     MyRTOS_Port_ExitCritical();
 }
 
 /**
- * @brief ³õÊ¼»¯Ò»¸öÊÂ¼şÁĞ±í
- * @param pEventList Ö¸ÏòÒª³õÊ¼»¯µÄÊÂ¼şÁĞ±íµÄÖ¸Õë
+ * @brief åˆå§‹åŒ–ä¸€ä¸ªäº‹ä»¶åˆ—è¡¨
+ * @param pEventList æŒ‡å‘è¦åˆå§‹åŒ–çš„äº‹ä»¶åˆ—è¡¨çš„æŒ‡é’ˆ
  */
 static void eventListInit(EventList_t *pEventList) { pEventList->head = NULL; }
 
 /**
- * @brief ½«ÈÎÎñ°´ÓÅÏÈ¼¶²åÈëµ½ÊÂ¼şµÈ´ıÁĞ±íÖĞ
- * @param pEventList Ä¿±êÊÂ¼şÁĞ±í
- * @param taskToInsert Òª²åÈëµÄÈÎÎñ
+ * @brief å°†ä»»åŠ¡æŒ‰ä¼˜å…ˆçº§æ’å…¥åˆ°äº‹ä»¶ç­‰å¾…åˆ—è¡¨ä¸­
+ * @param pEventList ç›®æ ‡äº‹ä»¶åˆ—è¡¨
+ * @param taskToInsert è¦æ’å…¥çš„ä»»åŠ¡
  */
 static void eventListInsert(EventList_t *pEventList, TaskHandle_t taskToInsert) {
     taskToInsert->pEventList = pEventList;
-    // ²åÈëµ½Á´±íÍ·£¨Èç¹ûĞÂÈÎÎñÓÅÏÈ¼¶×î¸ß£©
+    // æ’å…¥åˆ°é“¾è¡¨å¤´ï¼ˆå¦‚æœæ–°ä»»åŠ¡ä¼˜å…ˆçº§æœ€é«˜ï¼‰
     if (pEventList->head == NULL || pEventList->head->priority <= taskToInsert->priority) {
         taskToInsert->pNextEvent = pEventList->head;
         pEventList->head = taskToInsert;
     } else {
-        // ±éÀúÕÒµ½°´ÓÅÏÈ¼¶ÅÅĞòµÄÕıÈ·Î»ÖÃ
+        // éå†æ‰¾åˆ°æŒ‰ä¼˜å…ˆçº§æ’åºçš„æ­£ç¡®ä½ç½®
         Task_t *iterator = pEventList->head;
         while (iterator->pNextEvent != NULL && iterator->pNextEvent->priority > taskToInsert->priority) {
             iterator = iterator->pNextEvent;
@@ -376,18 +376,18 @@ static void eventListInsert(EventList_t *pEventList, TaskHandle_t taskToInsert) 
 }
 
 /**
- * @brief ´ÓÈÎÎñµ±Ç°µÈ´ıµÄÊÂ¼şÁĞ±íÖĞÒÆ³ı¸ÃÈÎÎñ
- * @param taskToRemove ÒªÒÆ³ıµÄÈÎÎñ
+ * @brief ä»ä»»åŠ¡å½“å‰ç­‰å¾…çš„äº‹ä»¶åˆ—è¡¨ä¸­ç§»é™¤è¯¥ä»»åŠ¡
+ * @param taskToRemove è¦ç§»é™¤çš„ä»»åŠ¡
  */
 static void eventListRemove(TaskHandle_t taskToRemove) {
     if (taskToRemove->pEventList == NULL)
         return;
     EventList_t *pEventList = taskToRemove->pEventList;
-    // Èç¹ûÈÎÎñÊÇÊÂ¼şÁĞ±íµÄÍ·½Úµã
+    // å¦‚æœä»»åŠ¡æ˜¯äº‹ä»¶åˆ—è¡¨çš„å¤´èŠ‚ç‚¹
     if (pEventList->head == taskToRemove) {
         pEventList->head = taskToRemove->pNextEvent;
     } else {
-        // ±éÀú²éÕÒ²¢ÒÆ³ıÈÎÎñ
+        // éå†æŸ¥æ‰¾å¹¶ç§»é™¤ä»»åŠ¡
         Task_t *iterator = pEventList->head;
         while (iterator != NULL && iterator->pNextEvent != taskToRemove) {
             iterator = iterator->pNextEvent;
@@ -396,14 +396,14 @@ static void eventListRemove(TaskHandle_t taskToRemove) {
             iterator->pNextEvent = taskToRemove->pNextEvent;
         }
     }
-    // ÇåÀíÈÎÎñÖĞµÄÊÂ¼şÁĞ±íÏà¹ØÖ¸Õë
+    // æ¸…ç†ä»»åŠ¡ä¸­çš„äº‹ä»¶åˆ—è¡¨ç›¸å…³æŒ‡é’ˆ
     taskToRemove->pNextEvent = NULL;
     taskToRemove->pEventList = NULL;
 }
 
 /**
- * @brief ÏòËùÓĞÒÑ×¢²áµÄÄÚºËÀ©Õ¹¹ã²¥Ò»¸öÊÂ¼ş
- * @param pEventData Òª¹ã²¥µÄÊÂ¼şÊı¾İ
+ * @brief å‘æ‰€æœ‰å·²æ³¨å†Œçš„å†…æ ¸æ‰©å±•å¹¿æ’­ä¸€ä¸ªäº‹ä»¶
+ * @param pEventData è¦å¹¿æ’­çš„äº‹ä»¶æ•°æ®
  */
 static void broadcast_event(const KernelEventData_t *pEventData) {
     for (uint8_t i = 0; i < g_extension_count; ++i) {
@@ -414,13 +414,13 @@ static void broadcast_event(const KernelEventData_t *pEventData) {
 }
 
 /*===========================================================================*
- * ¹«¿ª½Ó¿ÚÊµÏÖ
+ * å…¬å¼€æ¥å£å®ç°
  *===========================================================================*/
 
 /**
- * @brief ³õÊ¼»¯RTOSÄÚºË
- * @note  ´Ëº¯Êı±ØĞëÔÚ´´½¨ÈÎºÎÈÎÎñ»òÆô¶¯µ÷¶ÈÆ÷Ö®Ç°µ÷ÓÃ¡£
- *        Ëü»á³õÊ¼»¯ËùÓĞµÄÄÚºËÊı¾İ½á¹¹¡£
+ * @brief åˆå§‹åŒ–RTOSå†…æ ¸
+ * @note  æ­¤å‡½æ•°å¿…é¡»åœ¨åˆ›å»ºä»»ä½•ä»»åŠ¡æˆ–å¯åŠ¨è°ƒåº¦å™¨ä¹‹å‰è°ƒç”¨ã€‚
+ *        å®ƒä¼šåˆå§‹åŒ–æ‰€æœ‰çš„å†…æ ¸æ•°æ®ç»“æ„ã€‚
  */
 void MyRTOS_Init(void) {
     allTaskListHead = NULL;
@@ -435,38 +435,38 @@ void MyRTOS_Init(void) {
 }
 
 /**
- * @brief Æô¶¯RTOSµ÷¶ÈÆ÷
- * @note  ´Ëº¯Êı²»»á·µ»Ø¡£Ëü»á´´½¨¿ÕÏĞÈÎÎñ£¬È»ºóÆô¶¯µÚÒ»¸öÈÎÎñµÄÖ´ĞĞ¡£
- *        ÔÚ´ËÖ®ºó£¬ÈÎÎñµ÷¶ÈÓÉÄÚºË½Ó¹Ü¡£
- * @param idle_task_func ¿ÕÏĞÈÎÎñµÄº¯ÊıÖ¸Õë¡£µ±Ã»ÓĞÆäËûÈÎÎñ¿ÉÔËĞĞÊ±£¬½«Ö´ĞĞ´ËÈÎÎñ¡£
+ * @brief å¯åŠ¨RTOSè°ƒåº¦å™¨
+ * @note  æ­¤å‡½æ•°ä¸ä¼šè¿”å›ã€‚å®ƒä¼šåˆ›å»ºç©ºé—²ä»»åŠ¡ï¼Œç„¶åå¯åŠ¨ç¬¬ä¸€ä¸ªä»»åŠ¡çš„æ‰§è¡Œã€‚
+ *        åœ¨æ­¤ä¹‹åï¼Œä»»åŠ¡è°ƒåº¦ç”±å†…æ ¸æ¥ç®¡ã€‚
+ * @param idle_task_func ç©ºé—²ä»»åŠ¡çš„å‡½æ•°æŒ‡é’ˆã€‚å½“æ²¡æœ‰å…¶ä»–ä»»åŠ¡å¯è¿è¡Œæ—¶ï¼Œå°†æ‰§è¡Œæ­¤ä»»åŠ¡ã€‚
  */
 void Task_StartScheduler(void (*idle_task_func)(void *)) {
-    // ±ØĞëÌá¹©Ò»¸öÓĞĞ§µÄ¿ÕÏĞÈÎÎñº¯Êı
+    // å¿…é¡»æä¾›ä¸€ä¸ªæœ‰æ•ˆçš„ç©ºé—²ä»»åŠ¡å‡½æ•°
     if (idle_task_func == NULL) {
         while (1)
             ;
     }
-    // ´´½¨¿ÕÏĞÈÎÎñ£¬ÆäÓÅÏÈ¼¶Îª×îµÍ
+    // åˆ›å»ºç©ºé—²ä»»åŠ¡ï¼Œå…¶ä¼˜å…ˆçº§ä¸ºæœ€ä½
     idleTask = Task_Create(idle_task_func, "IDLE", 128, NULL, 0);
     if (idleTask == NULL) {
-        // Èç¹û¿ÕÏĞÈÎÎñ´´½¨Ê§°Ü£¬ÏµÍ³ÎŞ·¨¼ÌĞø
+        // å¦‚æœç©ºé—²ä»»åŠ¡åˆ›å»ºå¤±è´¥ï¼Œç³»ç»Ÿæ— æ³•ç»§ç»­
         while (1)
             ;
     }
-    // ±ê¼Çµ÷¶ÈÆ÷ÒÑÆô¶¯
+    // æ ‡è®°è°ƒåº¦å™¨å·²å¯åŠ¨
     g_scheduler_started = 1;
-    // ÊÖ¶¯µ÷ÓÃÒ»´Îµ÷¶ÈÒÔÑ¡ÔñµÚÒ»¸öÒªÔËĞĞµÄÈÎÎñ
+    // æ‰‹åŠ¨è°ƒç”¨ä¸€æ¬¡è°ƒåº¦ä»¥é€‰æ‹©ç¬¬ä¸€ä¸ªè¦è¿è¡Œçš„ä»»åŠ¡
     MyRTOS_Schedule();
-    // µ÷ÓÃÒÆÖ²²ã´úÂëÀ´Æô¶¯µ÷¶ÈÆ÷£¨Í¨³£ÊÇÉèÖÃµÚÒ»¸öÈÎÎñµÄ¶ÑÕ»Ö¸Õë²¢´¥·¢SVC/PendSV£©
+    // è°ƒç”¨ç§»æ¤å±‚ä»£ç æ¥å¯åŠ¨è°ƒåº¦å™¨ï¼ˆé€šå¸¸æ˜¯è®¾ç½®ç¬¬ä¸€ä¸ªä»»åŠ¡çš„å †æ ˆæŒ‡é’ˆå¹¶è§¦å‘SVC/PendSVï¼‰
     if (MyRTOS_Port_StartScheduler() != 0) {
-        // ´Ë´¦²»Ó¦¸Ã±»Ö´ĞĞµ½
+        // æ­¤å¤„ä¸åº”è¯¥è¢«æ‰§è¡Œåˆ°
     }
 }
 
 /**
- * @brief »ñÈ¡µ±Ç°ÏµÍ³µÎ´ğ¼ÆÊı
- * @note  ´Ëº¯ÊıÊÇÏß³Ì°²È«µÄ¡£
- * @return ·µ»Ø×Ôµ÷¶ÈÆ÷Æô¶¯ÒÔÀ´µÄµÎ´ğÊı
+ * @brief è·å–å½“å‰ç³»ç»Ÿæ»´ç­”è®¡æ•°
+ * @note  æ­¤å‡½æ•°æ˜¯çº¿ç¨‹å®‰å…¨çš„ã€‚
+ * @return è¿”å›è‡ªè°ƒåº¦å™¨å¯åŠ¨ä»¥æ¥çš„æ»´ç­”æ•°
  */
 uint64_t MyRTOS_GetTick(void) {
     MyRTOS_Port_EnterCritical();
@@ -476,48 +476,48 @@ uint64_t MyRTOS_GetTick(void) {
 }
 
 /**
- * @brief ÏµÍ³µÎ´ğÖĞ¶Ï´¦Àíº¯Êı
- * @note  ´Ëº¯ÊıÓ¦ÔÚÏµÍ³µÎ´ğ¶¨Ê±Æ÷ÖĞ¶Ï£¨ÈçSysTick_Handler£©ÖĞµ÷ÓÃ¡£
- *        Ëü¸ºÔğÔö¼ÓÏµÍ³µÎ´ğ¼ÆÊı£¬²¢¼ì²éÊÇ·ñÓĞÑÓ³ÙµÄÈÎÎñĞèÒª±»»½ĞÑ¡£
+ * @brief ç³»ç»Ÿæ»´ç­”ä¸­æ–­å¤„ç†å‡½æ•°
+ * @note  æ­¤å‡½æ•°åº”åœ¨ç³»ç»Ÿæ»´ç­”å®šæ—¶å™¨ä¸­æ–­ï¼ˆå¦‚SysTick_Handlerï¼‰ä¸­è°ƒç”¨ã€‚
+ *        å®ƒè´Ÿè´£å¢åŠ ç³»ç»Ÿæ»´ç­”è®¡æ•°ï¼Œå¹¶æ£€æŸ¥æ˜¯å¦æœ‰å»¶è¿Ÿçš„ä»»åŠ¡éœ€è¦è¢«å”¤é†’ã€‚
  */
 int MyRTOS_Tick_Handler(void) {
     int higherPriorityTaskWoken = 0;
-    // Ôö¼ÓÏµÍ³µÎ´ğ¼ÆÊı
+    // å¢åŠ ç³»ç»Ÿæ»´ç­”è®¡æ•°
     systemTickCount++;
     const uint64_t current_tick = systemTickCount;
-    // ¼ì²éÑÓ³ÙÁ´±íÍ·£¬¿´ÊÇ·ñÓĞÈÎÎñµÄ»½ĞÑÊ±¼äÒÑµ½
+    // æ£€æŸ¥å»¶è¿Ÿé“¾è¡¨å¤´ï¼Œçœ‹æ˜¯å¦æœ‰ä»»åŠ¡çš„å”¤é†’æ—¶é—´å·²åˆ°
     while (delayedTaskListHead != NULL && delayedTaskListHead->delay <= current_tick) {
         Task_t *taskToWake = delayedTaskListHead;
-        // ´ÓÑÓ³ÙÁ´±íÖĞÒÆ³ı
+        // ä»å»¶è¿Ÿé“¾è¡¨ä¸­ç§»é™¤
         removeTaskFromList(&delayedTaskListHead, taskToWake);
         taskToWake->delay = 0;
-        // Ìí¼Óµ½¾ÍĞ÷Á´±í
+        // æ·»åŠ åˆ°å°±ç»ªé“¾è¡¨
         addTaskToReadyList(taskToWake);
         if (taskToWake->priority > currentTask->priority) {
             higherPriorityTaskWoken = 1;
         }
     }
-    // ¹ã²¥µÎ´ğÊÂ¼ş
+    // å¹¿æ’­æ»´ç­”äº‹ä»¶
     KernelEventData_t eventData = {.eventType = KERNEL_EVENT_TICK};
     broadcast_event(&eventData);
     return higherPriorityTaskWoken;
 }
 
 /**
- * @brief ¼ì²éµ÷¶ÈÆ÷ÊÇ·ñÕıÔÚÔËĞĞ
- * @return Èç¹ûµ÷¶ÈÆ÷ÒÑÆô¶¯£¬·µ»Ø1£¬·ñÔò·µ»Ø0
+ * @brief æ£€æŸ¥è°ƒåº¦å™¨æ˜¯å¦æ­£åœ¨è¿è¡Œ
+ * @return å¦‚æœè°ƒåº¦å™¨å·²å¯åŠ¨ï¼Œè¿”å›1ï¼Œå¦åˆ™è¿”å›0
  */
 uint8_t MyRTOS_Schedule_IsRunning(void) { return g_scheduler_started; }
 
 /**
- * @brief ±¨¸æÒ»¸öÄÚºË¼¶´íÎó
- * @note  ´Ëº¯ÊıÍ¨¹ıÄÚºËÀ©Õ¹»úÖÆ¹ã²¥´íÎóÊÂ¼ş£¬ÔÊĞíµ÷ÊÔ¹¤¾ß»òÓÃ»§´úÂë²¶»ñºÍ´¦ÀíÕâĞ©´íÎó¡£
- * @param error_type ´íÎóÀàĞÍ
- * @param p_context Óë´íÎóÏà¹ØµÄÉÏÏÂÎÄÊı¾İÖ¸Õë
+ * @brief æŠ¥å‘Šä¸€ä¸ªå†…æ ¸çº§é”™è¯¯
+ * @note  æ­¤å‡½æ•°é€šè¿‡å†…æ ¸æ‰©å±•æœºåˆ¶å¹¿æ’­é”™è¯¯äº‹ä»¶ï¼Œå…è®¸è°ƒè¯•å·¥å…·æˆ–ç”¨æˆ·ä»£ç æ•è·å’Œå¤„ç†è¿™äº›é”™è¯¯ã€‚
+ * @param error_type é”™è¯¯ç±»å‹
+ * @param p_context ä¸é”™è¯¯ç›¸å…³çš„ä¸Šä¸‹æ–‡æ•°æ®æŒ‡é’ˆ
  */
 void MyRTOS_ReportError(KernelErrorType_t error_type, void *p_context) {
     KernelEventData_t eventData;
-    // ×îºÃÏÈÇå¿ÕÊÂ¼şÊı¾İ½á¹¹
+    // æœ€å¥½å…ˆæ¸…ç©ºäº‹ä»¶æ•°æ®ç»“æ„
     memset(&eventData, 0, sizeof(eventData));
 
     eventData.p_context_data = p_context;
@@ -538,37 +538,37 @@ void MyRTOS_ReportError(KernelErrorType_t error_type, void *p_context) {
             eventData.eventType = KERNEL_EVENT_ERROR_HARD_FAULT;
             break;
         default:
-            return; // Î´ÖªµÄ´íÎóÀàĞÍ£¬²»´¦Àí
+            return; // æœªçŸ¥çš„é”™è¯¯ç±»å‹ï¼Œä¸å¤„ç†
     }
 
     broadcast_event(&eventData);
 }
 
 /**
- * @brief µ÷¶È²¢Ñ¡ÔñÏÂÒ»¸öÒªÔËĞĞµÄÈÎÎñ
- * @note  ÕâÊÇRTOSµ÷¶ÈµÄºËĞÄ¡£Ëü»áÕÒµ½×î¸ßÓÅÏÈ¼¶µÄ¾ÍĞ÷ÈÎÎñ²¢½«ÆäÉèÖÃÎªµ±Ç°ÈÎÎñ¡£
- *        ´Ëº¯Êı±»PendSVÖĞ¶Ï·şÎñ³ÌĞòµ÷ÓÃÒÔÖ´ĞĞÉÏÏÂÎÄÇĞ»»¡£
- * @return ·µ»ØÏÂÒ»¸öÒªÔËĞĞÈÎÎñµÄ¶ÑÕ»Ö¸Õë (SP)
+ * @brief è°ƒåº¦å¹¶é€‰æ‹©ä¸‹ä¸€ä¸ªè¦è¿è¡Œçš„ä»»åŠ¡
+ * @note  è¿™æ˜¯RTOSè°ƒåº¦çš„æ ¸å¿ƒã€‚å®ƒä¼šæ‰¾åˆ°æœ€é«˜ä¼˜å…ˆçº§çš„å°±ç»ªä»»åŠ¡å¹¶å°†å…¶è®¾ç½®ä¸ºå½“å‰ä»»åŠ¡ã€‚
+ *        æ­¤å‡½æ•°è¢«PendSVä¸­æ–­æœåŠ¡ç¨‹åºè°ƒç”¨ä»¥æ‰§è¡Œä¸Šä¸‹æ–‡åˆ‡æ¢ã€‚
+ * @return è¿”å›ä¸‹ä¸€ä¸ªè¦è¿è¡Œä»»åŠ¡çš„å †æ ˆæŒ‡é’ˆ (SP)
  */
 void *schedule_next_task(void) {
     TaskHandle_t prevTask = currentTask;
     TaskHandle_t nextTaskToRun = NULL;
-    // ¹ã²¥ÈÎÎñÇĞ³öÊÂ¼ş
+    // å¹¿æ’­ä»»åŠ¡åˆ‡å‡ºäº‹ä»¶
     if (prevTask) {
         KernelEventData_t eventData = {.eventType = KERNEL_EVENT_TASK_SWITCH_OUT, .task = prevTask};
         broadcast_event(&eventData);
     }
-    // Èç¹ûÃ»ÓĞ¾ÍĞ÷ÈÎÎñ£¬ÔòÑ¡Ôñ¿ÕÏĞÈÎÎñ
+    // å¦‚æœæ²¡æœ‰å°±ç»ªä»»åŠ¡ï¼Œåˆ™é€‰æ‹©ç©ºé—²ä»»åŠ¡
     if (topReadyPriority == 0) {
         nextTaskToRun = idleTask;
     } else {
-        // ÕÒµ½×î¸ßÓÅÏÈ¼¶µÄ¾ÍĞ÷ÈÎÎñ
-        // `__builtin_clz` ÊÇÒ»¸öGCC/ClangÄÚÖÃº¯Êı£¬ÓÃÓÚ¼ÆËãÇ°µ¼ÁãµÄÊıÁ¿£¬¿ÉÒÔ¸ßĞ§µØÕÒµ½×î¸ßÖÃÎ»
+        // æ‰¾åˆ°æœ€é«˜ä¼˜å…ˆçº§çš„å°±ç»ªä»»åŠ¡
+        // `__builtin_clz` æ˜¯ä¸€ä¸ªGCC/Clangå†…ç½®å‡½æ•°ï¼Œç”¨äºè®¡ç®—å‰å¯¼é›¶çš„æ•°é‡ï¼Œå¯ä»¥é«˜æ•ˆåœ°æ‰¾åˆ°æœ€é«˜ç½®ä½
         uint32_t highestPriority = 31 - __builtin_clz(topReadyPriority);
         nextTaskToRun = readyTaskLists[highestPriority];
-        // ÊµÏÖÍ¬ÓÅÏÈ¼¶ÈÎÎñµÄÂÖ×ªµ÷¶È (Round-Robin)
+        // å®ç°åŒä¼˜å…ˆçº§ä»»åŠ¡çš„è½®è½¬è°ƒåº¦ (Round-Robin)
         if (nextTaskToRun != NULL && nextTaskToRun->pNextGeneric != NULL) {
-            // ½«µ±Ç°Í·½ÚµãÒÆ¶¯µ½Á´±íÎ²²¿
+            // å°†å½“å‰å¤´èŠ‚ç‚¹ç§»åŠ¨åˆ°é“¾è¡¨å°¾éƒ¨
             readyTaskLists[highestPriority] = nextTaskToRun->pNextGeneric;
             nextTaskToRun->pNextGeneric->pPrevGeneric = NULL;
             Task_t *pLast = readyTaskLists[highestPriority];
@@ -579,30 +579,30 @@ void *schedule_next_task(void) {
                 nextTaskToRun->pPrevGeneric = pLast;
                 nextTaskToRun->pNextGeneric = NULL;
             } else {
-                // Èç¹ûÁ´±íÖĞÖ»ÓĞÒ»¸öÔªËØ£¬ÔòËüÈÔÈ»ÊÇÍ·
+                // å¦‚æœé“¾è¡¨ä¸­åªæœ‰ä¸€ä¸ªå…ƒç´ ï¼Œåˆ™å®ƒä»ç„¶æ˜¯å¤´
                 readyTaskLists[highestPriority] = nextTaskToRun;
                 nextTaskToRun->pPrevGeneric = NULL;
                 nextTaskToRun->pNextGeneric = NULL;
             }
         }
     }
-    // ¸üĞÂµ±Ç°ÈÎÎñ
+    // æ›´æ–°å½“å‰ä»»åŠ¡
     currentTask = nextTaskToRun;
-    // ¹ã²¥ÈÎÎñÇĞÈëÊÂ¼ş
+    // å¹¿æ’­ä»»åŠ¡åˆ‡å…¥äº‹ä»¶
     if (currentTask) {
         KernelEventData_t eventData = {.eventType = KERNEL_EVENT_TASK_SWITCH_IN, .task = currentTask};
         broadcast_event(&eventData);
     }
     if (currentTask == NULL)
-        return NULL; // ÀíÂÛÉÏ²»Ó¦·¢Éú£¬ÒòÎª×ÜÓĞidleTask
-    // ·µ»ØĞÂÈÎÎñµÄ¶ÑÕ»Ö¸Õë¸øÒÆÖ²²ã
+        return NULL; // ç†è®ºä¸Šä¸åº”å‘ç”Ÿï¼Œå› ä¸ºæ€»æœ‰idleTask
+    // è¿”å›æ–°ä»»åŠ¡çš„å †æ ˆæŒ‡é’ˆç»™ç§»æ¤å±‚
     return currentTask->sp;
 }
 
 /**
- * @brief ÊÖ¶¯´¥·¢Ò»´ÎÈÎÎñµ÷¶È
- * @note  Í¨³£ÔÚÈÎÎñ×´Ì¬·¢Éú¸Ä±äºó£¨ÀıÈç£¬´ÓÑÓ³Ù±äÎª¾ÍĞ÷£©µ÷ÓÃ£¬ÒÔÈ·±£×î¸ßÓÅÏÈ¼¶µÄÈÎÎñÄÜ¹»ÔËĞĞ¡£
- *        ÔÚRTOSµÄAPIÄÚ²¿£¬ÕâÍ¨³£Í¨¹ı `MyRTOS_Port_Yield()` ÊµÏÖ¡£
+ * @brief æ‰‹åŠ¨è§¦å‘ä¸€æ¬¡ä»»åŠ¡è°ƒåº¦
+ * @note  é€šå¸¸åœ¨ä»»åŠ¡çŠ¶æ€å‘ç”Ÿæ”¹å˜åï¼ˆä¾‹å¦‚ï¼Œä»å»¶è¿Ÿå˜ä¸ºå°±ç»ªï¼‰è°ƒç”¨ï¼Œä»¥ç¡®ä¿æœ€é«˜ä¼˜å…ˆçº§çš„ä»»åŠ¡èƒ½å¤Ÿè¿è¡Œã€‚
+ *        åœ¨RTOSçš„APIå†…éƒ¨ï¼Œè¿™é€šå¸¸é€šè¿‡ `MyRTOS_Port_Yield()` å®ç°ã€‚
  */
 void MyRTOS_Schedule(void) { schedule_next_task(); }
 
@@ -610,27 +610,27 @@ void MyRTOS_Schedule(void) { schedule_next_task(); }
 // Memory Management API
 // =============================
 /**
- * @brief ¶¯Ì¬·ÖÅäÄÚ´æ
- * @note  ´Ëº¯ÊıÊÇÏß³Ì°²È«µÄ¡£ÄÚ²¿Ê¹ÓÃ `rtos_malloc` ²¢¹ã²¥Ò»¸öÄÚ´æ·ÖÅäÊÂ¼ş¡£
- * @param wantedSize Òª·ÖÅäµÄÄÚ´æ´óĞ¡£¨×Ö½Ú£©
- * @return ³É¹¦Ôò·µ»ØÖ¸ÏòÒÑ·ÖÅäÄÚ´æµÄÖ¸Õë£¬Ê§°ÜÔò·µ»ØNULL
+ * @brief åŠ¨æ€åˆ†é…å†…å­˜
+ * @note  æ­¤å‡½æ•°æ˜¯çº¿ç¨‹å®‰å…¨çš„ã€‚å†…éƒ¨ä½¿ç”¨ `rtos_malloc` å¹¶å¹¿æ’­ä¸€ä¸ªå†…å­˜åˆ†é…äº‹ä»¶ã€‚
+ * @param wantedSize è¦åˆ†é…çš„å†…å­˜å¤§å°ï¼ˆå­—èŠ‚ï¼‰
+ * @return æˆåŠŸåˆ™è¿”å›æŒ‡å‘å·²åˆ†é…å†…å­˜çš„æŒ‡é’ˆï¼Œå¤±è´¥åˆ™è¿”å›NULL
  */
 void *MyRTOS_Malloc(size_t wantedSize) {
     void *pv = rtos_malloc(wantedSize);
-    // ¹ã²¥ÄÚ´æ·ÖÅäÊÂ¼ş
+    // å¹¿æ’­å†…å­˜åˆ†é…äº‹ä»¶
     KernelEventData_t eventData = {.eventType = KERNEL_EVENT_MALLOC, .mem = {.ptr = pv, .size = wantedSize}};
     broadcast_event(&eventData);
     return pv;
 }
 
 /**
- * @brief ÊÍ·ÅÏÈÇ°·ÖÅäµÄÄÚ´æ
- * @note  ´Ëº¯ÊıÊÇÏß³Ì°²È«µÄ¡£ÄÚ²¿Ê¹ÓÃ `rtos_free` ²¢¹ã²¥Ò»¸öÄÚ´æÊÍ·ÅÊÂ¼ş¡£
- * @param pv ÒªÊÍ·ÅµÄÄÚ´æÖ¸Õë£¬±ØĞëÊÇÍ¨¹ı `MyRTOS_Malloc` ·ÖÅäµÄ
+ * @brief é‡Šæ”¾å…ˆå‰åˆ†é…çš„å†…å­˜
+ * @note  æ­¤å‡½æ•°æ˜¯çº¿ç¨‹å®‰å…¨çš„ã€‚å†…éƒ¨ä½¿ç”¨ `rtos_free` å¹¶å¹¿æ’­ä¸€ä¸ªå†…å­˜é‡Šæ”¾äº‹ä»¶ã€‚
+ * @param pv è¦é‡Šæ”¾çš„å†…å­˜æŒ‡é’ˆï¼Œå¿…é¡»æ˜¯é€šè¿‡ `MyRTOS_Malloc` åˆ†é…çš„
  */
 void MyRTOS_Free(void *pv) {
     if (pv) {
-        // ÔÚÊÍ·ÅÇ°»ñÈ¡¿é´óĞ¡ÒÔÓÃÓÚÊÂ¼ş¹ã²¥
+        // åœ¨é‡Šæ”¾å‰è·å–å—å¤§å°ä»¥ç”¨äºäº‹ä»¶å¹¿æ’­
         BlockLink_t *link = (BlockLink_t *) ((uint8_t *) pv - heapStructSize);
         KernelEventData_t eventData = {.eventType = KERNEL_EVENT_FREE,
                                        .mem = {.ptr = pv, .size = (link->blockSize & ~blockAllocatedBit)}};
@@ -640,43 +640,43 @@ void MyRTOS_Free(void *pv) {
 }
 
 /**
- * @brief ´´½¨Ò»¸öĞÂÈÎÎñ
- * @param func ÈÎÎñº¯ÊıÖ¸Õë
- * @param taskName ÈÎÎñÃû³Æ£¨×Ö·û´®£©£¬ÓÃÓÚµ÷ÊÔ
- * @param stack_size ÈÎÎñ¶ÑÕ»´óĞ¡£¨ÒÔStackType_tÎªµ¥Î»£¬Í¨³£ÊÇ4×Ö½Ú£©
- * @param param ´«µİ¸øÈÎÎñº¯ÊıµÄ²ÎÊı
- * @param priority ÈÎÎñÓÅÏÈ¼¶ (0ÊÇ×îµÍÓÅÏÈ¼¶)
- * @return ³É¹¦Ôò·µ»ØÈÎÎñ¾ä±ú£¬Ê§°ÜÔò·µ»ØNULL
+ * @brief åˆ›å»ºä¸€ä¸ªæ–°ä»»åŠ¡
+ * @param func ä»»åŠ¡å‡½æ•°æŒ‡é’ˆ
+ * @param taskName ä»»åŠ¡åç§°ï¼ˆå­—ç¬¦ä¸²ï¼‰ï¼Œç”¨äºè°ƒè¯•
+ * @param stack_size ä»»åŠ¡å †æ ˆå¤§å°ï¼ˆä»¥StackType_tä¸ºå•ä½ï¼Œé€šå¸¸æ˜¯4å­—èŠ‚ï¼‰
+ * @param param ä¼ é€’ç»™ä»»åŠ¡å‡½æ•°çš„å‚æ•°
+ * @param priority ä»»åŠ¡ä¼˜å…ˆçº§ (0æ˜¯æœ€ä½ä¼˜å…ˆçº§)
+ * @return æˆåŠŸåˆ™è¿”å›ä»»åŠ¡å¥æŸ„ï¼Œå¤±è´¥åˆ™è¿”å›NULL
  */
 TaskHandle_t Task_Create(void (*func)(void *), const char *taskName, uint16_t stack_size, void *param,
                          uint8_t priority) {
     if (priority >= MYRTOS_MAX_PRIORITIES || func == NULL)
         return NULL;
-    // ÎªÈÎÎñ¿ØÖÆ¿é£¨TCB£©·ÖÅäÄÚ´æ
+    // ä¸ºä»»åŠ¡æ§åˆ¶å—ï¼ˆTCBï¼‰åˆ†é…å†…å­˜
     Task_t *t = MyRTOS_Malloc(sizeof(Task_t));
     if (t == NULL)
         return NULL;
-    // ÎªÈÎÎñ¶ÑÕ»·ÖÅäÄÚ´æ
+    // ä¸ºä»»åŠ¡å †æ ˆåˆ†é…å†…å­˜
     StackType_t *stack = MyRTOS_Malloc(stack_size * sizeof(StackType_t));
     if (stack == NULL) {
         MyRTOS_Free(t);
         return NULL;
     }
-    // ·ÖÅäÒ»¸öÎ¨Ò»µÄÈÎÎñID
+    // åˆ†é…ä¸€ä¸ªå”¯ä¸€çš„ä»»åŠ¡ID
     uint32_t newTaskId = (uint32_t) -1;
     MyRTOS_Port_EnterCritical();
     if (taskIdBitmap != 0xFFFFFFFFFFFFFFFFULL) {
-        newTaskId = __builtin_ctzll(~taskIdBitmap); // ²éÕÒÎ»Í¼ÖĞµÚÒ»¸öÎª0µÄÎ»
+        newTaskId = __builtin_ctzll(~taskIdBitmap); // æŸ¥æ‰¾ä½å›¾ä¸­ç¬¬ä¸€ä¸ªä¸º0çš„ä½
         taskIdBitmap |= (1ULL << newTaskId);
     }
     MyRTOS_Port_ExitCritical();
     if (newTaskId == (uint32_t) -1) {
-        // Èç¹ûÃ»ÓĞ¿ÉÓÃµÄÈÎÎñID
+        // å¦‚æœæ²¡æœ‰å¯ç”¨çš„ä»»åŠ¡ID
         MyRTOS_Free(stack);
         MyRTOS_Free(t);
         return NULL;
     }
-    // ³õÊ¼»¯ÈÎÎñ¿ØÖÆ¿é£¨TCB£©
+    // åˆå§‹åŒ–ä»»åŠ¡æ§åˆ¶å—ï¼ˆTCBï¼‰
     t->func = func;
     t->param = param;
     t->delay = 0;
@@ -695,15 +695,15 @@ TaskHandle_t Task_Create(void (*func)(void *), const char *taskName, uint16_t st
     t->eventData = NULL;
     t->taskName = taskName;
     t->stackSize_words = stack_size;
-    // Ê¹ÓÃÄ§·¨Êı×ÖÌî³ä¶ÑÕ»£¬ÓÃÓÚ¶ÑÕ»Òç³ö¼ì²â
+    // ä½¿ç”¨é­”æ³•æ•°å­—å¡«å……å †æ ˆï¼Œç”¨äºå †æ ˆæº¢å‡ºæ£€æµ‹
     for (uint16_t i = 0; i < stack_size; ++i) {
         stack[i] = 0xA5A5A5A5;
     }
-    // µ÷ÓÃÒÆÖ²²ã´úÂë³õÊ¼»¯ÈÎÎñ¶ÑÕ»£¨Ä£ÄâCPUÉÏÏÂÎÄ£©
+    // è°ƒç”¨ç§»æ¤å±‚ä»£ç åˆå§‹åŒ–ä»»åŠ¡å †æ ˆï¼ˆæ¨¡æ‹ŸCPUä¸Šä¸‹æ–‡ï¼‰
     t->sp = MyRTOS_Port_InitialiseStack(stack + stack_size, func, param);
     MyRTOS_Port_EnterCritical();
     {
-        // ½«ĞÂÈÎÎñÌí¼Óµ½È«¾ÖÈÎÎñÁĞ±íÖĞ
+        // å°†æ–°ä»»åŠ¡æ·»åŠ åˆ°å…¨å±€ä»»åŠ¡åˆ—è¡¨ä¸­
         if (allTaskListHead == NULL) {
             allTaskListHead = t;
         } else {
@@ -712,47 +712,47 @@ TaskHandle_t Task_Create(void (*func)(void *), const char *taskName, uint16_t st
                 p = p->pNextTask;
             p->pNextTask = t;
         }
-        // ½«ĞÂÈÎÎñÌí¼Óµ½¾ÍĞ÷ÁĞ±í
+        // å°†æ–°ä»»åŠ¡æ·»åŠ åˆ°å°±ç»ªåˆ—è¡¨
         addTaskToReadyList(t);
     }
     MyRTOS_Port_ExitCritical();
-    // ¹ã²¥ÈÎÎñ´´½¨ÊÂ¼ş
+    // å¹¿æ’­ä»»åŠ¡åˆ›å»ºäº‹ä»¶
     KernelEventData_t eventData = {.eventType = KERNEL_EVENT_TASK_CREATE, .task = t};
     broadcast_event(&eventData);
     return t;
 }
 
 /**
- * @brief É¾³ıÒ»¸öÈÎÎñ
- * @param task_h ÒªÉ¾³ıµÄÈÎÎñ¾ä±ú¡£Èç¹ûÎªNULL£¬ÔòÉ¾³ıµ±Ç°ÈÎÎñ¡£
- * @return ³É¹¦·µ»Ø0£¬Ê§°Ü·µ»Ø-1 (ÀıÈç£¬³¢ÊÔÉ¾³ı¿ÕÏĞÈÎÎñ)
+ * @brief åˆ é™¤ä¸€ä¸ªä»»åŠ¡
+ * @param task_h è¦åˆ é™¤çš„ä»»åŠ¡å¥æŸ„ã€‚å¦‚æœä¸ºNULLï¼Œåˆ™åˆ é™¤å½“å‰ä»»åŠ¡ã€‚
+ * @return æˆåŠŸè¿”å›0ï¼Œå¤±è´¥è¿”å›-1 (ä¾‹å¦‚ï¼Œå°è¯•åˆ é™¤ç©ºé—²ä»»åŠ¡)
  */
 int Task_Delete(TaskHandle_t task_h) {
     Task_t *task_to_delete = (task_h == NULL) ? currentTask : task_h;
-    // ²»ÔÊĞíÉ¾³ı¿ÕÏĞÈÎÎñ
+    // ä¸å…è®¸åˆ é™¤ç©ºé—²ä»»åŠ¡
     if (task_to_delete == idleTask || task_to_delete == NULL)
         return -1;
     uint32_t deleted_task_id = task_to_delete->taskId;
-    // ¹ã²¥ÈÎÎñÉ¾³ıÊÂ¼ş
+    // å¹¿æ’­ä»»åŠ¡åˆ é™¤äº‹ä»¶
     KernelEventData_t eventData = {.eventType = KERNEL_EVENT_TASK_DELETE, .task = task_to_delete};
     broadcast_event(&eventData);
     MyRTOS_Port_EnterCritical();
-    // ´ÓÆäËùÔÚµÄÈÎºÎÁ´±íÖĞÒÆ³ıÈÎÎñ
+    // ä»å…¶æ‰€åœ¨çš„ä»»ä½•é“¾è¡¨ä¸­ç§»é™¤ä»»åŠ¡
     if (task_to_delete->state == TASK_STATE_READY) {
         removeTaskFromList(&readyTaskLists[task_to_delete->priority], task_to_delete);
     } else if (task_to_delete->state == TASK_STATE_DELAYED || task_to_delete->state == TASK_STATE_BLOCKED) {
         removeTaskFromList(&delayedTaskListHead, task_to_delete);
     }
-    // Èç¹ûÈÎÎñÕıÔÚµÈ´ıÊÂ¼ş£¬Ò²´ÓÊÂ¼şÁĞ±íÖĞÒÆ³ı
+    // å¦‚æœä»»åŠ¡æ­£åœ¨ç­‰å¾…äº‹ä»¶ï¼Œä¹Ÿä»äº‹ä»¶åˆ—è¡¨ä¸­ç§»é™¤
     if (task_to_delete->pEventList != NULL) {
         eventListRemove(task_to_delete);
     }
-    // ÊÍ·ÅÈÎÎñ³ÖÓĞµÄËùÓĞ»¥³âËø
+    // é‡Šæ”¾ä»»åŠ¡æŒæœ‰çš„æ‰€æœ‰äº’æ–¥é”
     while (task_to_delete->held_mutexes_head != NULL) {
         Mutex_Unlock(task_to_delete->held_mutexes_head);
     }
     task_to_delete->state = TASK_STATE_UNUSED;
-    // ´ÓÈ«¾ÖÈÎÎñÁĞ±íÖĞÒÆ³ı
+    // ä»å…¨å±€ä»»åŠ¡åˆ—è¡¨ä¸­ç§»é™¤
     Task_t *prev = NULL, *curr = allTaskListHead;
     while (curr != NULL && curr != task_to_delete) {
         prev = curr;
@@ -765,17 +765,17 @@ int Task_Delete(TaskHandle_t task_h) {
             prev->pNextTask = curr->pNextTask;
     }
     void *stack_to_free = task_to_delete->stack_base;
-    // Èç¹ûÊÇÉ¾³ı×ÔÉí
+    // å¦‚æœæ˜¯åˆ é™¤è‡ªèº«
     if (task_h == NULL) {
-        currentTask = NULL; // ±ê¼Çµ±Ç°ÈÎÎñÎª¿Õ£¬µ÷¶ÈÆ÷½«Ñ¡ÔñĞÂÈÎÎñ
-        taskIdBitmap &= ~(1ULL << deleted_task_id); // »ØÊÕÈÎÎñID
+        currentTask = NULL; // æ ‡è®°å½“å‰ä»»åŠ¡ä¸ºç©ºï¼Œè°ƒåº¦å™¨å°†é€‰æ‹©æ–°ä»»åŠ¡
+        taskIdBitmap &= ~(1ULL << deleted_task_id); // å›æ”¶ä»»åŠ¡ID
         MyRTOS_Free(task_to_delete);
         MyRTOS_Free(stack_to_free);
         MyRTOS_Port_ExitCritical();
-        MyRTOS_Port_Yield(); // ´¥·¢µ÷¶È£¬´ËÈÎÎñ½«²»ÔÙÖ´ĞĞ
+        MyRTOS_Port_Yield(); // è§¦å‘è°ƒåº¦ï¼Œæ­¤ä»»åŠ¡å°†ä¸å†æ‰§è¡Œ
     } else {
-        // Èç¹ûÊÇÉ¾³ıÆäËûÈÎÎñ
-        taskIdBitmap &= ~(1ULL << deleted_task_id); // »ØÊÕÈÎÎñID
+        // å¦‚æœæ˜¯åˆ é™¤å…¶ä»–ä»»åŠ¡
+        taskIdBitmap &= ~(1ULL << deleted_task_id); // å›æ”¶ä»»åŠ¡ID
         MyRTOS_Free(task_to_delete);
         MyRTOS_Free(stack_to_free);
         MyRTOS_Port_ExitCritical();
@@ -785,41 +785,41 @@ int Task_Delete(TaskHandle_t task_h) {
 }
 
 /**
- * @brief ½«µ±Ç°ÈÎÎñÑÓ³ÙÖ¸¶¨µÄµÎ´ğÊı
- * @param tick ÒªÑÓ³ÙµÄÏµÍ³µÎ´ğÊı
+ * @brief å°†å½“å‰ä»»åŠ¡å»¶è¿ŸæŒ‡å®šçš„æ»´ç­”æ•°
+ * @param tick è¦å»¶è¿Ÿçš„ç³»ç»Ÿæ»´ç­”æ•°
  */
 void Task_Delay(uint32_t tick) {
     if (tick == 0 || g_scheduler_started == 0)
         return;
     MyRTOS_Port_EnterCritical();
     {
-        // ´Ó¾ÍĞ÷Á´±íÖĞÒÆ³ıµ±Ç°ÈÎÎñ
+        // ä»å°±ç»ªé“¾è¡¨ä¸­ç§»é™¤å½“å‰ä»»åŠ¡
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
-        // ¼ÆËã»½ĞÑÊ±¼ä²¢ÉèÖÃÈÎÎñ×´Ì¬
+        // è®¡ç®—å”¤é†’æ—¶é—´å¹¶è®¾ç½®ä»»åŠ¡çŠ¶æ€
         currentTask->delay = MyRTOS_GetTick() + tick;
         currentTask->state = TASK_STATE_DELAYED;
-        // ½«ÈÎÎñÌí¼Óµ½ÅÅĞòµÄÑÓ³ÙÁ´±íÖĞ
+        // å°†ä»»åŠ¡æ·»åŠ åˆ°æ’åºçš„å»¶è¿Ÿé“¾è¡¨ä¸­
         addTaskToSortedDelayList(currentTask);
     }
     MyRTOS_Port_ExitCritical();
-    // ´¥·¢µ÷¶È
+    // è§¦å‘è°ƒåº¦
     MyRTOS_Port_Yield();
 }
 
 /**
- * @brief ÏòÒ»¸öÈÎÎñ·¢ËÍÍ¨Öª£¬»½ĞÑÕıÔÚµÈ´ıµÄÈÎÎñ
- * @param task_h Ä¿±êÈÎÎñµÄ¾ä±ú
- * @return ³É¹¦·µ»Ø0
+ * @brief å‘ä¸€ä¸ªä»»åŠ¡å‘é€é€šçŸ¥ï¼Œå”¤é†’æ­£åœ¨ç­‰å¾…çš„ä»»åŠ¡
+ * @param task_h ç›®æ ‡ä»»åŠ¡çš„å¥æŸ„
+ * @return æˆåŠŸè¿”å›0
  */
 int Task_Notify(TaskHandle_t task_h) {
     int trigger_yield = 0;
     MyRTOS_Port_EnterCritical();
     {
-        // ¼ì²éÄ¿±êÈÎÎñÊÇ·ñÕıÔÚµÈ´ıÍ¨Öª
+        // æ£€æŸ¥ç›®æ ‡ä»»åŠ¡æ˜¯å¦æ­£åœ¨ç­‰å¾…é€šçŸ¥
         if (task_h->is_waiting_notification && task_h->state == TASK_STATE_BLOCKED) {
             task_h->is_waiting_notification = 0;
             addTaskToReadyList(task_h);
-            // Èç¹û±»»½ĞÑµÄÈÎÎñÓÅÏÈ¼¶¸ü¸ß£¬ÔòĞèÒª½øĞĞµ÷¶È
+            // å¦‚æœè¢«å”¤é†’çš„ä»»åŠ¡ä¼˜å…ˆçº§æ›´é«˜ï¼Œåˆ™éœ€è¦è¿›è¡Œè°ƒåº¦
             if (task_h->priority > currentTask->priority) {
                 trigger_yield = 1;
             }
@@ -832,10 +832,10 @@ int Task_Notify(TaskHandle_t task_h) {
 }
 
 /**
- * @brief ´ÓÖĞ¶Ï·şÎñ³ÌĞò(ISR)ÖĞÏòÈÎÎñ·¢ËÍÍ¨Öª
- * @param task_h Ä¿±êÈÎÎñµÄ¾ä±ú
- * @param higherPriorityTaskWoken Ö¸Õë£¬ÓÃÓÚ·µ»ØÊÇ·ñÓĞ¸ü¸ßÓÅÏÈ¼¶µÄÈÎÎñ±»»½ĞÑ
- * @return ³É¹¦·µ»Ø0£¬Ê§°Ü·µ»Ø-1
+ * @brief ä»ä¸­æ–­æœåŠ¡ç¨‹åº(ISR)ä¸­å‘ä»»åŠ¡å‘é€é€šçŸ¥
+ * @param task_h ç›®æ ‡ä»»åŠ¡çš„å¥æŸ„
+ * @param higherPriorityTaskWoken æŒ‡é’ˆï¼Œç”¨äºè¿”å›æ˜¯å¦æœ‰æ›´é«˜ä¼˜å…ˆçº§çš„ä»»åŠ¡è¢«å”¤é†’
+ * @return æˆåŠŸè¿”å›0ï¼Œå¤±è´¥è¿”å›-1
  */
 int Task_NotifyFromISR(TaskHandle_t task_h, int *higherPriorityTaskWoken) {
     if (higherPriorityTaskWoken == NULL)
@@ -856,47 +856,47 @@ int Task_NotifyFromISR(TaskHandle_t task_h, int *higherPriorityTaskWoken) {
 }
 
 /**
- * @brief Ê¹µ±Ç°ÈÎÎñ½øÈë×èÈû×´Ì¬£¬µÈ´ıÍ¨Öª
- * @note  ÈÎÎñ½«Ò»Ö±×èÈû£¬Ö±µ½ `Task_Notify` »ò `Task_NotifyFromISR` ±»µ÷ÓÃ
+ * @brief ä½¿å½“å‰ä»»åŠ¡è¿›å…¥é˜»å¡çŠ¶æ€ï¼Œç­‰å¾…é€šçŸ¥
+ * @note  ä»»åŠ¡å°†ä¸€ç›´é˜»å¡ï¼Œç›´åˆ° `Task_Notify` æˆ– `Task_NotifyFromISR` è¢«è°ƒç”¨
  */
 void Task_Wait(void) {
     MyRTOS_Port_EnterCritical();
     {
-        // ´Ó¾ÍĞ÷Á´±íÒÆ³ı
+        // ä»å°±ç»ªé“¾è¡¨ç§»é™¤
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
-        // ÉèÖÃµÈ´ıÍ¨Öª±êÖ¾ºÍ×èÈû×´Ì¬
+        // è®¾ç½®ç­‰å¾…é€šçŸ¥æ ‡å¿—å’Œé˜»å¡çŠ¶æ€
         currentTask->is_waiting_notification = 1;
         currentTask->state = TASK_STATE_BLOCKED;
     }
     MyRTOS_Port_ExitCritical();
-    // ´¥·¢µ÷¶È
+    // è§¦å‘è°ƒåº¦
     MyRTOS_Port_Yield();
 }
 
 /**
- * @brief »ñÈ¡ÈÎÎñµÄµ±Ç°×´Ì¬
- * @param task_h Ä¿±êÈÎÎñµÄ¾ä±ú
- * @return ·µ»ØÈÎÎñµÄ×´Ì¬ (TaskState_t)
+ * @brief è·å–ä»»åŠ¡çš„å½“å‰çŠ¶æ€
+ * @param task_h ç›®æ ‡ä»»åŠ¡çš„å¥æŸ„
+ * @return è¿”å›ä»»åŠ¡çš„çŠ¶æ€ (TaskState_t)
  */
 TaskState_t Task_GetState(TaskHandle_t task_h) { return task_h ? ((Task_t *) task_h)->state : TASK_STATE_UNUSED; }
 
 /**
- * @brief »ñÈ¡ÈÎÎñµÄµ±Ç°ÓÅÏÈ¼¶
- * @param task_h Ä¿±êÈÎÎñµÄ¾ä±ú
- * @return ·µ»ØÈÎÎñµÄÓÅÏÈ¼¶
+ * @brief è·å–ä»»åŠ¡çš„å½“å‰ä¼˜å…ˆçº§
+ * @param task_h ç›®æ ‡ä»»åŠ¡çš„å¥æŸ„
+ * @return è¿”å›ä»»åŠ¡çš„ä¼˜å…ˆçº§
  */
 uint8_t Task_GetPriority(TaskHandle_t task_h) { return task_h ? ((Task_t *) task_h)->priority : 0; }
 
 /**
- * @brief »ñÈ¡µ±Ç°ÕıÔÚÔËĞĞµÄÈÎÎñµÄ¾ä±ú
- * @return ·µ»Øµ±Ç°ÈÎÎñµÄ¾ä±ú
+ * @brief è·å–å½“å‰æ­£åœ¨è¿è¡Œçš„ä»»åŠ¡çš„å¥æŸ„
+ * @return è¿”å›å½“å‰ä»»åŠ¡çš„å¥æŸ„
  */
 TaskHandle_t Task_GetCurrentTaskHandle(void) { return currentTask; }
 
 /**
- * @brief »ñÈ¡ÈÎÎñµÄÎ¨Ò»ID
- * @param task_h Ä¿±êÈÎÎñµÄ¾ä±ú
- * @return ·µ»ØÈÎÎñµÄID
+ * @brief è·å–ä»»åŠ¡çš„å”¯ä¸€ID
+ * @param task_h ç›®æ ‡ä»»åŠ¡çš„å¥æŸ„
+ * @return è¿”å›ä»»åŠ¡çš„ID
  */
 uint32_t Task_GetId(TaskHandle_t task_h) {
     if (!task_h)
@@ -905,22 +905,22 @@ uint32_t Task_GetId(TaskHandle_t task_h) {
 }
 
 /**
- * @brief »ñÈ¡ÈÎÎñµÄÃû³Æ¡£
- * @param task_h Òª²éÑ¯µÄÈÎÎñ¾ä±ú¡£
- * @return ·µ»ØÖ¸ÏòÈÎÎñÃû³Æ×Ö·û´®µÄÖ¸Õë¡£Èç¹û¾ä±úÎŞĞ§£¬¿ÉÄÜ·µ»ØNULL»ò¿Õ×Ö·û´®¡£
+ * @brief è·å–ä»»åŠ¡çš„åç§°ã€‚
+ * @param task_h è¦æŸ¥è¯¢çš„ä»»åŠ¡å¥æŸ„ã€‚
+ * @return è¿”å›æŒ‡å‘ä»»åŠ¡åç§°å­—ç¬¦ä¸²çš„æŒ‡é’ˆã€‚å¦‚æœå¥æŸ„æ— æ•ˆï¼Œå¯èƒ½è¿”å›NULLæˆ–ç©ºå­—ç¬¦ä¸²ã€‚
  */
 char *Task_GetName(TaskHandle_t task_h) {
-    // ½øĞĞÒ»¸ö»ù±¾µÄ¾ä±úÓĞĞ§ĞÔ¼ì²é
+    // è¿›è¡Œä¸€ä¸ªåŸºæœ¬çš„å¥æŸ„æœ‰æ•ˆæ€§æ£€æŸ¥
     if (task_h == NULL) {
-        return "Unknown"; // »òÕß·µ»Ø NULL
+        return "Unknown"; // æˆ–è€…è¿”å› NULL
     }
     return ((Task_t *) task_h)->taskName;
 }
 
 /**
- * @brief ¸ù¾İÈÎÎñÃû³Æ²éÕÒÈÎÎñ¾ä±ú¡£
- * @param taskName Òª²éÕÒµÄÈÎÎñµÄÃû³Æ×Ö·û´®¡£
- * @return Èç¹ûÕÒµ½£¬Ôò·µ»ØÈÎÎñµÄ¾ä±ú£»Èç¹ûÎ´ÕÒµ½£¬Ôò·µ»Ø NULL¡£
+ * @brief æ ¹æ®ä»»åŠ¡åç§°æŸ¥æ‰¾ä»»åŠ¡å¥æŸ„ã€‚
+ * @param taskName è¦æŸ¥æ‰¾çš„ä»»åŠ¡çš„åç§°å­—ç¬¦ä¸²ã€‚
+ * @return å¦‚æœæ‰¾åˆ°ï¼Œåˆ™è¿”å›ä»»åŠ¡çš„å¥æŸ„ï¼›å¦‚æœæœªæ‰¾åˆ°ï¼Œåˆ™è¿”å› NULLã€‚
  */
 TaskHandle_t Task_FindByName(const char *taskName) {
     TaskHandle_t found_task = NULL;
@@ -928,14 +928,14 @@ TaskHandle_t Task_FindByName(const char *taskName) {
     if (taskName == NULL) {
         return NULL;
     }
-    // ½øÈëÁÙ½çÇøÒÔ°²È«µØ±éÀúÈ«¾ÖÈÎÎñÁĞ±í
+    // è¿›å…¥ä¸´ç•ŒåŒºä»¥å®‰å…¨åœ°éå†å…¨å±€ä»»åŠ¡åˆ—è¡¨
     MyRTOS_Port_EnterCritical();
     Task_t *p_iterator = allTaskListHead;
     while (p_iterator != NULL) {
-        // Ê¹ÓÃ strcmp ±È½ÏÈÎÎñÃû³Æ
+        // ä½¿ç”¨ strcmp æ¯”è¾ƒä»»åŠ¡åç§°
         if (strcmp(p_iterator->taskName, taskName) == 0) {
             found_task = p_iterator;
-            break; // ÕÒµ½ºóÁ¢¼´ÍË³öÑ­»·
+            break; // æ‰¾åˆ°åç«‹å³é€€å‡ºå¾ªç¯
         }
         p_iterator = p_iterator->pNextTask;
     }
@@ -944,39 +944,39 @@ TaskHandle_t Task_FindByName(const char *taskName) {
 }
 
 /**
- * @brief ´´½¨Ò»¸öÏûÏ¢¶ÓÁĞ
- * @param length ¶ÓÁĞÄÜ¹»´æ´¢µÄ×î´óÏîÄ¿Êı
- * @param itemSize Ã¿¸öÏîÄ¿µÄ´óĞ¡£¨×Ö½Ú£©
- * @return ³É¹¦Ôò·µ»Ø¶ÓÁĞ¾ä±ú£¬Ê§°ÜÔò·µ»ØNULL
+ * @brief åˆ›å»ºä¸€ä¸ªæ¶ˆæ¯é˜Ÿåˆ—
+ * @param length é˜Ÿåˆ—èƒ½å¤Ÿå­˜å‚¨çš„æœ€å¤§é¡¹ç›®æ•°
+ * @param itemSize æ¯ä¸ªé¡¹ç›®çš„å¤§å°ï¼ˆå­—èŠ‚ï¼‰
+ * @return æˆåŠŸåˆ™è¿”å›é˜Ÿåˆ—å¥æŸ„ï¼Œå¤±è´¥åˆ™è¿”å›NULL
  */
 QueueHandle_t Queue_Create(uint32_t length, uint32_t itemSize) {
     if (length == 0 || itemSize == 0)
         return NULL;
-    // ·ÖÅä¶ÓÁĞ¿ØÖÆ½á¹¹ÄÚ´æ
+    // åˆ†é…é˜Ÿåˆ—æ§åˆ¶ç»“æ„å†…å­˜
     Queue_t *queue = MyRTOS_Malloc(sizeof(Queue_t));
     if (queue == NULL)
         return NULL;
-    // ·ÖÅä¶ÓÁĞ´æ´¢ÇøÄÚ´æ
+    // åˆ†é…é˜Ÿåˆ—å­˜å‚¨åŒºå†…å­˜
     queue->storage = (uint8_t *) MyRTOS_Malloc(length * itemSize);
     if (queue->storage == NULL) {
         MyRTOS_Free(queue);
         return NULL;
     }
-    // ³õÊ¼»¯¶ÓÁĞÊôĞÔ
+    // åˆå§‹åŒ–é˜Ÿåˆ—å±æ€§
     queue->length = length;
     queue->itemSize = itemSize;
     queue->waitingCount = 0;
     queue->writePtr = queue->storage;
     queue->readPtr = queue->storage;
-    eventListInit(&queue->sendEventList); // ³õÊ¼»¯µÈ´ı·¢ËÍµÄÈÎÎñÁĞ±í
-    eventListInit(&queue->receiveEventList); // ³õÊ¼»¯µÈ´ı½ÓÊÕµÄÈÎÎñÁĞ±í
+    eventListInit(&queue->sendEventList); // åˆå§‹åŒ–ç­‰å¾…å‘é€çš„ä»»åŠ¡åˆ—è¡¨
+    eventListInit(&queue->receiveEventList); // åˆå§‹åŒ–ç­‰å¾…æ¥æ”¶çš„ä»»åŠ¡åˆ—è¡¨
     return queue;
 }
 
 /**
- * @brief É¾³ıÒ»¸öÏûÏ¢¶ÓÁĞ
- * @note  »á»½ĞÑËùÓĞµÈ´ı¸Ã¶ÓÁĞµÄÈÎÎñ¡£
- * @param delQueue ÒªÉ¾³ıµÄ¶ÓÁĞ¾ä±ú
+ * @brief åˆ é™¤ä¸€ä¸ªæ¶ˆæ¯é˜Ÿåˆ—
+ * @note  ä¼šå”¤é†’æ‰€æœ‰ç­‰å¾…è¯¥é˜Ÿåˆ—çš„ä»»åŠ¡ã€‚
+ * @param delQueue è¦åˆ é™¤çš„é˜Ÿåˆ—å¥æŸ„
  */
 void Queue_Delete(QueueHandle_t delQueue) {
     Queue_t *queue = delQueue;
@@ -984,19 +984,19 @@ void Queue_Delete(QueueHandle_t delQueue) {
         return;
     MyRTOS_Port_EnterCritical();
     {
-        // »½ĞÑËùÓĞµÈ´ı·¢ËÍµÄÈÎÎñ
+        // å”¤é†’æ‰€æœ‰ç­‰å¾…å‘é€çš„ä»»åŠ¡
         while (queue->sendEventList.head != NULL) {
             Task_t *taskToWake = queue->sendEventList.head;
             eventListRemove(taskToWake);
             addTaskToReadyList(taskToWake);
         }
-        // »½ĞÑËùÓĞµÈ´ı½ÓÊÕµÄÈÎÎñ
+        // å”¤é†’æ‰€æœ‰ç­‰å¾…æ¥æ”¶çš„ä»»åŠ¡
         while (queue->receiveEventList.head != NULL) {
             Task_t *taskToWake = queue->receiveEventList.head;
             eventListRemove(taskToWake);
             addTaskToReadyList(taskToWake);
         }
-        // ÊÍ·ÅÄÚ´æ
+        // é‡Šæ”¾å†…å­˜
         MyRTOS_Free(queue->storage);
         MyRTOS_Free(queue);
     }
@@ -1004,11 +1004,11 @@ void Queue_Delete(QueueHandle_t delQueue) {
 }
 
 /**
- * @brief Ïò¶ÓÁĞ·¢ËÍÒ»¸öÏîÄ¿
- * @param queue Ä¿±ê¶ÓÁĞ¾ä±ú
- * @param item Ö¸ÏòÒª·¢ËÍµÄÏîÄ¿µÄÖ¸Õë
- * @param block_ticks Èç¹û¶ÓÁĞÒÑÂú£¬ÈÎÎñ½«×èÈûµÈ´ıµÄ×î´óµÎ´ğÊı¡£0±íÊ¾²»µÈ´ı£¬MYRTOS_MAX_DELAY±íÊ¾ÓÀ¾ÃµÈ´ı¡£
- * @return ³É¹¦·¢ËÍ·µ»Ø1£¬Ê§°Ü»ò³¬Ê±·µ»Ø0
+ * @brief å‘é˜Ÿåˆ—å‘é€ä¸€ä¸ªé¡¹ç›®
+ * @param queue ç›®æ ‡é˜Ÿåˆ—å¥æŸ„
+ * @param item æŒ‡å‘è¦å‘é€çš„é¡¹ç›®çš„æŒ‡é’ˆ
+ * @param block_ticks å¦‚æœé˜Ÿåˆ—å·²æ»¡ï¼Œä»»åŠ¡å°†é˜»å¡ç­‰å¾…çš„æœ€å¤§æ»´ç­”æ•°ã€‚0è¡¨ç¤ºä¸ç­‰å¾…ï¼ŒMYRTOS_MAX_DELAYè¡¨ç¤ºæ°¸ä¹…ç­‰å¾…ã€‚
+ * @return æˆåŠŸå‘é€è¿”å›1ï¼Œå¤±è´¥æˆ–è¶…æ—¶è¿”å›0
  */
 int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
     Queue_t *pQueue = queue;
@@ -1016,30 +1016,30 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
         return 0;
     while (1) {
         MyRTOS_Port_EnterCritical();
-        // Çé¿ö1: ÓĞÈÎÎñÕıÔÚµÈ´ı½ÓÊÕÊı¾İ
+        // æƒ…å†µ1: æœ‰ä»»åŠ¡æ­£åœ¨ç­‰å¾…æ¥æ”¶æ•°æ®
         if (pQueue->receiveEventList.head != NULL) {
             Task_t *taskToWake = pQueue->receiveEventList.head;
             eventListRemove(taskToWake);
-            // Èç¹û¸ÃÈÎÎñÍ¬Ê±Ò²ÔÚÑÓ³ÙÁĞ±íÖĞ£¬´ÓÖĞÒÆ³ı
+            // å¦‚æœè¯¥ä»»åŠ¡åŒæ—¶ä¹Ÿåœ¨å»¶è¿Ÿåˆ—è¡¨ä¸­ï¼Œä»ä¸­ç§»é™¤
             if (taskToWake->delay > 0) {
                 removeTaskFromList(&delayedTaskListHead, taskToWake);
                 taskToWake->delay = 0;
             }
-            // Ö±½Ó½«Êı¾İ¿½±´¸øµÈ´ıµÄÈÎÎñ
+            // ç›´æ¥å°†æ•°æ®æ‹·è´ç»™ç­‰å¾…çš„ä»»åŠ¡
             memcpy(taskToWake->eventData, item, pQueue->itemSize);
             taskToWake->eventData = NULL;
             addTaskToReadyList(taskToWake);
-            // Èç¹û±»»½ĞÑµÄÈÎÎñÓÅÏÈ¼¶¸ü¸ß£¬´¥·¢µ÷¶È
+            // å¦‚æœè¢«å”¤é†’çš„ä»»åŠ¡ä¼˜å…ˆçº§æ›´é«˜ï¼Œè§¦å‘è°ƒåº¦
             if (taskToWake->priority > currentTask->priority)
                 MyRTOS_Port_Yield();
             MyRTOS_Port_ExitCritical();
             return 1;
         }
-        // Çé¿ö2: ¶ÓÁĞÎ´Âú
+        // æƒ…å†µ2: é˜Ÿåˆ—æœªæ»¡
         if (pQueue->waitingCount < pQueue->length) {
             memcpy(pQueue->writePtr, item, pQueue->itemSize);
             pQueue->writePtr += pQueue->itemSize;
-            // Ğ´Ö¸Õë»Ø»·
+            // å†™æŒ‡é’ˆå›ç¯
             if (pQueue->writePtr >= (pQueue->storage + (pQueue->length * pQueue->itemSize))) {
                 pQueue->writePtr = pQueue->storage;
             }
@@ -1047,26 +1047,26 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
             MyRTOS_Port_ExitCritical();
             return 1;
         }
-        // Çé¿ö3: ¶ÓÁĞÒÑÂú£¬ÇÒ²»ÔÊĞí×èÈû
+        // æƒ…å†µ3: é˜Ÿåˆ—å·²æ»¡ï¼Œä¸”ä¸å…è®¸é˜»å¡
         if (block_ticks == 0) {
             MyRTOS_Port_ExitCritical();
             return 0;
         }
-        // Çé¿ö4: ¶ÓÁĞÒÑÂú£¬ĞèÒª×èÈû
+        // æƒ…å†µ4: é˜Ÿåˆ—å·²æ»¡ï¼Œéœ€è¦é˜»å¡
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         currentTask->state = TASK_STATE_BLOCKED;
-        eventListInsert(&pQueue->sendEventList, currentTask); // ¼ÓÈë·¢ËÍµÈ´ıÁĞ±í
+        eventListInsert(&pQueue->sendEventList, currentTask); // åŠ å…¥å‘é€ç­‰å¾…åˆ—è¡¨
         currentTask->delay = 0;
         if (block_ticks != MYRTOS_MAX_DELAY) {
             currentTask->delay = MyRTOS_GetTick() + block_ticks;
             addTaskToSortedDelayList(currentTask);
         }
         MyRTOS_Port_ExitCritical();
-        MyRTOS_Port_Yield(); // ´¥·¢µ÷¶È£¬ÈÎÎñ½øÈë×èÈû
-        // ÈÎÎñ±»»½ĞÑºó£¬¼ì²éÊÇ·ñÊÇÕı³£»½ĞÑ£¨¶ø²»ÊÇ³¬Ê±£©
+        MyRTOS_Port_Yield(); // è§¦å‘è°ƒåº¦ï¼Œä»»åŠ¡è¿›å…¥é˜»å¡
+        // ä»»åŠ¡è¢«å”¤é†’åï¼Œæ£€æŸ¥æ˜¯å¦æ˜¯æ­£å¸¸å”¤é†’ï¼ˆè€Œä¸æ˜¯è¶…æ—¶ï¼‰
         if (currentTask->pEventList == NULL)
-            continue; // Èç¹ûÊÇÕı³£»½ĞÑ£¬pEventList»á±»ÉèÎªNULL£¬Ñ­»·ÖØÊÔ·¢ËÍ
-        // Èç¹ûÊÇ³¬Ê±»½ĞÑ
+            continue; // å¦‚æœæ˜¯æ­£å¸¸å”¤é†’ï¼ŒpEventListä¼šè¢«è®¾ä¸ºNULLï¼Œå¾ªç¯é‡è¯•å‘é€
+        // å¦‚æœæ˜¯è¶…æ—¶å”¤é†’
         MyRTOS_Port_EnterCritical();
         eventListRemove(currentTask);
         MyRTOS_Port_ExitCritical();
@@ -1075,11 +1075,11 @@ int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks) {
 }
 
 /**
- * @brief ´Ó¶ÓÁĞ½ÓÊÕÒ»¸öÏîÄ¿
- * @param queue Ä¿±ê¶ÓÁĞ¾ä±ú
- * @param buffer ÓÃÓÚ´æ´¢½ÓÊÕµ½µÄÏîÄ¿µÄ»º³åÇøÖ¸Õë
- * @param block_ticks Èç¹û¶ÓÁĞÎª¿Õ£¬ÈÎÎñ½«×èÈûµÈ´ıµÄ×î´óµÎ´ğÊı¡£0±íÊ¾²»µÈ´ı£¬MYRTOS_MAX_DELAY±íÊ¾ÓÀ¾ÃµÈ´ı¡£
- * @return ³É¹¦½ÓÊÕ·µ»Ø1£¬Ê§°Ü»ò³¬Ê±·µ»Ø0
+ * @brief ä»é˜Ÿåˆ—æ¥æ”¶ä¸€ä¸ªé¡¹ç›®
+ * @param queue ç›®æ ‡é˜Ÿåˆ—å¥æŸ„
+ * @param buffer ç”¨äºå­˜å‚¨æ¥æ”¶åˆ°çš„é¡¹ç›®çš„ç¼“å†²åŒºæŒ‡é’ˆ
+ * @param block_ticks å¦‚æœé˜Ÿåˆ—ä¸ºç©ºï¼Œä»»åŠ¡å°†é˜»å¡ç­‰å¾…çš„æœ€å¤§æ»´ç­”æ•°ã€‚0è¡¨ç¤ºä¸ç­‰å¾…ï¼ŒMYRTOS_MAX_DELAYè¡¨ç¤ºæ°¸ä¹…ç­‰å¾…ã€‚
+ * @return æˆåŠŸæ¥æ”¶è¿”å›1ï¼Œå¤±è´¥æˆ–è¶…æ—¶è¿”å›0
  */
 int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
     Queue_t *pQueue = queue;
@@ -1087,41 +1087,41 @@ int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
         return 0;
     while (1) {
         MyRTOS_Port_EnterCritical();
-        // Çé¿ö1: ¶ÓÁĞÖĞÓĞÊı¾İ
+        // æƒ…å†µ1: é˜Ÿåˆ—ä¸­æœ‰æ•°æ®
         if (pQueue->waitingCount > 0) {
             memcpy(buffer, pQueue->readPtr, pQueue->itemSize);
             pQueue->readPtr += pQueue->itemSize;
-            // ¶ÁÖ¸Õë»Ø»·
+            // è¯»æŒ‡é’ˆå›ç¯
             if (pQueue->readPtr >= (pQueue->storage + (pQueue->length * pQueue->itemSize))) {
                 pQueue->readPtr = pQueue->storage;
             }
             pQueue->waitingCount--;
-            // Èç¹ûÓĞÈÎÎñÔÚµÈ´ı·¢ËÍ£¬»½ĞÑÒ»¸ö
+            // å¦‚æœæœ‰ä»»åŠ¡åœ¨ç­‰å¾…å‘é€ï¼Œå”¤é†’ä¸€ä¸ª
             if (pQueue->sendEventList.head != NULL) {
                 Task_t *taskToWake = pQueue->sendEventList.head;
                 eventListRemove(taskToWake);
-                // Èç¹û¸ÃÈÎÎñÍ¬Ê±Ò²ÔÚÑÓ³ÙÁĞ±íÖĞ£¬´ÓÖĞÒÆ³ı
+                // å¦‚æœè¯¥ä»»åŠ¡åŒæ—¶ä¹Ÿåœ¨å»¶è¿Ÿåˆ—è¡¨ä¸­ï¼Œä»ä¸­ç§»é™¤
                 if (taskToWake->delay > 0) {
                     removeTaskFromList(&delayedTaskListHead, taskToWake);
                     taskToWake->delay = 0;
                 }
                 addTaskToReadyList(taskToWake);
-                // Èç¹û±»»½ĞÑµÄÈÎÎñÓÅÏÈ¼¶¸ü¸ß£¬´¥·¢µ÷¶È
+                // å¦‚æœè¢«å”¤é†’çš„ä»»åŠ¡ä¼˜å…ˆçº§æ›´é«˜ï¼Œè§¦å‘è°ƒåº¦
                 if (taskToWake->priority > currentTask->priority)
                     MyRTOS_Port_Yield();
             }
             MyRTOS_Port_ExitCritical();
             return 1;
         }
-        // Çé¿ö2: ¶ÓÁĞÎª¿Õ£¬ÇÒ²»ÔÊĞí×èÈû
+        // æƒ…å†µ2: é˜Ÿåˆ—ä¸ºç©ºï¼Œä¸”ä¸å…è®¸é˜»å¡
         if (block_ticks == 0) {
             MyRTOS_Port_ExitCritical();
             return 0;
         }
-        // Çé¿ö3: ¶ÓÁĞÎª¿Õ£¬ĞèÒª×èÈû
+        // æƒ…å†µ3: é˜Ÿåˆ—ä¸ºç©ºï¼Œéœ€è¦é˜»å¡
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         currentTask->state = TASK_STATE_BLOCKED;
-        currentTask->eventData = buffer; // ÁÙÊ±´æ´¢½ÓÊÕ»º³åÇøÖ¸Õë
+        currentTask->eventData = buffer; // ä¸´æ—¶å­˜å‚¨æ¥æ”¶ç¼“å†²åŒºæŒ‡é’ˆ
         eventListInsert(&pQueue->receiveEventList, currentTask);
         currentTask->delay = 0;
         if (block_ticks != MYRTOS_MAX_DELAY) {
@@ -1129,11 +1129,11 @@ int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
             addTaskToSortedDelayList(currentTask);
         }
         MyRTOS_Port_ExitCritical();
-        MyRTOS_Port_Yield(); // ´¥·¢µ÷¶È£¬ÈÎÎñ½øÈë×èÈû
-        // ÈÎÎñ±»»½ĞÑºó£¬¼ì²éÊÇ·ñÊÇÕı³£»½ĞÑ£¨Êı¾İÒÑ±»Ö±½Ó¿½±´µ½buffer£©
+        MyRTOS_Port_Yield(); // è§¦å‘è°ƒåº¦ï¼Œä»»åŠ¡è¿›å…¥é˜»å¡
+        // ä»»åŠ¡è¢«å”¤é†’åï¼Œæ£€æŸ¥æ˜¯å¦æ˜¯æ­£å¸¸å”¤é†’ï¼ˆæ•°æ®å·²è¢«ç›´æ¥æ‹·è´åˆ°bufferï¼‰
         if (currentTask->pEventList == NULL)
             return 1;
-        // Èç¹ûÊÇ³¬Ê±»½ĞÑ
+        // å¦‚æœæ˜¯è¶…æ—¶å”¤é†’
         MyRTOS_Port_EnterCritical();
         eventListRemove(currentTask);
         currentTask->eventData = NULL;
@@ -1146,8 +1146,8 @@ int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks) {
 // Mutex Management API
 // =============================
 /**
- * @brief ´´½¨Ò»¸ö»¥³âËø
- * @return ³É¹¦Ôò·µ»Ø»¥³âËø¾ä±ú£¬Ê§°ÜÔò·µ»ØNULL
+ * @brief åˆ›å»ºä¸€ä¸ªäº’æ–¥é”
+ * @return æˆåŠŸåˆ™è¿”å›äº’æ–¥é”å¥æŸ„ï¼Œå¤±è´¥åˆ™è¿”å›NULL
  */
 MutexHandle_t Mutex_Create(void) {
     Mutex_t *mutex = MyRTOS_Malloc(sizeof(Mutex_t));
@@ -1162,12 +1162,12 @@ MutexHandle_t Mutex_Create(void) {
 }
 
 /**
- * @brief É¾³ıÒ»¸ö»¥³âËø
- * @note  ÕâÊÇÒ»¸ö½¡×³µÄÊµÏÖ¡£Ëü»á°²È«µØ´¦ÀíÒÔÏÂÇé¿ö£º
- *        1. »½ĞÑËùÓĞÕıÔÚµÈ´ı¸ÃËøµÄÈÎÎñ£¬·ÀÖ¹ËüÃÇÓÀ¾Ã×èÈû¡£
- *        2. Èç¹ûËøµ±Ç°±»³ÖÓĞ£¬»á´Ó³ÖÓĞÕßÈÎÎñµÄÄÚ²¿Á´±íÖĞ°²È«µØÒÆ³ı¸ÃËø£¬·ÀÖ¹Ğü¿ÕÖ¸Õë¡£
- *        Ó¦ÓÃ³ÌĞòÓ¦È·±£ÔÚÉ¾³ıËøÖ®ºó£¬²»ÔÙÓĞÈÎºÎ´úÂë³¢ÊÔÊ¹ÓÃËü¡£
- * @param mutex ÒªÉ¾³ıµÄ»¥³âËø¾ä±ú
+ * @brief åˆ é™¤ä¸€ä¸ªäº’æ–¥é”
+ * @note  è¿™æ˜¯ä¸€ä¸ªå¥å£®çš„å®ç°ã€‚å®ƒä¼šå®‰å…¨åœ°å¤„ç†ä»¥ä¸‹æƒ…å†µï¼š
+ *        1. å”¤é†’æ‰€æœ‰æ­£åœ¨ç­‰å¾…è¯¥é”çš„ä»»åŠ¡ï¼Œé˜²æ­¢å®ƒä»¬æ°¸ä¹…é˜»å¡ã€‚
+ *        2. å¦‚æœé”å½“å‰è¢«æŒæœ‰ï¼Œä¼šä»æŒæœ‰è€…ä»»åŠ¡çš„å†…éƒ¨é“¾è¡¨ä¸­å®‰å…¨åœ°ç§»é™¤è¯¥é”ï¼Œé˜²æ­¢æ‚¬ç©ºæŒ‡é’ˆã€‚
+ *        åº”ç”¨ç¨‹åºåº”ç¡®ä¿åœ¨åˆ é™¤é”ä¹‹åï¼Œä¸å†æœ‰ä»»ä½•ä»£ç å°è¯•ä½¿ç”¨å®ƒã€‚
+ * @param mutex è¦åˆ é™¤çš„äº’æ–¥é”å¥æŸ„
  */
 void Mutex_Delete(MutexHandle_t mutex) {
     if (mutex == NULL) {
@@ -1176,81 +1176,81 @@ void Mutex_Delete(MutexHandle_t mutex) {
 
     MyRTOS_Port_EnterCritical();
     {
-        // »½ĞÑËùÓĞÕıÔÚµÈ´ı¸ÃËøµÄÈÎÎñ
-        //  ±éÀúÊÂ¼şÁĞ±í£¬½«ËùÓĞµÈ´ıµÄÈÎÎñÒÆ»Øµ½¾ÍĞ÷ÁĞ±í
+        // å”¤é†’æ‰€æœ‰æ­£åœ¨ç­‰å¾…è¯¥é”çš„ä»»åŠ¡
+        //  éå†äº‹ä»¶åˆ—è¡¨ï¼Œå°†æ‰€æœ‰ç­‰å¾…çš„ä»»åŠ¡ç§»å›åˆ°å°±ç»ªåˆ—è¡¨
         while (mutex->eventList.head != NULL) {
             Task_t *taskToWake = mutex->eventList.head;
-            // ´ÓÊÂ¼şÁĞ±íÖĞÒÆ³ıÈÎÎñ¡£eventListRemove »á´¦ÀíºÃ taskToWake->pEventList µÄÇåÀí
+            // ä»äº‹ä»¶åˆ—è¡¨ä¸­ç§»é™¤ä»»åŠ¡ã€‚eventListRemove ä¼šå¤„ç†å¥½ taskToWake->pEventList çš„æ¸…ç†
             eventListRemove(taskToWake);
-            // Èç¹ûÈÎÎñÒòÎª³¬Ê±Ò²´æÔÚÓÚÑÓ³ÙÁĞ±íÖĞ£¬ÔòÒ»²¢ÒÆ³ı
+            // å¦‚æœä»»åŠ¡å› ä¸ºè¶…æ—¶ä¹Ÿå­˜åœ¨äºå»¶è¿Ÿåˆ—è¡¨ä¸­ï¼Œåˆ™ä¸€å¹¶ç§»é™¤
             if (taskToWake->delay > 0) {
                 removeTaskFromList(&delayedTaskListHead, taskToWake);
                 taskToWake->delay = 0;
             }
-            // ½«±»»½ĞÑµÄÈÎÎñÖØĞÂÌí¼Óµ½¾ÍĞ÷ÁĞ±íÖĞ
+            // å°†è¢«å”¤é†’çš„ä»»åŠ¡é‡æ–°æ·»åŠ åˆ°å°±ç»ªåˆ—è¡¨ä¸­
             addTaskToReadyList(taskToWake);
         }
-        // Èç¹ûËøµ±Ç°±»³ÖÓĞ£¬Ôò´Ó³ÖÓĞÕßÈÎÎñÖĞ¶Ï¿ªÁ´½Ó
+        // å¦‚æœé”å½“å‰è¢«æŒæœ‰ï¼Œåˆ™ä»æŒæœ‰è€…ä»»åŠ¡ä¸­æ–­å¼€é“¾æ¥
         TaskHandle_t owner_tcb = mutex->owner_tcb;
         if (owner_tcb != NULL) {
-            // ÔÚÈÎÎñ³ÖÓĞµÄ»¥³âËøÁ´±íÖĞ²éÕÒ²¢ÒÆ³ı´ËËø£¬ÒÔ·ÀÖ¹Ğü¿ÕÖ¸Õë
-            // ÒªÉ¾³ıµÄËøÊÇÁ´±íÍ·
+            // åœ¨ä»»åŠ¡æŒæœ‰çš„äº’æ–¥é”é“¾è¡¨ä¸­æŸ¥æ‰¾å¹¶ç§»é™¤æ­¤é”ï¼Œä»¥é˜²æ­¢æ‚¬ç©ºæŒ‡é’ˆ
+            // è¦åˆ é™¤çš„é”æ˜¯é“¾è¡¨å¤´
             if (owner_tcb->held_mutexes_head == mutex) {
                 owner_tcb->held_mutexes_head = mutex->next_held_mutex;
             }
-            // ÒªÉ¾³ıµÄËøÔÚÁ´±íÖĞ¼ä»òÄ©Î²
+            // è¦åˆ é™¤çš„é”åœ¨é“¾è¡¨ä¸­é—´æˆ–æœ«å°¾
             else {
                 Mutex_t *p_iterator = owner_tcb->held_mutexes_head;
-                // ±éÀúÁ´±íÕÒµ½ÒªÉ¾³ıËøµÄÇ°Ò»¸ö½Úµã
+                // éå†é“¾è¡¨æ‰¾åˆ°è¦åˆ é™¤é”çš„å‰ä¸€ä¸ªèŠ‚ç‚¹
                 while (p_iterator != NULL && p_iterator->next_held_mutex != mutex) {
                     p_iterator = p_iterator->next_held_mutex;
                 }
-                // Èç¹ûÕÒµ½ÁËÇ°Ò»¸ö½Úµã£¬¾ÍÌø¹ıÒªÉ¾³ıµÄËø
+                // å¦‚æœæ‰¾åˆ°äº†å‰ä¸€ä¸ªèŠ‚ç‚¹ï¼Œå°±è·³è¿‡è¦åˆ é™¤çš„é”
                 if (p_iterator != NULL) {
                     p_iterator->next_held_mutex = mutex->next_held_mutex;
                 }
             }
         }
 
-        // ÊÍ·Å»¥³âËø½á¹¹±¾ÉíÕ¼ÓÃµÄÄÚ´æ
-        // ´ËÊ±£¬ÒÑ¾­Ã»ÓĞÈÎºÎÈÎÎñµÄTCB»òÊÂ¼şÁĞ±íÒıÓÃÕâ¸ö»¥³âËøÁË£¬¿ÉÒÔ°²È«ÊÍ·Å
+        // é‡Šæ”¾äº’æ–¥é”ç»“æ„æœ¬èº«å ç”¨çš„å†…å­˜
+        // æ­¤æ—¶ï¼Œå·²ç»æ²¡æœ‰ä»»ä½•ä»»åŠ¡çš„TCBæˆ–äº‹ä»¶åˆ—è¡¨å¼•ç”¨è¿™ä¸ªäº’æ–¥é”äº†ï¼Œå¯ä»¥å®‰å…¨é‡Šæ”¾
         MyRTOS_Free(mutex);
     }
     MyRTOS_Port_ExitCritical();
-    // ±»»½ĞÑµÄÈÎÎñ»áÔÚÏÂÒ»´Îµ÷¶Èµã£¨ÈçÊ±ÖÓµÎ´ğ£©ÔËĞĞÊ±»ñµÃCPU¡£
+    // è¢«å”¤é†’çš„ä»»åŠ¡ä¼šåœ¨ä¸‹ä¸€æ¬¡è°ƒåº¦ç‚¹ï¼ˆå¦‚æ—¶é’Ÿæ»´ç­”ï¼‰è¿è¡Œæ—¶è·å¾—CPUã€‚
 }
 
 /**
- * @brief ³¢ÊÔ»ñÈ¡Ò»¸ö»¥³âËø£¬´ø³¬Ê±
- * @param mutex Ä¿±ê»¥³âËø¾ä±ú
- * @param block_ticks Èç¹ûËøÒÑ±»Õ¼ÓÃ£¬ÈÎÎñ½«×èÈûµÈ´ıµÄ×î´óµÎ´ğÊı¡£0±íÊ¾²»µÈ´ı£¬MYRTOS_MAX_DELAY±íÊ¾ÓÀ¾ÃµÈ´ı¡£
- * @return ³É¹¦»ñÈ¡·µ»Ø1£¬Ê§°Ü»ò³¬Ê±·µ»Ø0
+ * @brief å°è¯•è·å–ä¸€ä¸ªäº’æ–¥é”ï¼Œå¸¦è¶…æ—¶
+ * @param mutex ç›®æ ‡äº’æ–¥é”å¥æŸ„
+ * @param block_ticks å¦‚æœé”å·²è¢«å ç”¨ï¼Œä»»åŠ¡å°†é˜»å¡ç­‰å¾…çš„æœ€å¤§æ»´ç­”æ•°ã€‚0è¡¨ç¤ºä¸ç­‰å¾…ï¼ŒMYRTOS_MAX_DELAYè¡¨ç¤ºæ°¸ä¹…ç­‰å¾…ã€‚
+ * @return æˆåŠŸè·å–è¿”å›1ï¼Œå¤±è´¥æˆ–è¶…æ—¶è¿”å›0
  */
 int Mutex_Lock_Timeout(MutexHandle_t mutex, uint32_t block_ticks) {
     while (1) {
         MyRTOS_Port_EnterCritical();
-        // Çé¿ö1: ËøÎ´±»Õ¼ÓÃ£¬³É¹¦»ñÈ¡
+        // æƒ…å†µ1: é”æœªè¢«å ç”¨ï¼ŒæˆåŠŸè·å–
         if (!mutex->locked) {
             mutex->locked = 1;
             mutex->owner_tcb = currentTask;
-            // ½«´Ë»¥³âËø¼ÓÈëµ±Ç°ÈÎÎñ³ÖÓĞµÄ»¥³âËøÁ´±íÖĞ
+            // å°†æ­¤äº’æ–¥é”åŠ å…¥å½“å‰ä»»åŠ¡æŒæœ‰çš„äº’æ–¥é”é“¾è¡¨ä¸­
             mutex->next_held_mutex = currentTask->held_mutexes_head;
             currentTask->held_mutexes_head = mutex;
             MyRTOS_Port_ExitCritical();
             return 1;
         }
-        // Çé¿ö2: ËøÒÑ±»Õ¼ÓÃ£¬ÇÒ²»ÔÊĞí×èÈû
+        // æƒ…å†µ2: é”å·²è¢«å ç”¨ï¼Œä¸”ä¸å…è®¸é˜»å¡
         if (block_ticks == 0) {
             MyRTOS_Port_ExitCritical();
             return 0;
         }
-        // Çé¿ö3: ËøÒÑ±»Õ¼ÓÃ£¬ĞèÒª×èÈû
-        // ÊµÏÖÓÅÏÈ¼¶¼Ì³Ğ£ºÈç¹ûµ±Ç°ÈÎÎñÓÅÏÈ¼¶¸ßÓÚËøµÄ³ÖÓĞÕß£¬ÔòÌáÉı³ÖÓĞÕßµÄÓÅÏÈ¼¶
+        // æƒ…å†µ3: é”å·²è¢«å ç”¨ï¼Œéœ€è¦é˜»å¡
+        // å®ç°ä¼˜å…ˆçº§ç»§æ‰¿ï¼šå¦‚æœå½“å‰ä»»åŠ¡ä¼˜å…ˆçº§é«˜äºé”çš„æŒæœ‰è€…ï¼Œåˆ™æå‡æŒæœ‰è€…çš„ä¼˜å…ˆçº§
         TaskHandle_t owner_tcb = mutex->owner_tcb;
         if (owner_tcb != NULL && currentTask->priority > owner_tcb->priority) {
             task_set_priority(owner_tcb, currentTask->priority);
         }
-        // ½«µ±Ç°ÈÎÎñ´Ó¾ÍĞ÷ÁĞ±íÒÆ³ı£¬²¢¼ÓÈë»¥³âËøµÄµÈ´ıÁĞ±í
+        // å°†å½“å‰ä»»åŠ¡ä»å°±ç»ªåˆ—è¡¨ç§»é™¤ï¼Œå¹¶åŠ å…¥äº’æ–¥é”çš„ç­‰å¾…åˆ—è¡¨
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         currentTask->state = TASK_STATE_BLOCKED;
         eventListInsert(&mutex->eventList, currentTask);
@@ -1260,11 +1260,11 @@ int Mutex_Lock_Timeout(MutexHandle_t mutex, uint32_t block_ticks) {
             addTaskToSortedDelayList(currentTask);
         }
         MyRTOS_Port_ExitCritical();
-        MyRTOS_Port_Yield(); // ´¥·¢µ÷¶È£¬½øÈë×èÈû
-        // ÈÎÎñ±»»½ĞÑºó
+        MyRTOS_Port_Yield(); // è§¦å‘è°ƒåº¦ï¼Œè¿›å…¥é˜»å¡
+        // ä»»åŠ¡è¢«å”¤é†’å
         if (mutex->owner_tcb == currentTask)
-            return 1; // ¼ì²éÊÇ·ñÒÑ³ÉÎªĞÂµÄ³ÖÓĞÕß
-        // Èç¹ûÊÇ³¬Ê±»½ĞÑ
+            return 1; // æ£€æŸ¥æ˜¯å¦å·²æˆä¸ºæ–°çš„æŒæœ‰è€…
+        // å¦‚æœæ˜¯è¶…æ—¶å”¤é†’
         if (currentTask->pEventList != NULL) {
             MyRTOS_Port_EnterCritical();
             eventListRemove(currentTask);
@@ -1275,24 +1275,24 @@ int Mutex_Lock_Timeout(MutexHandle_t mutex, uint32_t block_ticks) {
 }
 
 /**
- * @brief »ñÈ¡Ò»¸ö»¥³âËø£¨ÓÀ¾ÃµÈ´ı£©
- * @param mutex Ä¿±ê»¥³âËø¾ä±ú
+ * @brief è·å–ä¸€ä¸ªäº’æ–¥é”ï¼ˆæ°¸ä¹…ç­‰å¾…ï¼‰
+ * @param mutex ç›®æ ‡äº’æ–¥é”å¥æŸ„
  */
 void Mutex_Lock(MutexHandle_t mutex) { Mutex_Lock_Timeout(mutex, MYRTOS_MAX_DELAY); }
 
 /**
- * @brief ÊÍ·ÅÒ»¸ö»¥³âËø
- * @param mutex Ä¿±ê»¥³âËø¾ä±ú
+ * @brief é‡Šæ”¾ä¸€ä¸ªäº’æ–¥é”
+ * @param mutex ç›®æ ‡äº’æ–¥é”å¥æŸ„
  */
 void Mutex_Unlock(MutexHandle_t mutex) {
     int trigger_yield = 0;
     MyRTOS_Port_EnterCritical();
-    // ¼ì²éÊÇ·ñÊÇËøµÄ³ÖÓĞÕß
+    // æ£€æŸ¥æ˜¯å¦æ˜¯é”çš„æŒæœ‰è€…
     if (!mutex->locked || mutex->owner_tcb != currentTask) {
         MyRTOS_Port_ExitCritical();
         return;
     }
-    // ´Óµ±Ç°ÈÎÎñ³ÖÓĞµÄ»¥³âËøÁ´±íÖĞÒÆ³ı´ËËø
+    // ä»å½“å‰ä»»åŠ¡æŒæœ‰çš„äº’æ–¥é”é“¾è¡¨ä¸­ç§»é™¤æ­¤é”
     if (currentTask->held_mutexes_head == mutex) {
         currentTask->held_mutexes_head = mutex->next_held_mutex;
     } else {
@@ -1303,7 +1303,7 @@ void Mutex_Unlock(MutexHandle_t mutex) {
             p_iterator->next_held_mutex = mutex->next_held_mutex;
     }
     mutex->next_held_mutex = NULL;
-    // ÓÅÏÈ¼¶»Ö¸´£º½«ÈÎÎñÓÅÏÈ¼¶»Ö¸´µ½Æä»ù´¡ÓÅÏÈ¼¶£¬»òÆäÈÔÈ»³ÖÓĞµÄÆäËû»¥³âËøËùÒªÇóµÄ×î¸ßÓÅÏÈ¼¶
+    // ä¼˜å…ˆçº§æ¢å¤ï¼šå°†ä»»åŠ¡ä¼˜å…ˆçº§æ¢å¤åˆ°å…¶åŸºç¡€ä¼˜å…ˆçº§ï¼Œæˆ–å…¶ä»ç„¶æŒæœ‰çš„å…¶ä»–äº’æ–¥é”æ‰€è¦æ±‚çš„æœ€é«˜ä¼˜å…ˆçº§
     uint8_t new_priority = currentTask->basePriority;
     Mutex_t *p_held_mutex = currentTask->held_mutexes_head;
     while (p_held_mutex != NULL) {
@@ -1313,14 +1313,14 @@ void Mutex_Unlock(MutexHandle_t mutex) {
         p_held_mutex = p_held_mutex->next_held_mutex;
     }
     task_set_priority(currentTask, new_priority);
-    // ±ê¼ÇËøÎªÎ´Ëø¶¨
+    // æ ‡è®°é”ä¸ºæœªé”å®š
     mutex->locked = 0;
     mutex->owner_tcb = NULL;
-    // Èç¹ûÓĞÈÎÎñÔÚµÈ´ı´ËËø£¬Ôò»½ĞÑÓÅÏÈ¼¶×î¸ßµÄÄÇ¸ö
+    // å¦‚æœæœ‰ä»»åŠ¡åœ¨ç­‰å¾…æ­¤é”ï¼Œåˆ™å”¤é†’ä¼˜å…ˆçº§æœ€é«˜çš„é‚£ä¸ª
     if (mutex->eventList.head != NULL) {
         Task_t *taskToWake = mutex->eventList.head;
         eventListRemove(taskToWake);
-        // ½«ËøµÄËùÓĞÈ¨Ö±½Ó×ªÒÆ¸ø±»»½ĞÑµÄÈÎÎñ
+        // å°†é”çš„æ‰€æœ‰æƒç›´æ¥è½¬ç§»ç»™è¢«å”¤é†’çš„ä»»åŠ¡
         mutex->locked = 1;
         mutex->owner_tcb = taskToWake;
         mutex->next_held_mutex = taskToWake->held_mutexes_head;
@@ -1335,20 +1335,20 @@ void Mutex_Unlock(MutexHandle_t mutex) {
 }
 
 /**
- * @brief µİ¹éµØ»ñÈ¡Ò»¸ö»¥³âËø
- * @note  Èç¹ûµ±Ç°ÈÎÎñÒÑÊÇ¸ÃËøµÄ³ÖÓĞÕß£¬ÔòÔö¼Óµİ¹é¼ÆÊı£»·ñÔò£¬ĞĞÎªÓë `Mutex_Lock` ÏàÍ¬¡£
- * @param mutex Ä¿±ê»¥³âËø¾ä±ú
+ * @brief é€’å½’åœ°è·å–ä¸€ä¸ªäº’æ–¥é”
+ * @note  å¦‚æœå½“å‰ä»»åŠ¡å·²æ˜¯è¯¥é”çš„æŒæœ‰è€…ï¼Œåˆ™å¢åŠ é€’å½’è®¡æ•°ï¼›å¦åˆ™ï¼Œè¡Œä¸ºä¸ `Mutex_Lock` ç›¸åŒã€‚
+ * @param mutex ç›®æ ‡äº’æ–¥é”å¥æŸ„
  */
 void Mutex_Lock_Recursive(MutexHandle_t mutex) {
     MyRTOS_Port_EnterCritical();
-    // Èç¹ûÒÑ¾­³ÖÓĞ¸ÃËø£¬Ôö¼Óµİ¹é¼ÆÊı
+    // å¦‚æœå·²ç»æŒæœ‰è¯¥é”ï¼Œå¢åŠ é€’å½’è®¡æ•°
     if (mutex->locked && mutex->owner_tcb == currentTask) {
         mutex->recursion_count++;
         MyRTOS_Port_ExitCritical();
         return;
     }
     MyRTOS_Port_ExitCritical();
-    // Ê×´Î»ñÈ¡¸ÃËø
+    // é¦–æ¬¡è·å–è¯¥é”
     Mutex_Lock(mutex);
     MyRTOS_Port_EnterCritical();
     if (mutex->owner_tcb == currentTask)
@@ -1357,16 +1357,16 @@ void Mutex_Lock_Recursive(MutexHandle_t mutex) {
 }
 
 /**
- * @brief µİ¹éµØÊÍ·ÅÒ»¸ö»¥³âËø
- * @note  Èç¹ûµİ¹é¼ÆÊı´óÓÚ1£¬Ôò½öµİ¼õ¼ÆÊı£»Èç¹û¼ÆÊıÎª1£¬ÔòÍêÈ«ÊÍ·Å¸ÃËø¡£
- * @param mutex Ä¿±ê»¥³âËø¾ä±ú
+ * @brief é€’å½’åœ°é‡Šæ”¾ä¸€ä¸ªäº’æ–¥é”
+ * @note  å¦‚æœé€’å½’è®¡æ•°å¤§äº1ï¼Œåˆ™ä»…é€’å‡è®¡æ•°ï¼›å¦‚æœè®¡æ•°ä¸º1ï¼Œåˆ™å®Œå…¨é‡Šæ”¾è¯¥é”ã€‚
+ * @param mutex ç›®æ ‡äº’æ–¥é”å¥æŸ„
  */
 void Mutex_Unlock_Recursive(MutexHandle_t mutex) {
     MyRTOS_Port_EnterCritical();
     if (mutex->locked && mutex->owner_tcb == currentTask) {
         mutex->recursion_count--;
         if (mutex->recursion_count == 0) {
-            // µ±µİ¹é¼ÆÊı¹éÁãÊ±£¬²ÅÕæÕıÊÍ·ÅËø
+            // å½“é€’å½’è®¡æ•°å½’é›¶æ—¶ï¼Œæ‰çœŸæ­£é‡Šæ”¾é”
             MyRTOS_Port_ExitCritical();
             Mutex_Unlock(mutex);
         } else {
@@ -1378,10 +1378,10 @@ void Mutex_Unlock_Recursive(MutexHandle_t mutex) {
 }
 
 /**
- * @brief ´´½¨Ò»¸ö¼ÆÊıĞÅºÅÁ¿
- * @param maxCount ĞÅºÅÁ¿µÄ×î´ó¼ÆÊıÖµ
- * @param initialCount ĞÅºÅÁ¿µÄ³õÊ¼¼ÆÊıÖµ
- * @return ³É¹¦Ôò·µ»ØĞÅºÅÁ¿¾ä±ú£¬Ê§°ÜÔò·µ»ØNULL
+ * @brief åˆ›å»ºä¸€ä¸ªè®¡æ•°ä¿¡å·é‡
+ * @param maxCount ä¿¡å·é‡çš„æœ€å¤§è®¡æ•°å€¼
+ * @param initialCount ä¿¡å·é‡çš„åˆå§‹è®¡æ•°å€¼
+ * @return æˆåŠŸåˆ™è¿”å›ä¿¡å·é‡å¥æŸ„ï¼Œå¤±è´¥åˆ™è¿”å›NULL
  */
 SemaphoreHandle_t Semaphore_Create(uint32_t maxCount, uint32_t initialCount) {
     if (maxCount == 0 || initialCount > maxCount)
@@ -1396,14 +1396,14 @@ SemaphoreHandle_t Semaphore_Create(uint32_t maxCount, uint32_t initialCount) {
 }
 
 /**
- * @brief É¾³ıÒ»¸öĞÅºÅÁ¿
- * @param semaphore ÒªÉ¾³ıµÄĞÅºÅÁ¿¾ä±ú
+ * @brief åˆ é™¤ä¸€ä¸ªä¿¡å·é‡
+ * @param semaphore è¦åˆ é™¤çš„ä¿¡å·é‡å¥æŸ„
  */
 void Semaphore_Delete(SemaphoreHandle_t semaphore) {
     if (semaphore == NULL)
         return;
     MyRTOS_Port_EnterCritical();
-    // »½ĞÑËùÓĞµÈ´ı¸ÃĞÅºÅÁ¿µÄÈÎÎñ
+    // å”¤é†’æ‰€æœ‰ç­‰å¾…è¯¥ä¿¡å·é‡çš„ä»»åŠ¡
     while (semaphore->eventList.head != NULL) {
         Task_t *taskToWake = semaphore->eventList.head;
         eventListRemove(taskToWake);
@@ -1414,28 +1414,28 @@ void Semaphore_Delete(SemaphoreHandle_t semaphore) {
 }
 
 /**
- * @brief »ñÈ¡£¨P²Ù×÷£©Ò»¸öĞÅºÅÁ¿
- * @param semaphore Ä¿±êĞÅºÅÁ¿¾ä±ú
- * @param block_ticks Èç¹ûĞÅºÅÁ¿¼ÆÊıÎª0£¬ÈÎÎñ½«×èÈûµÈ´ıµÄ×î´óµÎ´ğÊı¡£0±íÊ¾²»µÈ´ı£¬MYRTOS_MAX_DELAY±íÊ¾ÓÀ¾ÃµÈ´ı¡£
- * @return ³É¹¦»ñÈ¡·µ»Ø1£¬Ê§°Ü»ò³¬Ê±·µ»Ø0
+ * @brief è·å–ï¼ˆPæ“ä½œï¼‰ä¸€ä¸ªä¿¡å·é‡
+ * @param semaphore ç›®æ ‡ä¿¡å·é‡å¥æŸ„
+ * @param block_ticks å¦‚æœä¿¡å·é‡è®¡æ•°ä¸º0ï¼Œä»»åŠ¡å°†é˜»å¡ç­‰å¾…çš„æœ€å¤§æ»´ç­”æ•°ã€‚0è¡¨ç¤ºä¸ç­‰å¾…ï¼ŒMYRTOS_MAX_DELAYè¡¨ç¤ºæ°¸ä¹…ç­‰å¾…ã€‚
+ * @return æˆåŠŸè·å–è¿”å›1ï¼Œå¤±è´¥æˆ–è¶…æ—¶è¿”å›0
  */
 int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks) {
     if (semaphore == NULL)
         return 0;
     while (1) {
         MyRTOS_Port_EnterCritical();
-        // Çé¿ö1: ĞÅºÅÁ¿¼ÆÊı´óÓÚ0£¬³É¹¦»ñÈ¡
+        // æƒ…å†µ1: ä¿¡å·é‡è®¡æ•°å¤§äº0ï¼ŒæˆåŠŸè·å–
         if (semaphore->count > 0) {
             semaphore->count--;
             MyRTOS_Port_ExitCritical();
             return 1;
         }
-        // Çé¿ö2: ĞÅºÅÁ¿Îª0£¬ÇÒ²»×èÈû
+        // æƒ…å†µ2: ä¿¡å·é‡ä¸º0ï¼Œä¸”ä¸é˜»å¡
         if (block_ticks == 0) {
             MyRTOS_Port_ExitCritical();
             return 0;
         }
-        // Çé¿ö3: ĞÅºÅÁ¿Îª0£¬ĞèÒª×èÈû
+        // æƒ…å†µ3: ä¿¡å·é‡ä¸º0ï¼Œéœ€è¦é˜»å¡
         removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
         currentTask->state = TASK_STATE_BLOCKED;
         eventListInsert(&semaphore->eventList, currentTask);
@@ -1445,11 +1445,11 @@ int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks) {
             addTaskToSortedDelayList(currentTask);
         }
         MyRTOS_Port_ExitCritical();
-        MyRTOS_Port_Yield(); // ´¥·¢µ÷¶È£¬½øÈë×èÈû
-        // ±»»½ĞÑºó£¬¼ì²éÊÇ·ñÊÇÕı³£»½ĞÑ
+        MyRTOS_Port_Yield(); // è§¦å‘è°ƒåº¦ï¼Œè¿›å…¥é˜»å¡
+        // è¢«å”¤é†’åï¼Œæ£€æŸ¥æ˜¯å¦æ˜¯æ­£å¸¸å”¤é†’
         if (currentTask->pEventList == NULL)
             return 1;
-        // Èç¹ûÊÇ³¬Ê±»½ĞÑ
+        // å¦‚æœæ˜¯è¶…æ—¶å”¤é†’
         MyRTOS_Port_EnterCritical();
         eventListRemove(currentTask);
         MyRTOS_Port_ExitCritical();
@@ -1458,16 +1458,16 @@ int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks) {
 }
 
 /**
- * @brief ÊÍ·Å£¨V²Ù×÷£©Ò»¸öĞÅºÅÁ¿
- * @param semaphore Ä¿±êĞÅºÅÁ¿¾ä±ú
- * @return ³É¹¦ÊÍ·Å·µ»Ø1£¬Ê§°Ü£¨ÀıÈçĞÅºÅÁ¿ÒÑ´ï×î´óÖµ£©·µ»Ø0
+ * @brief é‡Šæ”¾ï¼ˆVæ“ä½œï¼‰ä¸€ä¸ªä¿¡å·é‡
+ * @param semaphore ç›®æ ‡ä¿¡å·é‡å¥æŸ„
+ * @return æˆåŠŸé‡Šæ”¾è¿”å›1ï¼Œå¤±è´¥ï¼ˆä¾‹å¦‚ä¿¡å·é‡å·²è¾¾æœ€å¤§å€¼ï¼‰è¿”å›0
  */
 int Semaphore_Give(SemaphoreHandle_t semaphore) {
     if (semaphore == NULL)
         return 0;
     int trigger_yield = 0;
     MyRTOS_Port_EnterCritical();
-    // Èç¹ûÓĞÈÎÎñÔÚµÈ´ıĞÅºÅÁ¿£¬ÔòÖ±½Ó»½ĞÑÒ»¸ö£¬¶ø²»Ôö¼Ó¼ÆÊıÖµ
+    // å¦‚æœæœ‰ä»»åŠ¡åœ¨ç­‰å¾…ä¿¡å·é‡ï¼Œåˆ™ç›´æ¥å”¤é†’ä¸€ä¸ªï¼Œè€Œä¸å¢åŠ è®¡æ•°å€¼
     if (semaphore->eventList.head != NULL) {
         Task_t *taskToWake = semaphore->eventList.head;
         eventListRemove(taskToWake);
@@ -1479,11 +1479,11 @@ int Semaphore_Give(SemaphoreHandle_t semaphore) {
         if (taskToWake->priority > currentTask->priority)
             trigger_yield = 1;
     } else {
-        // Èç¹ûÃ»ÓĞÈÎÎñµÈ´ı£¬ÔòÔö¼Ó¼ÆÊıÖµ
+        // å¦‚æœæ²¡æœ‰ä»»åŠ¡ç­‰å¾…ï¼Œåˆ™å¢åŠ è®¡æ•°å€¼
         if (semaphore->count < semaphore->maxCount) {
             semaphore->count++;
         } else {
-            // ÒÑ´ï×î´óÖµ£¬ÊÍ·ÅÊ§°Ü
+            // å·²è¾¾æœ€å¤§å€¼ï¼Œé‡Šæ”¾å¤±è´¥
             MyRTOS_Port_ExitCritical();
             return 0;
         }
@@ -1495,10 +1495,10 @@ int Semaphore_Give(SemaphoreHandle_t semaphore) {
 }
 
 /**
- * @brief ´ÓÖĞ¶Ï·şÎñ³ÌĞò(ISR)ÖĞÊÍ·ÅÒ»¸öĞÅºÅÁ¿
- * @param semaphore Ä¿±êĞÅºÅÁ¿¾ä±ú
- * @param pxHigherPriorityTaskWoken Ö¸Õë£¬ÓÃÓÚ·µ»ØÊÇ·ñÓĞ¸ü¸ßÓÅÏÈ¼¶µÄÈÎÎñ±»»½ĞÑ
- * @return ³É¹¦·µ»Ø1£¬Ê§°Ü·µ»Ø0
+ * @brief ä»ä¸­æ–­æœåŠ¡ç¨‹åº(ISR)ä¸­é‡Šæ”¾ä¸€ä¸ªä¿¡å·é‡
+ * @param semaphore ç›®æ ‡ä¿¡å·é‡å¥æŸ„
+ * @param pxHigherPriorityTaskWoken æŒ‡é’ˆï¼Œç”¨äºè¿”å›æ˜¯å¦æœ‰æ›´é«˜ä¼˜å…ˆçº§çš„ä»»åŠ¡è¢«å”¤é†’
+ * @return æˆåŠŸè¿”å›1ï¼Œå¤±è´¥è¿”å›0
  */
 int Semaphore_GiveFromISR(SemaphoreHandle_t semaphore, int *pxHigherPriorityTaskWoken) {
     if (semaphore == NULL || pxHigherPriorityTaskWoken == NULL)
@@ -1506,7 +1506,7 @@ int Semaphore_GiveFromISR(SemaphoreHandle_t semaphore, int *pxHigherPriorityTask
     *pxHigherPriorityTaskWoken = 0;
     int result = 0;
     MyRTOS_Port_EnterCritical();
-    // Âß¼­Óë Semaphore_Give ÀàËÆ
+    // é€»è¾‘ä¸ Semaphore_Give ç±»ä¼¼
     if (semaphore->eventList.head != NULL) {
         Task_t *taskToWake = semaphore->eventList.head;
         eventListRemove(taskToWake);
@@ -1530,35 +1530,35 @@ int Semaphore_GiveFromISR(SemaphoreHandle_t semaphore, int *pxHigherPriorityTask
 }
 
 /**
- * @brief ×¢²áÒ»¸öÄÚºËÀ©Õ¹»Øµ÷º¯Êı
- * @note  ÄÚºËÀ©Õ¹¿ÉÓÃÓÚµ÷ÊÔ¡¢¸ú×Ù»òÊµÏÖ×Ô¶¨Òå¹¦ÄÜ£¬Ëü»áÔÚÌØ¶¨ÄÚºËÊÂ¼ş·¢ÉúÊ±±»µ÷ÓÃ¡£
- * @param callback Òª×¢²áµÄ»Øµ÷º¯ÊıÖ¸Õë
- * @return ³É¹¦·µ»Ø0£¬Ê§°Ü·µ»Ø-1
+ * @brief æ³¨å†Œä¸€ä¸ªå†…æ ¸æ‰©å±•å›è°ƒå‡½æ•°
+ * @note  å†…æ ¸æ‰©å±•å¯ç”¨äºè°ƒè¯•ã€è·Ÿè¸ªæˆ–å®ç°è‡ªå®šä¹‰åŠŸèƒ½ï¼Œå®ƒä¼šåœ¨ç‰¹å®šå†…æ ¸äº‹ä»¶å‘ç”Ÿæ—¶è¢«è°ƒç”¨ã€‚
+ * @param callback è¦æ³¨å†Œçš„å›è°ƒå‡½æ•°æŒ‡é’ˆ
+ * @return æˆåŠŸè¿”å›0ï¼Œå¤±è´¥è¿”å›-1
  */
 int MyRTOS_RegisterExtension(KernelExtensionCallback_t callback) {
     MyRTOS_Port_EnterCritical();
-    // ¼ì²éÀ©Õ¹²ÛÊÇ·ñÒÑÂú»ò»Øµ÷º¯ÊıÊÇ·ñÎª¿Õ
+    // æ£€æŸ¥æ‰©å±•æ§½æ˜¯å¦å·²æ»¡æˆ–å›è°ƒå‡½æ•°æ˜¯å¦ä¸ºç©º
     if (g_extension_count >= MAX_KERNEL_EXTENSIONS || callback == NULL) {
         MyRTOS_Port_ExitCritical();
         return -1;
     }
-    // ±ÜÃâÖØ¸´×¢²á
+    // é¿å…é‡å¤æ³¨å†Œ
     for (uint8_t i = 0; i < g_extension_count; ++i) {
         if (g_extensions[i] == callback) {
             MyRTOS_Port_ExitCritical();
             return 0;
         }
     }
-    // Ìí¼ÓĞÂµÄ»Øµ÷
+    // æ·»åŠ æ–°çš„å›è°ƒ
     g_extensions[g_extension_count++] = callback;
     MyRTOS_Port_ExitCritical();
     return 0;
 }
 
 /**
- * @brief ×¢ÏúÒ»¸öÄÚºËÀ©Õ¹»Øµ÷º¯Êı
- * @param callback Òª×¢ÏúµÄ»Øµ÷º¯ÊıÖ¸Õë
- * @return ³É¹¦·µ»Ø0£¬Ê§°Ü£¨Î´ÕÒµ½¸Ã»Øµ÷£©·µ»Ø-1
+ * @brief æ³¨é”€ä¸€ä¸ªå†…æ ¸æ‰©å±•å›è°ƒå‡½æ•°
+ * @param callback è¦æ³¨é”€çš„å›è°ƒå‡½æ•°æŒ‡é’ˆ
+ * @return æˆåŠŸè¿”å›0ï¼Œå¤±è´¥ï¼ˆæœªæ‰¾åˆ°è¯¥å›è°ƒï¼‰è¿”å›-1
  */
 int MyRTOS_UnregisterExtension(KernelExtensionCallback_t callback) {
     int found = 0;
@@ -1569,7 +1569,7 @@ int MyRTOS_UnregisterExtension(KernelExtensionCallback_t callback) {
     }
     for (uint8_t i = 0; i < g_extension_count; ++i) {
         if (g_extensions[i] == callback) {
-            // ½«×îºóÒ»¸öÔªËØÒÆµ½µ±Ç°Î»ÖÃ£¬È»ºóËõ¼õ¼ÆÊı
+            // å°†æœ€åä¸€ä¸ªå…ƒç´ ç§»åˆ°å½“å‰ä½ç½®ï¼Œç„¶åç¼©å‡è®¡æ•°
             g_extensions[i] = g_extensions[g_extension_count - 1];
             g_extensions[g_extension_count - 1] = NULL;
             g_extension_count--;

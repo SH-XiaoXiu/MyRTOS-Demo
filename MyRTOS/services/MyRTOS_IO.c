@@ -1,6 +1,6 @@
 /**
  * @file  MyRTOS_IO.c
- * @brief MyRTOS IOÁ÷·şÎñ - ÊµÏÖ
+ * @brief MyRTOS IOæµæœåŠ¡ - å®ç°
  */
 #include "MyRTOS_IO.h"
 
@@ -12,9 +12,9 @@
 #include "MyRTOS_Config.h"
 #include "MyRTOS_Extension.h"
 
-/*============================== ÄÚ²¿Êı¾İ½á¹¹ ==============================*/
+/*============================== å†…éƒ¨æ•°æ®ç»“æ„ ==============================*/
 
-// Ã¿¸öÈÎÎñµÄ±ê×¼IOÁ÷Ö¸Õë
+// æ¯ä¸ªä»»åŠ¡çš„æ ‡å‡†IOæµæŒ‡é’ˆ
 typedef struct {
     TaskHandle_t task_handle;
     StreamHandle_t std_in;
@@ -22,21 +22,21 @@ typedef struct {
     StreamHandle_t std_err;
 } TaskStdIO_t;
 
-// PipeµÄË½ÓĞÊı¾İ½á¹¹
+// Pipeçš„ç§æœ‰æ•°æ®ç»“æ„
 typedef struct {
-    QueueHandle_t queue; // Pipeµ×²ãÊ¹ÓÃÒ»¸ö×Ö½Ú¶ÓÁĞÊµÏÖ
+    QueueHandle_t queue; // Pipeåº•å±‚ä½¿ç”¨ä¸€ä¸ªå­—èŠ‚é˜Ÿåˆ—å®ç°
 } PipePrivateData_t;
 
-/*============================== Ä£¿éÈ«¾Ö±äÁ¿ ==============================*/
+/*============================== æ¨¡å—å…¨å±€å˜é‡ ==============================*/
 
-// ÓÃÓÚ´æ´¢ËùÓĞÈÎÎñStdIOĞÅÏ¢µÄÊı×é£¬´óĞ¡ÓÉÄÚºËÅäÖÃ¾ö¶¨
+// ç”¨äºå­˜å‚¨æ‰€æœ‰ä»»åŠ¡StdIOä¿¡æ¯çš„æ•°ç»„ï¼Œå¤§å°ç”±å†…æ ¸é…ç½®å†³å®š
 static TaskStdIO_t g_task_stdio_map[MYRTOS_MAX_CONCURRENT_TASKS];
-// Ä¬ÈÏµÄÏµÍ³±ê×¼Á÷ (±ÈÈç¿ÉÒÔÖ¸ÏòÒ»¸öUARTÁ÷)
+// é»˜è®¤çš„ç³»ç»Ÿæ ‡å‡†æµ (æ¯”å¦‚å¯ä»¥æŒ‡å‘ä¸€ä¸ªUARTæµ)
 StreamHandle_t g_system_stdin = NULL;
 StreamHandle_t g_system_stdout = NULL;
 StreamHandle_t g_system_stderr = NULL;
 
-/*============================== Ë½ÓĞº¯ÊıÔ­ĞÍ ==============================*/
+/*============================== ç§æœ‰å‡½æ•°åŸå‹ ==============================*/
 
 static void stdio_kernel_event_handler(const KernelEventData_t *pEventData);
 
@@ -46,19 +46,19 @@ static size_t pipe_read(StreamHandle_t stream, void *buffer, size_t bytes_to_rea
 
 static size_t pipe_write(StreamHandle_t stream, const void *buffer, size_t bytes_to_write, uint32_t block_ticks);
 
-/*============================== ÄÚºËÊÂ¼ş´¦ÀíÆ÷ ==============================*/
+/*============================== å†…æ ¸äº‹ä»¶å¤„ç†å™¨ ==============================*/
 
-// StdIO·şÎñµÄÄÚºËÊÂ¼ş´¦ÀíÆ÷£¬¼àÌıÈÎÎñ´´½¨ºÍÉ¾³ıÊÂ¼ş£¬ÒÔ¹ÜÀíÆäStdIOÁ÷
+// StdIOæœåŠ¡çš„å†…æ ¸äº‹ä»¶å¤„ç†å™¨ï¼Œç›‘å¬ä»»åŠ¡åˆ›å»ºå’Œåˆ é™¤äº‹ä»¶ï¼Œä»¥ç®¡ç†å…¶StdIOæµ
 static void stdio_kernel_event_handler(const KernelEventData_t *pEventData) {
     switch (pEventData->eventType) {
         case KERNEL_EVENT_TASK_CREATE: {
-            // ĞÂÈÎÎñ´´½¨Ê±£¬ÎªÆä·ÖÅäÒ»¸öStdIO²ÛÎ»
-            TaskStdIO_t *new_stdio = find_task_stdio(NULL); // ÕÒÒ»¸ö¿Õ²ÛÎ»
+            // æ–°ä»»åŠ¡åˆ›å»ºæ—¶ï¼Œä¸ºå…¶åˆ†é…ä¸€ä¸ªStdIOæ§½ä½
+            TaskStdIO_t *new_stdio = find_task_stdio(NULL); // æ‰¾ä¸€ä¸ªç©ºæ§½ä½
             if (new_stdio) {
                 new_stdio->task_handle = pEventData->task;
                 TaskHandle_t parent_task = Task_GetCurrentTaskHandle();
                 if (parent_task) {
-                    // ×ÓÈÎÎñ¼Ì³Ğ¸¸ÈÎÎñµÄStdIOÁ÷£¬ÊµÏÖÀàËÆshellµÄ¹ÜµÀ/ÖØ¶¨Ïò¹¦ÄÜ
+                    // å­ä»»åŠ¡ç»§æ‰¿çˆ¶ä»»åŠ¡çš„StdIOæµï¼Œå®ç°ç±»ä¼¼shellçš„ç®¡é“/é‡å®šå‘åŠŸèƒ½
                     TaskStdIO_t *parent_stdio = find_task_stdio(parent_task);
                     if (parent_stdio) {
                         new_stdio->std_in = parent_stdio->std_in;
@@ -66,7 +66,7 @@ static void stdio_kernel_event_handler(const KernelEventData_t *pEventData) {
                         new_stdio->std_err = parent_stdio->std_err;
                     }
                 } else {
-                    // ÈôÎŞ¸¸ÈÎÎñ£¨µ÷¶ÈÆ÷Æô¶¯Ç°´´½¨£©£¬Ôò¼Ì³ĞÏµÍ³Ä¬ÈÏÁ÷
+                    // è‹¥æ— çˆ¶ä»»åŠ¡ï¼ˆè°ƒåº¦å™¨å¯åŠ¨å‰åˆ›å»ºï¼‰ï¼Œåˆ™ç»§æ‰¿ç³»ç»Ÿé»˜è®¤æµ
                     new_stdio->std_in = g_system_stdin;
                     new_stdio->std_out = g_system_stdout;
                     new_stdio->std_err = g_system_stderr;
@@ -76,37 +76,37 @@ static void stdio_kernel_event_handler(const KernelEventData_t *pEventData) {
         }
 
         case KERNEL_EVENT_TASK_DELETE: {
-            // ÈÎÎñÉ¾³ıÊ±£¬ÊÍ·ÅÆäStdIO²ÛÎ»
+            // ä»»åŠ¡åˆ é™¤æ—¶ï¼Œé‡Šæ”¾å…¶StdIOæ§½ä½
             TaskStdIO_t *stdio_to_free = find_task_stdio(pEventData->task);
             if (stdio_to_free) {
-                // ÇåÀí²ÛÎ»£¬½«¾ä±úÖÃ¿ÕÒÔ±¸ºóÓÃ
+                // æ¸…ç†æ§½ä½ï¼Œå°†å¥æŸ„ç½®ç©ºä»¥å¤‡åç”¨
                 memset(stdio_to_free, 0, sizeof(TaskStdIO_t));
             }
             break;
         }
         default:
-            // ºöÂÔÆäËûÊÂ¼ş
+            // å¿½ç•¥å…¶ä»–äº‹ä»¶
             break;
     }
 }
 
-/*============================== ¸¨Öúº¯Êı ==============================*/
+/*============================== è¾…åŠ©å‡½æ•° ==============================*/
 
-// ²éÕÒ»ò·ÖÅäÒ»¸öÈÎÎñµÄStdIO²ÛÎ»
+// æŸ¥æ‰¾æˆ–åˆ†é…ä¸€ä¸ªä»»åŠ¡çš„StdIOæ§½ä½
 static TaskStdIO_t *find_task_stdio(TaskHandle_t task_h) {
     for (int i = 0; i < MYRTOS_MAX_CONCURRENT_TASKS; ++i) {
         if (g_task_stdio_map[i].task_handle == task_h) {
             return &g_task_stdio_map[i];
         }
     }
-    return NULL; // Î´ÕÒµ½
+    return NULL; // æœªæ‰¾åˆ°
 }
 
-/*============================== ¹«¹²APIÊµÏÖ ==============================*/
+/*============================== å…¬å…±APIå®ç° ==============================*/
 
 int StdIOService_Init(void) {
     memset(g_task_stdio_map, 0, sizeof(g_task_stdio_map));
-    // ÏòÄÚºË×¢²áÊÂ¼ş´¦ÀíÆ÷
+    // å‘å†…æ ¸æ³¨å†Œäº‹ä»¶å¤„ç†å™¨
     return MyRTOS_RegisterExtension(stdio_kernel_event_handler);
 }
 
@@ -155,10 +155,10 @@ void Task_SetStdErr(TaskHandle_t task_h, StreamHandle_t new_stderr) {
         stdio->std_err = new_stderr;
 }
 
-/*=========================== Á÷Ê½ I/O ²Ù×÷ API ÊµÏÖ ===========================*/
+/*=========================== æµå¼ I/O æ“ä½œ API å®ç° ===========================*/
 
 size_t Stream_Read(StreamHandle_t stream, void *buffer, size_t bytes_to_read, uint32_t block_ticks) {
-    // Í¨¹ıĞéº¯Êı±íµ÷ÓÃÊµ¼ÊµÄ¶Áº¯Êı
+    // é€šè¿‡è™šå‡½æ•°è¡¨è°ƒç”¨å®é™…çš„è¯»å‡½æ•°
     if (stream && stream->p_iface && stream->p_iface->read) {
         return stream->p_iface->read(stream, buffer, bytes_to_read, block_ticks);
     }
@@ -166,7 +166,7 @@ size_t Stream_Read(StreamHandle_t stream, void *buffer, size_t bytes_to_read, ui
 }
 
 size_t Stream_Write(StreamHandle_t stream, const void *buffer, size_t bytes_to_write, uint32_t block_ticks) {
-    // Í¨¹ıĞéº¯Êı±íµ÷ÓÃÊµ¼ÊµÄĞ´º¯Êı
+    // é€šè¿‡è™šå‡½æ•°è¡¨è°ƒç”¨å®é™…çš„å†™å‡½æ•°
     if (stream && stream->p_iface && stream->p_iface->write) {
         return stream->p_iface->write(stream, buffer, bytes_to_write, block_ticks);
     }
@@ -174,12 +174,12 @@ size_t Stream_Write(StreamHandle_t stream, const void *buffer, size_t bytes_to_w
 }
 
 int Stream_VPrintf(StreamHandle_t stream, const char *format, va_list args) {
-    // Ê¹ÓÃÅäÖÃÖĞ¶¨ÒåµÄ»º³åÇø´óĞ¡
+    // ä½¿ç”¨é…ç½®ä¸­å®šä¹‰çš„ç¼“å†²åŒºå¤§å°
     char buffer[MYRTOS_IO_PRINTF_BUFFER_SIZE];
-    // °²È«µØ¸ñÊ½»¯×Ö·û´®µ½±¾µØ»º³åÇø
+    // å®‰å…¨åœ°æ ¼å¼åŒ–å­—ç¬¦ä¸²åˆ°æœ¬åœ°ç¼“å†²åŒº
     int len = vsnprintf(buffer, sizeof(buffer), format, args);
     if (len > 0) {
-        // ½«¸ñÊ½»¯ºóµÄ×Ö·û´®Í¨¹ıÁ÷Ğ´³ö
+        // å°†æ ¼å¼åŒ–åçš„å­—ç¬¦ä¸²é€šè¿‡æµå†™å‡º
         Stream_Write(stream, buffer, len, MYRTOS_MAX_DELAY);
     }
     return len;
@@ -193,61 +193,61 @@ int Stream_Printf(StreamHandle_t stream, const char *format, ...) {
     return len;
 }
 
-/*======================= Pipe (ÈÎÎñ¼äÍ¨ĞÅÁ÷) API ÊµÏÖ =======================*/
+/*======================= Pipe (ä»»åŠ¡é—´é€šä¿¡æµ) API å®ç° =======================*/
 
-// PipeµÄ¶ÁÊµÏÖ£º´Óµ×²ã¶ÓÁĞÖĞ¶ÁÈ¡×Ö½Ú
+// Pipeçš„è¯»å®ç°ï¼šä»åº•å±‚é˜Ÿåˆ—ä¸­è¯»å–å­—èŠ‚
 static size_t pipe_read(StreamHandle_t stream, void *buffer, size_t bytes_to_read, uint32_t block_ticks) {
     PipePrivateData_t *pipe_data = (PipePrivateData_t *) stream->p_private_data;
     uint8_t *p_buf = (uint8_t *) buffer;
     size_t bytes_read = 0;
-    // Ñ­»·¶ÁÈ¡£¬Ö±µ½Âú×ãÒªÇó»ò³¬Ê±
+    // å¾ªç¯è¯»å–ï¼Œç›´åˆ°æ»¡è¶³è¦æ±‚æˆ–è¶…æ—¶
     while (bytes_read < bytes_to_read) {
         if (Queue_Receive(pipe_data->queue, p_buf + bytes_read, block_ticks) == 1) {
             bytes_read++;
         } else {
-            break; // ³¬Ê±»ò¶ÓÁĞÉ¾³ı
+            break; // è¶…æ—¶æˆ–é˜Ÿåˆ—åˆ é™¤
         }
     }
     return bytes_read;
 }
 
-// PipeµÄĞ´ÊµÏÖ£ºÏòµ×²ã¶ÓÁĞÖĞĞ´Èë×Ö½Ú
+// Pipeçš„å†™å®ç°ï¼šå‘åº•å±‚é˜Ÿåˆ—ä¸­å†™å…¥å­—èŠ‚
 static size_t pipe_write(StreamHandle_t stream, const void *buffer, size_t bytes_to_write, uint32_t block_ticks) {
     PipePrivateData_t *pipe_data = (PipePrivateData_t *) stream->p_private_data;
     const uint8_t *p_buf = (const uint8_t *) buffer;
     size_t bytes_written = 0;
-    // Ñ­»·Ğ´Èë£¬Ö±µ½È«²¿Ğ´Èë»ò³¬Ê±
+    // å¾ªç¯å†™å…¥ï¼Œç›´åˆ°å…¨éƒ¨å†™å…¥æˆ–è¶…æ—¶
     while (bytes_written < bytes_to_write) {
         if (Queue_Send(pipe_data->queue, p_buf + bytes_written, block_ticks) == 1) {
             bytes_written++;
         } else {
-            break; // ³¬Ê±»ò¶ÓÁĞÂú
+            break; // è¶…æ—¶æˆ–é˜Ÿåˆ—æ»¡
         }
     }
     return bytes_written;
 }
 
-// ¶¨ÒåPipeÁ÷µÄĞéº¯Êı±í
+// å®šä¹‰Pipeæµçš„è™šå‡½æ•°è¡¨
 static const StreamInterface_t g_pipe_stream_interface = {
         .read = pipe_read,
         .write = pipe_write,
-        .control = NULL, // Pipe²»Ö§³Öcontrol·½·¨
+        .control = NULL, // Pipeä¸æ”¯æŒcontrolæ–¹æ³•
 };
 
 StreamHandle_t Pipe_Create(size_t buffer_size) {
-    // ·ÖÅäÁ÷»ùÀà½á¹¹ÌåÄÚ´æ
+    // åˆ†é…æµåŸºç±»ç»“æ„ä½“å†…å­˜
     StreamHandle_t stream = (StreamHandle_t) MyRTOS_Malloc(sizeof(Stream_t));
     if (!stream)
         return NULL;
 
-    // ·ÖÅäPipeË½ÓĞÊı¾İ½á¹¹ÄÚ´æ
+    // åˆ†é…Pipeç§æœ‰æ•°æ®ç»“æ„å†…å­˜
     PipePrivateData_t *pipe_data = (PipePrivateData_t *) MyRTOS_Malloc(sizeof(PipePrivateData_t));
     if (!pipe_data) {
         MyRTOS_Free(stream);
         return NULL;
     }
 
-    // ´´½¨µ×²ãµÄ×Ö½Ú¶ÓÁĞ
+    // åˆ›å»ºåº•å±‚çš„å­—èŠ‚é˜Ÿåˆ—
     pipe_data->queue = Queue_Create(buffer_size, sizeof(uint8_t));
     if (!pipe_data->queue) {
         MyRTOS_Free(pipe_data);
@@ -255,7 +255,7 @@ StreamHandle_t Pipe_Create(size_t buffer_size) {
         return NULL;
     }
 
-    // ×é×°Á÷¶ÔÏó£º¹ØÁª½Ó¿Ú±íºÍË½ÓĞÊı¾İ
+    // ç»„è£…æµå¯¹è±¡ï¼šå…³è”æ¥å£è¡¨å’Œç§æœ‰æ•°æ®
     stream->p_iface = &g_pipe_stream_interface;
     stream->p_private_data = pipe_data;
 
@@ -265,7 +265,7 @@ StreamHandle_t Pipe_Create(size_t buffer_size) {
 void Pipe_Delete(StreamHandle_t pipe_stream) {
     if (pipe_stream && pipe_stream->p_private_data) {
         PipePrivateData_t *pipe_data = (PipePrivateData_t *) pipe_stream->p_private_data;
-        // ÊÍ·ÅËùÓĞÏà¹Ø×ÊÔ´
+        // é‡Šæ”¾æ‰€æœ‰ç›¸å…³èµ„æº
         Queue_Delete(pipe_data->queue);
         MyRTOS_Free(pipe_data);
         MyRTOS_Free(pipe_stream);

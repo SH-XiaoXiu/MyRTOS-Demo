@@ -1,7 +1,7 @@
 /**
  * @file  MyRTOS_Shell.h
- * @brief MyRTOS ÃüÁîĞĞ(Shell)·şÎñ - ¹«¹²½Ó¿Ú
- * @details Ìá¹©Ò»¸ö¿É½»»¥µÄÃüÁîĞĞ½çÃæ£¬ÓÃÓÚÖ´ĞĞÓÃ»§¶¨ÒåµÄÃüÁî¡£ÒÀÀµIOÁ÷Ä£¿é¡£
+ * @brief MyRTOS å‘½ä»¤è¡Œ(Shell)æœåŠ¡ - å…¬å…±æ¥å£
+ * @details æä¾›ä¸€ä¸ªå¯äº¤äº’çš„å‘½ä»¤è¡Œç•Œé¢ï¼Œç”¨äºæ‰§è¡Œç”¨æˆ·å®šä¹‰çš„å‘½ä»¤ã€‚ä¾èµ–IOæµæ¨¡å—ã€‚
  */
 #ifndef MYRTOS_SHELL_H
 #define MYRTOS_SHELL_H
@@ -18,72 +18,72 @@
 
 #include "MyRTOS_Stream_Def.h"
 
-// Ç°ÖÃÉùÃ÷ShellÊµÀı½á¹¹Ìå
+// å‰ç½®å£°æ˜Shellå®ä¾‹ç»“æ„ä½“
 struct ShellInstance_t;
-/** @brief ShellÊµÀı¾ä±úÀàĞÍ */
+/** @brief Shellå®ä¾‹å¥æŸ„ç±»å‹ */
 typedef struct ShellInstance_t *ShellHandle_t;
 
 /**
- * @brief ShellÃüÁî»Øµ÷º¯ÊıÔ­ĞÍ¡£
- * @param shell_h   [in] Ö´ĞĞ´ËÃüÁîµÄShellÊµÀı¾ä±ú¡£
- * @param argc      [in] ²ÎÊı¸öÊı (°üÀ¨ÃüÁî±¾Éí)¡£
- * @param argv      [in] ²ÎÊı×Ö·û´®Êı×é¡£
- * @return int      ÃüÁîÖ´ĞĞµÄ·µ»ØÖµ (Í¨³£ 0 ±íÊ¾³É¹¦)¡£
+ * @brief Shellå‘½ä»¤å›è°ƒå‡½æ•°åŸå‹ã€‚
+ * @param shell_h   [in] æ‰§è¡Œæ­¤å‘½ä»¤çš„Shellå®ä¾‹å¥æŸ„ã€‚
+ * @param argc      [in] å‚æ•°ä¸ªæ•° (åŒ…æ‹¬å‘½ä»¤æœ¬èº«)ã€‚
+ * @param argv      [in] å‚æ•°å­—ç¬¦ä¸²æ•°ç»„ã€‚
+ * @return int      å‘½ä»¤æ‰§è¡Œçš„è¿”å›å€¼ (é€šå¸¸ 0 è¡¨ç¤ºæˆåŠŸ)ã€‚
  */
 typedef int (*ShellCommandCallback_t)(ShellHandle_t shell_h, int argc, char *argv[]);
 
 /**
- * @brief ShellÃüÁî¶¨Òå½á¹¹Ìå¡£
+ * @brief Shellå‘½ä»¤å®šä¹‰ç»“æ„ä½“ã€‚
  */
 typedef struct {
-    const char *name; // ÃüÁîÃû³Æ
-    const char *help; // ÃüÁîµÄ°ïÖúĞÅÏ¢
-    ShellCommandCallback_t callback; // ÃüÁî´¦Àíº¯Êı
+    const char *name; // å‘½ä»¤åç§°
+    const char *help; // å‘½ä»¤çš„å¸®åŠ©ä¿¡æ¯
+    ShellCommandCallback_t callback; // å‘½ä»¤å¤„ç†å‡½æ•°
 } ShellCommand_t;
 
 /**
- * @brief ShellÃüÁî½Ú¶¨Òå½á¹¹Ìå¡£
+ * @brief Shellå‘½ä»¤èŠ‚å®šä¹‰ç»“æ„ä½“ã€‚
  */
 typedef struct ShellCommandNode_t {
     const char *name;
     const char *help;
     ShellCommandCallback_t callback;
-    struct ShellCommandNode_t *next; // Ö¸ÏòÏÂÒ»¸öÃüÁî½ÚµãµÄÖ¸Õë
+    struct ShellCommandNode_t *next; // æŒ‡å‘ä¸‹ä¸€ä¸ªå‘½ä»¤èŠ‚ç‚¹çš„æŒ‡é’ˆ
 } ShellCommandNode_t;
 
 /**
- * @brief Shell ³õÊ¼»¯ÅäÖÃ½á¹¹Ìå (ÓÃÓÚÒÀÀµ×¢Èë)¡£
+ * @brief Shell åˆå§‹åŒ–é…ç½®ç»“æ„ä½“ (ç”¨äºä¾èµ–æ³¨å…¥)ã€‚
  */
 typedef struct {
-    const char *prompt; // ÃüÁîĞĞÌáÊ¾·û (ÀıÈç "> ")
+    const char *prompt; // å‘½ä»¤è¡Œæç¤ºç¬¦ (ä¾‹å¦‚ "> ")
 } ShellConfig_t;
 
 
 /**
- * @brief ´´½¨²¢³õÊ¼»¯Ò»¸öShell·şÎñÊµÀı¡£
- * @param config        [in] Ö¸ÏòShellÅäÖÃµÄÖ¸Õë (°üº¬ÒÀÀµ×¢ÈëµÄÁ÷)¡£
- * @param commands      [in] Ö¸ÏòÃüÁî±íÊı×éµÄÖ¸Õë¡£
- * @param command_count [in] ÃüÁî±íÖĞµÄÃüÁîÊıÁ¿¡£
- * @return ShellHandle_t    ³É¹¦Ôò·µ»ØShellÊµÀı¾ä±ú, Ê§°Ü·µ»ØNULL¡£
+ * @brief åˆ›å»ºå¹¶åˆå§‹åŒ–ä¸€ä¸ªShellæœåŠ¡å®ä¾‹ã€‚
+ * @param config        [in] æŒ‡å‘Shellé…ç½®çš„æŒ‡é’ˆ (åŒ…å«ä¾èµ–æ³¨å…¥çš„æµ)ã€‚
+ * @param commands      [in] æŒ‡å‘å‘½ä»¤è¡¨æ•°ç»„çš„æŒ‡é’ˆã€‚
+ * @param command_count [in] å‘½ä»¤è¡¨ä¸­çš„å‘½ä»¤æ•°é‡ã€‚
+ * @return ShellHandle_t    æˆåŠŸåˆ™è¿”å›Shellå®ä¾‹å¥æŸ„, å¤±è´¥è¿”å›NULLã€‚
  */
 ShellHandle_t Shell_Init(const ShellConfig_t *config);
 
 /**
- * @brief Æô¶¯Shell·şÎñµÄÈÎÎñ¡£
- * @details ´Ëº¯Êı»á´´½¨Ò»¸öºóÌ¨ÈÎÎñÀ´ÔËĞĞShellµÄÃüÁî½ÓÊÕºÍ´¦ÀíÑ­»·¡£
- * @param shell_h       [in] Shell_Init ·µ»ØµÄ¾ä±ú¡£
- * @param task_name     [in] ShellÈÎÎñµÄÃû³Æ¡£
- * @param task_priority [in] ShellÈÎÎñµÄÓÅÏÈ¼¶¡£
- * @param task_stack_size [in] ShellÈÎÎñµÄÕ»´óĞ¡¡£
- * @return TaskHandle_t   ³É¹¦Ôò·µ»Ø´´½¨µÄÈÎÎñ¾ä±ú, Ê§°Ü·µ»ØNULL¡£
+ * @brief å¯åŠ¨ShellæœåŠ¡çš„ä»»åŠ¡ã€‚
+ * @details æ­¤å‡½æ•°ä¼šåˆ›å»ºä¸€ä¸ªåå°ä»»åŠ¡æ¥è¿è¡ŒShellçš„å‘½ä»¤æ¥æ”¶å’Œå¤„ç†å¾ªç¯ã€‚
+ * @param shell_h       [in] Shell_Init è¿”å›çš„å¥æŸ„ã€‚
+ * @param task_name     [in] Shellä»»åŠ¡çš„åç§°ã€‚
+ * @param task_priority [in] Shellä»»åŠ¡çš„ä¼˜å…ˆçº§ã€‚
+ * @param task_stack_size [in] Shellä»»åŠ¡çš„æ ˆå¤§å°ã€‚
+ * @return TaskHandle_t   æˆåŠŸåˆ™è¿”å›åˆ›å»ºçš„ä»»åŠ¡å¥æŸ„, å¤±è´¥è¿”å›NULLã€‚
  */
 TaskHandle_t Shell_Start(ShellHandle_t shell_h, const char *task_name, uint8_t task_priority, uint16_t task_stack_size);
 
 /**
- * @brief »ñÈ¡ÓëShellÊµÀı¹ØÁªµÄÁ÷¾ä±ú¡£
- * @details Õâ¶ÔÓÚÃüÁî»Øµ÷º¯ÊıĞèÒªÖ±½ÓĞ´»ØÖÕ¶Ë·Ç³£ÓĞÓÃ¡£
- * @param shell_h [in] ShellÊµÀı¾ä±ú¡£
- * @return StreamHandle_t Á÷¾ä±ú¡£
+ * @brief è·å–ä¸Shellå®ä¾‹å…³è”çš„æµå¥æŸ„ã€‚
+ * @details è¿™å¯¹äºå‘½ä»¤å›è°ƒå‡½æ•°éœ€è¦ç›´æ¥å†™å›ç»ˆç«¯éå¸¸æœ‰ç”¨ã€‚
+ * @param shell_h [in] Shellå®ä¾‹å¥æŸ„ã€‚
+ * @return StreamHandle_t æµå¥æŸ„ã€‚
  */
 StreamHandle_t Shell_GetStream(ShellHandle_t shell_h);
 

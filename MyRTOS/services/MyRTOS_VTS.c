@@ -1,57 +1,57 @@
 /**
  * @file  MyRTOS_VTS.c
- * @brief MyRTOS ĞéÄâÖÕ¶Ë·şÎñ (Virtual Terminal Service)
+ * @brief MyRTOS è™šæ‹Ÿç»ˆç«¯æœåŠ¡ (Virtual Terminal Service)
  */
 #include "MyRTOS_VTS.h"
 
 #if (MYRTOS_SERVICE_VTS_ENABLE == 1)
 #include <string.h>
 
-// ÄÚ²¿Êı¾İ½á¹¹
+// å†…éƒ¨æ•°æ®ç»“æ„
 typedef struct {
-    VTS_Config_t config; // ±£´æ³õÊ¼»¯ÅäÖÃ
+    VTS_Config_t config; // ä¿å­˜åˆå§‹åŒ–é…ç½®
 
-    // ÄÚ²¿×´Ì¬
+    // å†…éƒ¨çŠ¶æ€
     volatile bool log_all_mode;
     char back_cmd_buffer[VTS_MAX_BACK_CMD_LEN];
     size_t back_cmd_buffer_idx;
 
-    // µ±Ç°½¹µãÁ÷
+    // å½“å‰ç„¦ç‚¹æµ
     volatile StreamHandle_t focused_stream;
 
-    // RTOS ¶ÔÏó
+    // RTOS å¯¹è±¡
     TaskHandle_t vts_task_handle;
     MutexHandle_t lock;
-    StreamHandle_t background_stream; // ºóÌ¨ÈÎÎñµÄÍ³Ò»Êä³öÁ÷
+    StreamHandle_t background_stream; // åå°ä»»åŠ¡çš„ç»Ÿä¸€è¾“å‡ºæµ
 } VTS_Instance_t;
 
 
-// È«¾ÖÊµÀıÖ¸Õë
+// å…¨å±€å®ä¾‹æŒ‡é’ˆ
 static VTS_Instance_t *g_vts = NULL;
 
 
-// Ë½ÓĞ¸¨Öúº¯Êı
+// ç§æœ‰è¾…åŠ©å‡½æ•°
 
 /**
- * @brief ´¦Àí´ÓÎïÀíÖÕ¶Ë½ÓÊÕµ½µÄµ¥¸ö×Ö·û¡£
- * @details ¼ì²é×Ö·ûÊÇ·ñÆ¥Åä'back'ÃüÁîĞòÁĞ¡£Èç¹û²»Æ¥Åä£¬Ôò½«Æä×ª·¢µ½¸ùÊäÈëÁ÷¡£
- * @param vts VTSÊµÀıÖ¸Õë¡£
- * @param ch ½ÓÊÕµ½µÄ×Ö·û¡£
+ * @brief å¤„ç†ä»ç‰©ç†ç»ˆç«¯æ¥æ”¶åˆ°çš„å•ä¸ªå­—ç¬¦ã€‚
+ * @details æ£€æŸ¥å­—ç¬¦æ˜¯å¦åŒ¹é…'back'å‘½ä»¤åºåˆ—ã€‚å¦‚æœä¸åŒ¹é…ï¼Œåˆ™å°†å…¶è½¬å‘åˆ°æ ¹è¾“å…¥æµã€‚
+ * @param vts VTSå®ä¾‹æŒ‡é’ˆã€‚
+ * @param ch æ¥æ”¶åˆ°çš„å­—ç¬¦ã€‚
  */
 static void vts_process_input_char(VTS_Instance_t *vts, char ch) {
     if (ch == vts->config.back_command_sequence[vts->back_cmd_buffer_idx]) {
         vts->back_cmd_buffer[vts->back_cmd_buffer_idx++] = ch;
 
         if (vts->back_cmd_buffer_idx == vts->config.back_command_len) {
-            // ÍêÕûÆ¥Åä'back'ÃüÁî
-            vts->back_cmd_buffer_idx = 0; // ÖØÖÃ»º³åÇø
+            // å®Œæ•´åŒ¹é…'back'å‘½ä»¤
+            vts->back_cmd_buffer_idx = 0; // é‡ç½®ç¼“å†²åŒº
 
-            // ½«½¹µãÖØÖÃ»Ø¸ùÁ÷
+            // å°†ç„¦ç‚¹é‡ç½®å›æ ¹æµ
             Mutex_Lock(vts->lock);
             vts->focused_stream = vts->config.root_output_stream;
             Mutex_Unlock(vts->lock);
 
-            // µ÷ÓÃ»Øµ÷Í¨ÖªÆ½Ì¨²ã
+            // è°ƒç”¨å›è°ƒé€šçŸ¥å¹³å°å±‚
             if (vts->config.on_back_command) {
                 vts->config.on_back_command();
             }
@@ -79,7 +79,7 @@ static void vts_drain_stream(StreamHandle_t stream, char *buffer, size_t buffer_
 }
 
 
-// VTS Ö÷ÈÎÎñ
+// VTS ä¸»ä»»åŠ¡
 
 static void VTS_Task(void *param) {
     VTS_Instance_t *vts = (VTS_Instance_t *) param;
@@ -87,12 +87,12 @@ static void VTS_Task(void *param) {
     char input_char;
 
     for (;;) {
-        // ´¦ÀíÎïÀíÊäÈë
+        // å¤„ç†ç‰©ç†è¾“å…¥
         if (Stream_Read(vts->config.physical_stream, &input_char, 1, 0) > 0) {
             vts_process_input_char(vts, input_char);
         }
 
-        // ´¦ÀíÊä³ö
+        // å¤„ç†è¾“å‡º
         Mutex_Lock(vts->lock);
         bool log_all = vts->log_all_mode;
         StreamHandle_t current_focus_stream = vts->focused_stream;
@@ -119,7 +119,7 @@ static void VTS_Task(void *param) {
 }
 
 
-// ¹«¹² API ÊµÏÖ
+// å…¬å…± API å®ç°
 
 int VTS_Init(const VTS_Config_t *config) {
     if (g_vts || !config || !config->physical_stream || !config->root_input_stream || !config->root_output_stream ||
@@ -141,7 +141,7 @@ int VTS_Init(const VTS_Config_t *config) {
         goto cleanup;
     }
 
-    // Ä¬ÈÏ½¹µãÊÇ¸ùÁ÷
+    // é»˜è®¤ç„¦ç‚¹æ˜¯æ ¹æµ
     g_vts->focused_stream = config->root_output_stream;
 
     g_vts->vts_task_handle = Task_Create(VTS_Task, "VTSService", VTS_TASK_STACK_SIZE, g_vts, VTS_TASK_PRIORITY);

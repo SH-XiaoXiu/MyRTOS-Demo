@@ -1,4 +1,4 @@
-// Æ½Ì¨ÒÆÖ²²ã×îĞ¡Ê¾Àı´úÂë
+// å¹³å°ç§»æ¤å±‚æœ€å°ç¤ºä¾‹ä»£ç 
 
 #if 0
 
@@ -27,7 +27,7 @@ StackType_t *MyRTOS_Port_InitialiseStack(StackType_t *pxTopOfStack, void (*pxCod
 }
 
 
-//Æô¶¯µ÷¶È
+//å¯åŠ¨è°ƒåº¦
 BaseType_t MyRTOS_Port_StartScheduler(void) {
 }
 

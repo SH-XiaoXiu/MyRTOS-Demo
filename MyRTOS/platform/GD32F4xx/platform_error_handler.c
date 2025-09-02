@@ -7,29 +7,29 @@
 
 
 /**
- * @brief ÕâÊÇÆ½Ì¨²ã×¢²áµ½ÄÚºËµÄÎ¨Ò»´íÎóÊÂ¼ş´¦ÀíÆ÷¡£
- * @param pEventData À´×ÔÄÚºËµÄÊÂ¼şÊı¾İ¡£
+ * @brief è¿™æ˜¯å¹³å°å±‚æ³¨å†Œåˆ°å†…æ ¸çš„å”¯ä¸€é”™è¯¯äº‹ä»¶å¤„ç†å™¨ã€‚
+ * @param pEventData æ¥è‡ªå†…æ ¸çš„äº‹ä»¶æ•°æ®ã€‚
  */
 static void platform_kernel_event_handler(const KernelEventData_t *pEventData) {
     switch (pEventData->eventType) {
         case KERNEL_EVENT_HOOK_STACK_OVERFLOW:
-            // ÄÚºË±¨¸æÁËÕ»Òç³ö
-            // pEventData->task °üº¬ÁËÎ¥¹æÈÎÎñµÄ¾ä±ú
+            // å†…æ ¸æŠ¥å‘Šäº†æ ˆæº¢å‡º
+            // pEventData->task åŒ…å«äº†è¿è§„ä»»åŠ¡çš„å¥æŸ„
             Platform_StackOverflow_Hook(pEventData->task);
             break;
 
         case KERNEL_EVENT_HOOK_MALLOC_FAILED:
-            // ÄÚºË±¨¸æÁËÄÚ´æ·ÖÅäÊ§°Ü
-            // pEventData->mem.size °üº¬ÁËÇëÇóµÄ×Ö½ÚÊı
+            // å†…æ ¸æŠ¥å‘Šäº†å†…å­˜åˆ†é…å¤±è´¥
+            // pEventData->mem.size åŒ…å«äº†è¯·æ±‚çš„å­—èŠ‚æ•°
             Platform_MallocFailed_Hook(pEventData->mem.size);
             break;
 
         case KERNEL_EVENT_ERROR_HARD_FAULT:
-            // ÄÚºË±¨¸æÁËÓ²¼ş´íÎó
-            // pEventData->p_context_data ´æ´¢ÁËÓ²¼ş´íÎóĞÅÏ¢
+            // å†…æ ¸æŠ¥å‘Šäº†ç¡¬ä»¶é”™è¯¯
+            // pEventData->p_context_data å­˜å‚¨äº†ç¡¬ä»¶é”™è¯¯ä¿¡æ¯
             Platform_HardFault_Hook(pEventData->p_context_data);
 
-        // ÕâÀï¿ÉÒÔÀ©Õ¹´¦Àí¸ü¶à´íÎóÊÂ¼ş
+        // è¿™é‡Œå¯ä»¥æ‰©å±•å¤„ç†æ›´å¤šé”™è¯¯äº‹ä»¶
         default:
             break;
     }
@@ -37,7 +37,7 @@ static void platform_kernel_event_handler(const KernelEventData_t *pEventData) {
 
 
 /**
- * @brief (ÄÚ²¿º¯Êı) ³õÊ¼»¯Æ½Ì¨²ãµÄ´íÎó´¦Àí»úÖÆ¡£
- *        ÓÉ platform_core.c ÔÚ Platform_Init Á÷³ÌÖĞµ÷ÓÃ¡£
+ * @brief (å†…éƒ¨å‡½æ•°) åˆå§‹åŒ–å¹³å°å±‚çš„é”™è¯¯å¤„ç†æœºåˆ¶ã€‚
+ *        ç”± platform_core.c åœ¨ Platform_Init æµç¨‹ä¸­è°ƒç”¨ã€‚
  */
 void Platform_error_handler_init(void) { MyRTOS_RegisterExtension(platform_kernel_event_handler); }

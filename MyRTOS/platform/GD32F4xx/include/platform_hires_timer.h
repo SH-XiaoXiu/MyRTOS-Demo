@@ -9,15 +9,15 @@
 #include <stdint.h>
 
 /**
- * @brief ³õÊ¼»¯¸ß¾«¶ÈÓ²¼ş¶¨Ê±Æ÷¡£
- *        ÅäÖÃÒ»¸öÓ²¼ş¶¨Ê±Æ÷×÷Îª×ÔÓÉÔËĞĞµÄ¼ÆÊıÆ÷¡£
+ * @brief åˆå§‹åŒ–é«˜ç²¾åº¦ç¡¬ä»¶å®šæ—¶å™¨ã€‚
+ *        é…ç½®ä¸€ä¸ªç¡¬ä»¶å®šæ—¶å™¨ä½œä¸ºè‡ªç”±è¿è¡Œçš„è®¡æ•°å™¨ã€‚
  */
 void Platform_HiresTimer_Init(void);
 
 /**
- * @brief »ñÈ¡¸ß¾«¶È¶¨Ê±Æ÷µÄµ±Ç°¼ÆÊıÖµ¡£
- *        ´Ëº¯Êı·ûºÏ MonitorGetHiresTimerValueFn ±ê×¼¡£
- * @return uint32_t 32Î»¼ÆÊıÖµ¡£
+ * @brief è·å–é«˜ç²¾åº¦å®šæ—¶å™¨çš„å½“å‰è®¡æ•°å€¼ã€‚
+ *        æ­¤å‡½æ•°ç¬¦åˆ MonitorGetHiresTimerValueFn æ ‡å‡†ã€‚
+ * @return uint32_t 32ä½è®¡æ•°å€¼ã€‚
  */
 uint32_t Platform_Timer_GetHiresValue(void);
 

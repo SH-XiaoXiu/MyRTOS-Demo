@@ -1,8 +1,8 @@
 /**
  * @file  MyRTOS_VTS.h
- * @brief MyRTOS ĞéÄâÖÕ¶Ë·şÎñ
- * @details ¸ºÔğ½«ÎïÀíÖÕ¶ËµÄIOÂ·ÓÉµ½µ±Ç°ÓµÓĞ¡°½¹µã¡±µÄĞéÄâÁ÷¡£
- *          ÊµÏÖÁËÀàËÆÇ°Ì¨/ºóÌ¨½ø³ÌµÄ¶ÀÕ¼Ê½ÖÕ¶Ë·ÃÎÊÄ£ĞÍ¡£
+ * @brief MyRTOS è™šæ‹Ÿç»ˆç«¯æœåŠ¡
+ * @details è´Ÿè´£å°†ç‰©ç†ç»ˆç«¯çš„IOè·¯ç”±åˆ°å½“å‰æ‹¥æœ‰â€œç„¦ç‚¹â€çš„è™šæ‹Ÿæµã€‚
+ *          å®ç°äº†ç±»ä¼¼å‰å°/åå°è¿›ç¨‹çš„ç‹¬å å¼ç»ˆç«¯è®¿é—®æ¨¡å‹ã€‚
  */
 #ifndef MYRTOS_VTS_H
 #define MYRTOS_VTS_H
@@ -20,56 +20,56 @@
 
 
 /**
- * @brief µ±VTS´¦Àí'back'ÃüÁîºóµ÷ÓÃµÄ»Øµ÷º¯ÊıÔ­ĞÍ¡£
- * @details Æ½Ì¨²ãÓ¦ÔÚ´Ë»Øµ÷ÖĞÊµÏÖÇåÀíÇ°Ì¨ÈÎÎñµÄÂß¼­¡£
+ * @brief å½“VTSå¤„ç†'back'å‘½ä»¤åè°ƒç”¨çš„å›è°ƒå‡½æ•°åŸå‹ã€‚
+ * @details å¹³å°å±‚åº”åœ¨æ­¤å›è°ƒä¸­å®ç°æ¸…ç†å‰å°ä»»åŠ¡çš„é€»è¾‘ã€‚
  */
 typedef void (*VTS_BackCommandCallback_t)(void);
 
 /**
- * @brief VTS ³õÊ¼»¯ÅäÖÃ½á¹¹Ìå
+ * @brief VTS åˆå§‹åŒ–é…ç½®ç»“æ„ä½“
  */
 typedef struct {
-    StreamHandle_t physical_stream; // ÎïÀíI/OÁ÷ (ÀıÈç: UARTÁ÷)
-    StreamHandle_t root_input_stream; // VTS½«ËùÓĞ·Ç'back'ÊäÈë×ª·¢µ½´ËÁ÷ (Í¨³£ÊÇShellµÄÊäÈë¹ÜµÀ)
-    StreamHandle_t root_output_stream; // ¸ùÈÎÎñµÄÊä³öÁ÷£¬Ò²ÊÇ'back'ÃüÁîºóµÄÄ¬ÈÏ½¹µã
-    const char *back_command_sequence; // ÓÃÓÚ´¥·¢½¹µãÖØÖÃµÄÃüÁîĞòÁĞ (ÀıÈç: "back\r\n")
-    size_t back_command_len; // backÃüÁîĞòÁĞµÄ³¤¶È
-    VTS_BackCommandCallback_t on_back_command; // µ±'back'ÃüÁî³É¹¦Ö´ĞĞÊ±µ÷ÓÃµÄ»Øµ÷
+    StreamHandle_t physical_stream; // ç‰©ç†I/Oæµ (ä¾‹å¦‚: UARTæµ)
+    StreamHandle_t root_input_stream; // VTSå°†æ‰€æœ‰é'back'è¾“å…¥è½¬å‘åˆ°æ­¤æµ (é€šå¸¸æ˜¯Shellçš„è¾“å…¥ç®¡é“)
+    StreamHandle_t root_output_stream; // æ ¹ä»»åŠ¡çš„è¾“å‡ºæµï¼Œä¹Ÿæ˜¯'back'å‘½ä»¤åçš„é»˜è®¤ç„¦ç‚¹
+    const char *back_command_sequence; // ç”¨äºè§¦å‘ç„¦ç‚¹é‡ç½®çš„å‘½ä»¤åºåˆ— (ä¾‹å¦‚: "back\r\n")
+    size_t back_command_len; // backå‘½ä»¤åºåˆ—çš„é•¿åº¦
+    VTS_BackCommandCallback_t on_back_command; // å½“'back'å‘½ä»¤æˆåŠŸæ‰§è¡Œæ—¶è°ƒç”¨çš„å›è°ƒ
 } VTS_Config_t;
 
 /**
- * @brief ³õÊ¼»¯²¢Æô¶¯ĞéÄâÖÕ¶Ë·şÎñ¡£
- * @details ´Ëº¯Êı»á´´½¨ËùÓĞ±ØĞèµÄÄÚ²¿¹ÜµÀºÍVTSÖ÷ÈÎÎñ¡£
- * @param config [in] Ö¸ÏòVTSÅäÖÃ½á¹¹ÌåµÄÖ¸Õë¡£
- * @return int 0 ±íÊ¾³É¹¦, -1 ±íÊ¾Ê§°Ü (ÀıÈçÄÚ´æ²»×ã)¡£
+ * @brief åˆå§‹åŒ–å¹¶å¯åŠ¨è™šæ‹Ÿç»ˆç«¯æœåŠ¡ã€‚
+ * @details æ­¤å‡½æ•°ä¼šåˆ›å»ºæ‰€æœ‰å¿…éœ€çš„å†…éƒ¨ç®¡é“å’ŒVTSä¸»ä»»åŠ¡ã€‚
+ * @param config [in] æŒ‡å‘VTSé…ç½®ç»“æ„ä½“çš„æŒ‡é’ˆã€‚
+ * @return int 0 è¡¨ç¤ºæˆåŠŸ, -1 è¡¨ç¤ºå¤±è´¥ (ä¾‹å¦‚å†…å­˜ä¸è¶³)ã€‚
  */
 int VTS_Init(const VTS_Config_t *config);
 
 /**
- * @brief ÉèÖÃµ±Ç°µÄÖÕ¶Ë½¹µã¡£
- * @details ½«ÎïÀíÖÕ¶ËµÄÊä³öÇĞ»»µ½Ö¸¶¨µÄÁ÷¡£
- * @param output_stream [in] ĞÂµÄ½¹µãÊä³öÁ÷¡£
- * @return int 0 ±íÊ¾³É¹¦, -1 ±íÊ¾VTSÎ´³õÊ¼»¯¡£
+ * @brief è®¾ç½®å½“å‰çš„ç»ˆç«¯ç„¦ç‚¹ã€‚
+ * @details å°†ç‰©ç†ç»ˆç«¯çš„è¾“å‡ºåˆ‡æ¢åˆ°æŒ‡å®šçš„æµã€‚
+ * @param output_stream [in] æ–°çš„ç„¦ç‚¹è¾“å‡ºæµã€‚
+ * @return int 0 è¡¨ç¤ºæˆåŠŸ, -1 è¡¨ç¤ºVTSæœªåˆå§‹åŒ–ã€‚
  */
 int VTS_SetFocus(StreamHandle_t output_stream);
 
 /**
- * @brief ½«½¹µãÖØÖÃ»Ø¸ù£¨Shell£©Á÷¡£
- * @details Í¨³£ÓÉ'shell'ÃüÁîµ÷ÓÃ¡£´Ëº¯Êı²»»á´¥·¢ on_back_command »Øµ÷¡£
+ * @brief å°†ç„¦ç‚¹é‡ç½®å›æ ¹ï¼ˆShellï¼‰æµã€‚
+ * @details é€šå¸¸ç”±'shell'å‘½ä»¤è°ƒç”¨ã€‚æ­¤å‡½æ•°ä¸ä¼šè§¦å‘ on_back_command å›è°ƒã€‚
  */
 void VTS_ReturnToRootFocus(void);
 
 /**
- * @brief ÉèÖÃ»òÈ¡Ïû¡°È«¾ÖÈÕÖ¾Ä£Ê½¡±¡£
- * @details ÔÚ´ËÄ£Ê½ÏÂ£¬VTS»á³¢ÊÔ´ÓËùÓĞÒÑÖªµÄÁ÷£¨¸ù¡¢ºóÌ¨¡¢µ±Ç°½¹µã£©¶ÁÈ¡Êä³ö²¢´òÓ¡µ½ÎïÀíÖÕ¶Ë¡£
- * @param enable [in] true ÆôÓÃÈ«¾ÖÈÕÖ¾Ä£Ê½, false ½ûÓÃ¡£
+ * @brief è®¾ç½®æˆ–å–æ¶ˆâ€œå…¨å±€æ—¥å¿—æ¨¡å¼â€ã€‚
+ * @details åœ¨æ­¤æ¨¡å¼ä¸‹ï¼ŒVTSä¼šå°è¯•ä»æ‰€æœ‰å·²çŸ¥çš„æµï¼ˆæ ¹ã€åå°ã€å½“å‰ç„¦ç‚¹ï¼‰è¯»å–è¾“å‡ºå¹¶æ‰“å°åˆ°ç‰©ç†ç»ˆç«¯ã€‚
+ * @param enable [in] true å¯ç”¨å…¨å±€æ—¥å¿—æ¨¡å¼, false ç¦ç”¨ã€‚
  */
 void VTS_SetLogAllMode(bool enable);
 
 /**
- * @brief »ñÈ¡VTS´´½¨µÄºóÌ¨Á÷¾ä±ú¡£
- * @details ËùÓĞ²»ÓëÖÕ¶ËÖ±½Ó½»»¥µÄºóÌ¨ÈÎÎñÓ¦½«Æästdout/stderrÖØ¶¨Ïòµ½´ËÁ÷¡£
- * @return StreamHandle_t ºóÌ¨Á÷µÄ¾ä±ú£¬Èç¹ûVTSÎ´³õÊ¼»¯Ôò·µ»ØNULL¡£
+ * @brief è·å–VTSåˆ›å»ºçš„åå°æµå¥æŸ„ã€‚
+ * @details æ‰€æœ‰ä¸ä¸ç»ˆç«¯ç›´æ¥äº¤äº’çš„åå°ä»»åŠ¡åº”å°†å…¶stdout/stderré‡å®šå‘åˆ°æ­¤æµã€‚
+ * @return StreamHandle_t åå°æµçš„å¥æŸ„ï¼Œå¦‚æœVTSæœªåˆå§‹åŒ–åˆ™è¿”å›NULLã€‚
  */
 StreamHandle_t VTS_GetBackgroundStream(void);
 

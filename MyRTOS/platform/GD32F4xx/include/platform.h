@@ -9,43 +9,43 @@
 #include "gd32f4xx.h"
 #include "platform_config.h"
 
-// ���� MyRTOS �������ͣ��Ա㹳�Ӻ�������ʹ��
+// 引入 MyRTOS 核心类型，以便钩子函数可以使用
 #include "MyRTOS.h"
 #include "MyRTOS_Shell.h"
 
 // =========================================================================
-//                         ����ƽ̨��ʼ������
+//                         核心平台初始化流程
 // =========================================================================
 /**
- * @brief ��ʼ������ƽ̨���RTOS���ķ���
- *        �����û��� main ��������Ҫ���õĵ�һ��������
+ * @brief 初始化整个平台层和RTOS核心服务。
+ *        这是用户在 main 函数中需要调用的第一个函数。
  */
 void Platform_Init(void);
 
 
 /**
- * @brief ����ƽ̨��RTOS��������
- *        ������������ Platform_CreateTasks_Hook ������Ӧ������
- *        Ȼ������RTOS���������˺����������ء�
+ * @brief 启动平台和RTOS调度器。
+ *        这个函数会调用 Platform_CreateTasks_Hook 来创建应用任务，
+ *        然后启动RTOS调度器。此函数永不返回。
  */
 void Platform_StartScheduler(void);
 
 
 // =========================================================================
-//                            ƽ̨�����ȡ�ӿ�
+//                            平台服务获取接口
 // =========================================================================
 #if (PLATFORM_USE_CONSOLE == 1)
 /**
- * @brief ��ȡ�ѳ�ʼ���Ŀ���̨�������
- * @return StreamHandle_t ָ�����̨���ľ������δʹ���򷵻�NULL��
+ * @brief 获取已初始化的控制台流句柄。
+ * @return StreamHandle_t 指向控制台流的句柄，若未使能则返回NULL。
  */
 StreamHandle_t Platform_Console_GetStream(void);
 #endif
 
 #if (PLATFORM_USE_HIRES_TIMER == 1)
 /**
- * @brief ��ȡ�߾��ȶ�ʱ���ĵ�ǰ����ֵ��
- * @return uint32_t 32λ����ֵ��
+ * @brief 获取高精度定时器的当前计数值。
+ * @return uint32_t 32位计数值。
  */
 uint32_t Platform_Timer_GetHiresValue(void);
 #endif
@@ -54,75 +54,75 @@ uint32_t Platform_Timer_GetHiresValue(void);
 #if MYRTOS_SERVICE_SHELL_ENABLE == 1
 struct ShellCommand_t;
 // =========================================================================
-//                            Shell ����ע��
+//                            Shell 命令注册
 // =========================================================================
 /**
- * @brief ��ƽ̨ע��һ�������û��Զ����Shell���
- * @details �û�Ӧ���� main ������ Platform_AppSetup_Hook �����е��ô˺�����
- *          ƽ̨����ռ�����ע�������������ͳһ��ʼ��Shell����
- *          ������ help ����ʱ������ע�������ᱻ��ʾ������
- * @param commands      [in] ָ�� ShellCommand_t ���������ָ�롣
- * @param command_count [in] �����������������
- * @return int 0 ��ʾ�ɹ�, -1 ��ʾʧ�� (���磬�����б�����)��
+ * @brief 向平台注册一个或多个用户自定义的Shell命令。
+ * @details 用户应该在 main 函数的 Platform_AppSetup_Hook 钩子中调用此函数。
+ *          平台层会收集所有注册的命令，并在最后统一初始化Shell服务。
+ *          当调用 help 命令时，所有注册的命令都会被显示出来。
+ * @param commands      [in] 指向 ShellCommand_t 命令数组的指针。
+ * @param command_count [in] 数组中命令的数量。
+ * @return int 0 表示成功, -1 表示失败 (例如，命令列表已满)。
  */
 int Platform_RegisterShellCommands(const struct ShellCommand_t *commands, size_t command_count);
 #endif
 
 
 // =========================================================================
-//                      �û��Զ��平�Ӻ��� (Weak Hooks)
-//               �û��������Լ��Ĵ���������ʵ����Щ����
+//                      用户自定义钩子函数 (Weak Hooks)
+//               用户可以在自己的代码中重新实现这些函数
 // =========================================================================
 
 /**
- * @brief ��ƽ̨����ʱ�ӳ�ʼ��֮�󣬵������������ʼ��֮ǰ���á�
- *        �ʺ��������õ�Դ�����Ÿ��õ��������á�
+ * @brief 在平台核心时钟初始化之后，但在其他外设初始化之前调用。
+ *        适合用于设置电源、引脚复用等早期配置。
  */
 void Platform_EarlyInit_Hook(void);
 
 /**
- * @brief ������ƽ̨��������USART, TIMER����ʼ��֮����á�
- *        ���Ƽ��������û���ʼ���Լ��ض�Ӳ�����紫������LED���������ĵط���
+ * @brief 在所有平台驱动（如USART, TIMER）初始化之后调用。
+ *        【推荐】这是用户初始化自己特定硬件（如传感器、LED、按键）的地方。
  */
 void Platform_BSP_Init_Hook(void);
 
 /**
- * @brief ��RTOS������Log, Shell����ʼ��֮�󣬵��ڴ����κ�Ӧ������֮ǰ���á�
- *        ���Ƽ��������û�ע���Զ���Shell����ĵط���
- * @param shell_h Shell����ľ�������Shell����ʹ�ܣ���
+ * @brief 在RTOS服务（如Log, Shell）初始化之后，但在创建任何应用任务之前调用。
+ *        【推荐】这是用户注册自定义Shell命令的地方。
+ * @param shell_h Shell服务的句柄（如果Shell服务被使能）。
  */
 void Platform_AppSetup_Hook(ShellHandle_t shell_h);
 
 /**
- * @brief �ڵ���������֮ǰ�����ڴ�������Ӧ�ó�������
- *        ���Ƽ��������û������Լ�ҵ���߼�����ĵط���
+ * @brief 在调度器启动之前，用于创建所有应用程序任务。
+ *        【推荐】这是用户创建自己业务逻辑任务的地方。
  */
 void Platform_CreateTasks_Hook(void);
 
 /**
- * @brief RTOS ���������ʵ�֡�
- *        �û�������д�˺������ڿ���ʱִ�е͹��Ĳ�����������̨����
+ * @brief RTOS 空闲任务的实现。
+ *        用户可以重写此函数以在空闲时执行低功耗操作或其他后台任务。
  */
 void Platform_IdleTask_Hook(void *pv);
 
 /**
- * @brief Ӳ������ (HardFault) �Ĵ�������
- *        Ĭ��ʵ�ֻ��ӡ������Ϣ������ϵͳ���û�������д��ʵ���Զ�����Ϊ�����¼��־����������
- * @param pulFaultStackAddress ָ����Ϸ���ʱ��ջ��ָ�롣
+ * @brief 硬件故障 (HardFault) 的处理器。
+ *        默认实现会打印故障信息并挂起系统。用户可以重写以实现自定义行为（如记录日志、重启）。
+ * @param pulFaultStackAddress 指向故障发生时堆栈的指针。
  */
 void Platform_HardFault_Hook(uint32_t *pulFaultStackAddress);
 
 /**
- * @brief �����ջ����Ĵ�������
- *        Ĭ��ʵ�ֻ��ӡ������Ϣ������ϵͳ��
- * @param pxTask �����������������
+ * @brief 任务堆栈溢出的处理器。
+ *        默认实现会打印任务信息并挂起系统。
+ * @param pxTask 发生溢出的任务句柄。
  */
 void Platform_StackOverflow_Hook(TaskHandle_t pxTask);
 
 
 /**
- * @brief �ں��ڴ����ʧ�ܵĴ�������
- * @param wantedSize ���Է��䵫ʧ�ܵ��ֽ�����
+ * @brief 内核内存分配失败的处理器。
+ * @param wantedSize 尝试分配但失败的字节数。
  */
 void Platform_MallocFailed_Hook(size_t wantedSize);
 

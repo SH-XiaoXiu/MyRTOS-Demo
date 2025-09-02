@@ -9,10 +9,10 @@
 #include "MyRTOS_Kernel_Private.h"
 
 /*===========================================================================*
- *                              ÄÚ²¿Êı¾İ½á¹¹                                  *
+ *                              å†…éƒ¨æ•°æ®ç»“æ„                                  *
  *===========================================================================*/
 
-// ÄÚ²¿½á¹¹Ìå£¬½öÓÃÓÚ±£´æ¶¯Ì¬ÊÕ¼¯µÄÔËĞĞÊ±Êı¾İ¡£
+// å†…éƒ¨ç»“æ„ä½“ï¼Œä»…ç”¨äºä¿å­˜åŠ¨æ€æ”¶é›†çš„è¿è¡Œæ—¶æ•°æ®ã€‚
 typedef struct {
     TaskHandle_t task_handle;
     volatile uint64_t runtime_counter;
@@ -20,30 +20,30 @@ typedef struct {
 
 
 /*===========================================================================*
- *                              Ä£¿é¼¶È«¾Ö±äÁ¿                                *
+ *                              æ¨¡å—çº§å…¨å±€å˜é‡                                *
  *===========================================================================*/
 
 static InternalTaskStats_t g_task_stats_map[MYRTOS_MAX_CONCURRENT_TASKS];
 static MonitorGetHiresTimerValueFn g_get_hires_timer_value = NULL;
 static volatile uint32_t g_last_switch_time = 0;
 
-// ¶ÑÍ³¼ÆĞÅÏ¢
+// å †ç»Ÿè®¡ä¿¡æ¯
 static size_t g_min_ever_free_bytes;
 
 
 /*===========================================================================*
- *                              Ë½ÓĞº¯Êı                                      *
+ *                              ç§æœ‰å‡½æ•°                                      *
  *===========================================================================*/
 
-// ²éÕÒÈÎÎñµÄÏÖÓĞ²å²Û»òÎªĞÂÈÎÎñ·ÖÅäÒ»¸ö²å²Û¡£
+// æŸ¥æ‰¾ä»»åŠ¡çš„ç°æœ‰æ’æ§½æˆ–ä¸ºæ–°ä»»åŠ¡åˆ†é…ä¸€ä¸ªæ’æ§½ã€‚
 static InternalTaskStats_t *find_or_alloc_stat_slot(TaskHandle_t task_h) {
-    // Ê×ÏÈ£¬³¢ÊÔÎª¸ø¶¨µÄÈÎÎñ¾ä±úÕÒµ½ÏÖÓĞµÄ²å²Û
+    // é¦–å…ˆï¼Œå°è¯•ä¸ºç»™å®šçš„ä»»åŠ¡å¥æŸ„æ‰¾åˆ°ç°æœ‰çš„æ’æ§½
     for (int i = 0; i < MYRTOS_MAX_CONCURRENT_TASKS; ++i) {
         if (g_task_stats_map[i].task_handle == task_h) {
             return &g_task_stats_map[i];
         }
     }
-    // Èç¹û task_h Îª NULL£¬±íÊ¾ÎÒÃÇÒªÎªĞÂÈÎÎñÕÒÒ»¸ö¿Õ²å²Û
+    // å¦‚æœ task_h ä¸º NULLï¼Œè¡¨ç¤ºæˆ‘ä»¬è¦ä¸ºæ–°ä»»åŠ¡æ‰¾ä¸€ä¸ªç©ºæ’æ§½
     if (task_h == NULL) {
         for (int i = 0; i < MYRTOS_MAX_CONCURRENT_TASKS; ++i) {
             if (g_task_stats_map[i].task_handle == NULL) {
@@ -51,12 +51,12 @@ static InternalTaskStats_t *find_or_alloc_stat_slot(TaskHandle_t task_h) {
             }
         }
     }
-    return NULL; // Î´ÕÒµ½²å²Û
+    return NULL; // æœªæ‰¾åˆ°æ’æ§½
 }
 
-// ÄÚºËÊÂ¼ş´¦Àíº¯Êı£¬±»¶¯ÊÕ¼¯ËùÓĞ¼à¿ØÊı¾İ¡£
+// å†…æ ¸äº‹ä»¶å¤„ç†å‡½æ•°ï¼Œè¢«åŠ¨æ”¶é›†æ‰€æœ‰ç›‘æ§æ•°æ®ã€‚
 static void monitor_kernel_event_handler(const KernelEventData_t *pEventData) {
-    // ÔËĞĞÊ±Í³¼ÆĞèÒª¸ß·Ö±æÂÊ¼ÆÊ±Æ÷¡£
+    // è¿è¡Œæ—¶ç»Ÿè®¡éœ€è¦é«˜åˆ†è¾¨ç‡è®¡æ—¶å™¨ã€‚
     if (g_get_hires_timer_value == NULL && (pEventData->eventType == KERNEL_EVENT_TASK_SWITCH_OUT ||
                                             pEventData->eventType == KERNEL_EVENT_TASK_SWITCH_IN)) {
         return;
@@ -92,7 +92,7 @@ static void monitor_kernel_event_handler(const KernelEventData_t *pEventData) {
 
             InternalTaskStats_t *slot = find_or_alloc_stat_slot(pEventData->task);
             if (slot) {
-                slot->runtime_counter += delta_hires; // ½«ÕıÈ·µÄ32Î»ÔöÁ¿ÀÛ¼Óµ½64Î»¼ÆÊıÆ÷ÉÏ
+                slot->runtime_counter += delta_hires; // å°†æ­£ç¡®çš„32ä½å¢é‡ç´¯åŠ åˆ°64ä½è®¡æ•°å™¨ä¸Š
             }
             break;
         }
@@ -103,7 +103,7 @@ static void monitor_kernel_event_handler(const KernelEventData_t *pEventData) {
         }
         case KERNEL_EVENT_MALLOC:
         case KERNEL_EVENT_FREE: {
-            // ÔÚÈÎºÎÄÚ´æ²Ù×÷ºó£¬¼ì²éÊÇ·ñ´ïµ½ÁËĞÂµÄ×îµÍË®Î»Ïß¡£
+            // åœ¨ä»»ä½•å†…å­˜æ“ä½œåï¼Œæ£€æŸ¥æ˜¯å¦è¾¾åˆ°äº†æ–°çš„æœ€ä½æ°´ä½çº¿ã€‚
             if (freeBytesRemaining < g_min_ever_free_bytes) {
                 g_min_ever_free_bytes = freeBytesRemaining;
             }
@@ -116,7 +116,7 @@ static void monitor_kernel_event_handler(const KernelEventData_t *pEventData) {
 }
 
 /*===========================================================================*
- *                              ¹«¹²APIÊµÏÖ                                   *
+ *                              å…¬å…±APIå®ç°                                   *
  *===========================================================================*/
 
 int Monitor_Init(const MonitorConfig_t *config) {
@@ -135,7 +135,7 @@ int Monitor_Init(const MonitorConfig_t *config) {
 }
 
 TaskHandle_t Monitor_GetNextTask(TaskHandle_t previous_handle) {
-    // ×ª»»ÎªÄÚ²¿ TCB ÀàĞÍÒÔ±éÀúÄÚºËµÄË½ÓĞÈÎÎñÁĞ±í¡£
+    // è½¬æ¢ä¸ºå†…éƒ¨ TCB ç±»å‹ä»¥éå†å†…æ ¸çš„ç§æœ‰ä»»åŠ¡åˆ—è¡¨ã€‚
     Task_t *prev_tcb = (Task_t *) previous_handle;
     if (prev_tcb == NULL) {
         return allTaskListHead;
@@ -155,7 +155,7 @@ int Monitor_GetTaskInfo(TaskHandle_t task_h, TaskStats_t *p_stats_out) {
 
     MyRTOS_Port_EnterCritical();
     {
-        // Ö±½Ó´Ó TCB Ìî³ä¾²Ì¬ĞÅÏ¢
+        // ç›´æ¥ä» TCB å¡«å……é™æ€ä¿¡æ¯
         p_stats_out->task_handle = task_h;
         p_stats_out->task_name = tcb->taskName;
         p_stats_out->state = tcb->state;
@@ -163,7 +163,7 @@ int Monitor_GetTaskInfo(TaskHandle_t task_h, TaskStats_t *p_stats_out) {
         p_stats_out->base_priority = tcb->basePriority;
         p_stats_out->stack_size_bytes = tcb->stackSize_words * sizeof(StackType_t);
 
-        // ´ÓÊÕ¼¯µÄÍ³¼ÆĞÅÏ¢ÖĞÌî³äÔËĞĞÊ±ĞÅÏ¢
+        // ä»æ”¶é›†çš„ç»Ÿè®¡ä¿¡æ¯ä¸­å¡«å……è¿è¡Œæ—¶ä¿¡æ¯
         InternalTaskStats_t *run_stats = find_or_alloc_stat_slot(task_h);
         if (run_stats) {
             p_stats_out->total_runtime = run_stats->runtime_counter;
@@ -171,14 +171,14 @@ int Monitor_GetTaskInfo(TaskHandle_t task_h, TaskStats_t *p_stats_out) {
             p_stats_out->total_runtime = 0;
         }
 
-        // °ÑĞèÒª½øĞĞºÄÊ±²Ù×÷µÄÊı¾İ¸´ÖÆµ½¾Ö²¿±äÁ¿ÖĞ
+        // æŠŠéœ€è¦è¿›è¡Œè€—æ—¶æ“ä½œçš„æ•°æ®å¤åˆ¶åˆ°å±€éƒ¨å˜é‡ä¸­
         local_stack_base = tcb->stack_base;
         local_stack_size_words = tcb->stackSize_words;
     }
     MyRTOS_Port_ExitCritical();
     uint32_t unused_words = 0;
     if (local_stack_base != NULL) {
-        // Ôö¼ÓÒ»¸ö°²È«¼ì²é
+        // å¢åŠ ä¸€ä¸ªå®‰å…¨æ£€æŸ¥
         StackType_t *stack_ptr = local_stack_base;
         while (unused_words < local_stack_size_words && *stack_ptr == 0xA5A5A5A5) {
             unused_words++;
@@ -186,10 +186,10 @@ int Monitor_GetTaskInfo(TaskHandle_t task_h, TaskStats_t *p_stats_out) {
         }
     }
 
-    // ÒÑÊ¹ÓÃ²¿·ÖÊÇ×Ü´óĞ¡¼õÈ¥Î´Ê¹ÓÃ²¿·Ö
+    // å·²ä½¿ç”¨éƒ¨åˆ†æ˜¯æ€»å¤§å°å‡å»æœªä½¿ç”¨éƒ¨åˆ†
     p_stats_out->stack_high_water_mark_bytes = (local_stack_size_words - unused_words) * sizeof(StackType_t);
 
-    p_stats_out->cpu_usage_permille = 0; // Õâ¸öÔÚpsÃüÁîÀï¼ÆËã
+    p_stats_out->cpu_usage_permille = 0; // è¿™ä¸ªåœ¨pså‘½ä»¤é‡Œè®¡ç®—
 
     return 0;
 }

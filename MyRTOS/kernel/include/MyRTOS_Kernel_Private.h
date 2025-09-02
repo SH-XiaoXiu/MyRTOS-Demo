@@ -9,97 +9,97 @@
 #include "MyRTOS_Port.h"
 
 /*===========================================================================*
- *                      ÄÚ²¿Êı¾İ½á¹¹¶¨Òå                                     *
+ *                      å†…éƒ¨æ•°æ®ç»“æ„å®šä¹‰                                     *
  *===========================================================================*/
 
-// --- ÄÚ´æ¹ÜÀí½á¹¹ ---
+// --- å†…å­˜ç®¡ç†ç»“æ„ ---
 /**
- * @brief ÄÚ´æ¿éÁ´½Ó½á¹¹Ìå
+ * @brief å†…å­˜å—é“¾æ¥ç»“æ„ä½“
  */
 typedef struct BlockLink_t {
-    struct BlockLink_t *nextFreeBlock; // Ö¸ÏòÏÂÒ»¸ö¿ÕÏĞÄÚ´æ¿é
-    size_t blockSize; // µ±Ç°ÄÚ´æ¿é´óĞ¡
+    struct BlockLink_t *nextFreeBlock; // æŒ‡å‘ä¸‹ä¸€ä¸ªç©ºé—²å†…å­˜å—
+    size_t blockSize; // å½“å‰å†…å­˜å—å¤§å°
 } BlockLink_t;
 
 
-// --- ÄÚºËºËĞÄ¶ÔÏó½á¹¹ ---
+// --- å†…æ ¸æ ¸å¿ƒå¯¹è±¡ç»“æ„ ---
 /**
- * @brief ÊÂ¼şÁĞ±í½á¹¹Ìå
+ * @brief äº‹ä»¶åˆ—è¡¨ç»“æ„ä½“
  */
 typedef struct EventList_t {
-    volatile TaskHandle_t head; // ÊÂ¼şÁĞ±íÍ·½Úµã
+    volatile TaskHandle_t head; // äº‹ä»¶åˆ—è¡¨å¤´èŠ‚ç‚¹
 } EventList_t;
 
 /**
- * @brief »¥³âËø½á¹¹Ìå
+ * @brief äº’æ–¥é”ç»“æ„ä½“
  */
 typedef struct Mutex_t {
-    volatile int locked; // Ëø×´Ì¬±ê¼Ç
-    struct Task_t *owner_tcb; // ÓµÓĞ¸Ã»¥³âËøµÄÈÎÎñTCB
-    struct Mutex_t *next_held_mutex; // ÏÂÒ»¸ö³ÖÓĞµÄ»¥³âËø
-    EventList_t eventList; // µÈ´ı¸Ã»¥³âËøµÄÈÎÎñÊÂ¼şÁĞ±í
-    volatile uint32_t recursion_count; // µİ¹éËø¶¨¼ÆÊı
+    volatile int locked; // é”çŠ¶æ€æ ‡è®°
+    struct Task_t *owner_tcb; // æ‹¥æœ‰è¯¥äº’æ–¥é”çš„ä»»åŠ¡TCB
+    struct Mutex_t *next_held_mutex; // ä¸‹ä¸€ä¸ªæŒæœ‰çš„äº’æ–¥é”
+    EventList_t eventList; // ç­‰å¾…è¯¥äº’æ–¥é”çš„ä»»åŠ¡äº‹ä»¶åˆ—è¡¨
+    volatile uint32_t recursion_count; // é€’å½’é”å®šè®¡æ•°
 } Mutex_t;
 
 /**
- * @brief ÈÎÎñ¿ØÖÆ¿é½á¹¹Ìå
+ * @brief ä»»åŠ¡æ§åˆ¶å—ç»“æ„ä½“
  */
 typedef struct Task_t {
-    StackType_t *sp; // ÈÎÎñÕ»Ö¸Õë
+    StackType_t *sp; // ä»»åŠ¡æ ˆæŒ‡é’ˆ
 
-    void (*func)(void *); // ÈÎÎñº¯ÊıÖ¸Õë
+    void (*func)(void *); // ä»»åŠ¡å‡½æ•°æŒ‡é’ˆ
 
-    void *param; // ÈÎÎñº¯Êı²ÎÊı
-    uint64_t delay; // ÈÎÎñÑÓÊ±¼ÆÊı
-    volatile uint32_t notification; // ÈÎÎñÍ¨ÖªÖµ
-    volatile uint8_t is_waiting_notification; // ÊÇ·ñÕıÔÚµÈ´ıÍ¨Öª
-    volatile TaskState_t state; // ÈÎÎñ×´Ì¬
-    uint32_t taskId; // ÈÎÎñID
-    StackType_t *stack_base; // ÈÎÎñÕ»»ùµØÖ·
-    uint8_t priority; // ÈÎÎñÓÅÏÈ¼¶
-    uint8_t basePriority; // ÈÎÎñ»ù´¡ÓÅÏÈ¼¶
-    struct Task_t *pNextTask; // Ö¸ÏòÏÂÒ»¸öÈÎÎñ(¾ÍĞ÷Á´±í)
-    struct Task_t *pNextGeneric; // Í¨ÓÃÁ´±íÏÂÒ»½ÚµãÖ¸Õë
-    struct Task_t *pPrevGeneric; // Í¨ÓÃÁ´±íÉÏÒ»½ÚµãÖ¸Õë
-    struct Task_t *pNextEvent; // ÊÂ¼şÁ´±íÏÂÒ»½ÚµãÖ¸Õë
-    EventList_t *pEventList; // ÈÎÎñËùÊôÊÂ¼şÁĞ±í
-    Mutex_t *held_mutexes_head; // ÈÎÎñ³ÖÓĞµÄ»¥³âËøÁ´±íÍ·
-    void *eventData; // ÊÂ¼şÏà¹ØÊı¾İ
-    const char *taskName; // ÈÎÎñÃû³Æ
-    uint16_t stackSize_words; // ÈÎÎñÕ»´óĞ¡(×Ö)
+    void *param; // ä»»åŠ¡å‡½æ•°å‚æ•°
+    uint64_t delay; // ä»»åŠ¡å»¶æ—¶è®¡æ•°
+    volatile uint32_t notification; // ä»»åŠ¡é€šçŸ¥å€¼
+    volatile uint8_t is_waiting_notification; // æ˜¯å¦æ­£åœ¨ç­‰å¾…é€šçŸ¥
+    volatile TaskState_t state; // ä»»åŠ¡çŠ¶æ€
+    uint32_t taskId; // ä»»åŠ¡ID
+    StackType_t *stack_base; // ä»»åŠ¡æ ˆåŸºåœ°å€
+    uint8_t priority; // ä»»åŠ¡ä¼˜å…ˆçº§
+    uint8_t basePriority; // ä»»åŠ¡åŸºç¡€ä¼˜å…ˆçº§
+    struct Task_t *pNextTask; // æŒ‡å‘ä¸‹ä¸€ä¸ªä»»åŠ¡(å°±ç»ªé“¾è¡¨)
+    struct Task_t *pNextGeneric; // é€šç”¨é“¾è¡¨ä¸‹ä¸€èŠ‚ç‚¹æŒ‡é’ˆ
+    struct Task_t *pPrevGeneric; // é€šç”¨é“¾è¡¨ä¸Šä¸€èŠ‚ç‚¹æŒ‡é’ˆ
+    struct Task_t *pNextEvent; // äº‹ä»¶é“¾è¡¨ä¸‹ä¸€èŠ‚ç‚¹æŒ‡é’ˆ
+    EventList_t *pEventList; // ä»»åŠ¡æ‰€å±äº‹ä»¶åˆ—è¡¨
+    Mutex_t *held_mutexes_head; // ä»»åŠ¡æŒæœ‰çš„äº’æ–¥é”é“¾è¡¨å¤´
+    void *eventData; // äº‹ä»¶ç›¸å…³æ•°æ®
+    const char *taskName; // ä»»åŠ¡åç§°
+    uint16_t stackSize_words; // ä»»åŠ¡æ ˆå¤§å°(å­—)
 } Task_t;
 
-// TCBÖĞstack_base×Ö¶ÎµÄÆ«ÒÆÁ¿
+// TCBä¸­stack_baseå­—æ®µçš„åç§»é‡
 #define TCB_OFFSET_STACK_BASE offsetof(Task_t, stack_base)
 
 /**
- * @brief ¶ÓÁĞ½á¹¹Ìå
+ * @brief é˜Ÿåˆ—ç»“æ„ä½“
  */
 typedef struct Queue_t {
-    uint8_t *storage; // ¶ÓÁĞ´æ´¢ÇøÓò
-    uint32_t length; // ¶ÓÁĞ³¤¶È
-    uint32_t itemSize; // ¶ÓÁĞÏî´óĞ¡
-    volatile uint32_t waitingCount; // µÈ´ı¼ÆÊı
-    uint8_t *writePtr; // Ğ´Ö¸Õë
-    uint8_t *readPtr; // ¶ÁÖ¸Õë
-    EventList_t sendEventList; // ·¢ËÍÊÂ¼şÁĞ±í
-    EventList_t receiveEventList; // ½ÓÊÕÊÂ¼şÁĞ±í
+    uint8_t *storage; // é˜Ÿåˆ—å­˜å‚¨åŒºåŸŸ
+    uint32_t length; // é˜Ÿåˆ—é•¿åº¦
+    uint32_t itemSize; // é˜Ÿåˆ—é¡¹å¤§å°
+    volatile uint32_t waitingCount; // ç­‰å¾…è®¡æ•°
+    uint8_t *writePtr; // å†™æŒ‡é’ˆ
+    uint8_t *readPtr; // è¯»æŒ‡é’ˆ
+    EventList_t sendEventList; // å‘é€äº‹ä»¶åˆ—è¡¨
+    EventList_t receiveEventList; // æ¥æ”¶äº‹ä»¶åˆ—è¡¨
 } Queue_t;
 
 /**
- * @brief ĞÅºÅÁ¿½á¹¹Ìå
+ * @brief ä¿¡å·é‡ç»“æ„ä½“
  */
 typedef struct Semaphore_t {
-    volatile uint32_t count; // ĞÅºÅÁ¿¼ÆÊı
-    uint32_t maxCount; // ĞÅºÅÁ¿×î´ó¼ÆÊı
-    EventList_t eventList; // µÈ´ı¸ÃĞÅºÅÁ¿µÄÈÎÎñÊÂ¼şÁĞ±í
+    volatile uint32_t count; // ä¿¡å·é‡è®¡æ•°
+    uint32_t maxCount; // ä¿¡å·é‡æœ€å¤§è®¡æ•°
+    EventList_t eventList; // ç­‰å¾…è¯¥ä¿¡å·é‡çš„ä»»åŠ¡äº‹ä»¶åˆ—è¡¨
 } Semaphore_t;
 
 
 /*===========================================================================*
- *                      ÄÚ²¿È«¾Ö±äÁ¿ÉùÃ÷                                     *
+ *                      å†…éƒ¨å…¨å±€å˜é‡å£°æ˜                                     *
  *===========================================================================*/
-extern TaskHandle_t allTaskListHead; // ËùÓĞÈÎÎñÁ´±íÍ·
-extern size_t freeBytesRemaining; // Ê£Óà¿ÕÏĞÄÚ´æ×Ö½ÚÊı
+extern TaskHandle_t allTaskListHead; // æ‰€æœ‰ä»»åŠ¡é“¾è¡¨å¤´
+extern size_t freeBytesRemaining; // å‰©ä½™ç©ºé—²å†…å­˜å­—èŠ‚æ•°
 
 #endif // MYRTOS_KERNEL_PRIVATE_H

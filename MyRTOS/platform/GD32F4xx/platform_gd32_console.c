@@ -7,13 +7,13 @@
 #include "gd32f4xx_rcu.h"
 #include "gd32f4xx_usart.h"
 
-// --- ƒ⁄≤ø ˝æ›∫Õ∫Í∂®“Â ---
+// --- ÂÜÖÈÉ®Êï∞ÊçÆÂíåÂÆèÂÆö‰πâ ---
 static char g_rx_buffer[PLATFORM_CONSOLE_RX_BUFFER_SIZE];
 static volatile uint16_t g_rx_write_index = 0;
 static volatile uint16_t g_rx_read_index = 0;
 static SemaphoreHandle_t g_rx_semaphore = NULL;
 
-// ∏˘æ›≈‰÷√—°‘ÒUSARTÕ‚…Ë
+// Ê†πÊçÆÈÖçÁΩÆÈÄâÊã©USARTÂ§ñËÆæ
 #if (PLATFORM_CONSOLE_USART_NUM == 0)
 #define CONSOLE_USART USART0
 #define CONSOLE_RCU_USART RCU_USART0
@@ -25,22 +25,22 @@ static SemaphoreHandle_t g_rx_semaphore = NULL;
 #define CONSOLE_IRQn USART0_IRQn
 #define CONSOLE_IRQHandler USART0_IRQHandler
 #elif (PLATFORM_CONSOLE_USART_NUM == 1)
-// USART1 ÃÌº”¿‡À∆µƒ∫Í∂®“Â ...
+// USART1 Ê∑ªÂä†Á±ª‰ººÁöÑÂÆèÂÆö‰πâ ...
 #else
 #error "Invalid PLATFORM_CONSOLE_USART_NUM selected in platform_config.h"
 #endif
 
 void Platform_fault_putchar(char c) {
-    // ‘⁄HardFault÷–£¨≤ªƒ‹Œﬁœﬁµ»¥˝°£
-    // …Ë÷√“ª∏ˆ∫œ¿Ìµƒ≥¨ ±º∆ ˝£¨∑¿÷πÀ¿À¯°£
+    // Âú®HardFault‰∏≠Ôºå‰∏çËÉΩÊó†ÈôêÁ≠âÂæÖ„ÄÇ
+    // ËÆæÁΩÆ‰∏Ä‰∏™ÂêàÁêÜÁöÑË∂ÖÊó∂ËÆ°Êï∞ÔºåÈò≤Ê≠¢Ê≠ªÈîÅ„ÄÇ
     volatile uint32_t timeout = 0x000FFFFF;
-    // µ»¥˝∑¢ÀÕª∫≥Â«¯Œ™ø’£¨µ´¥¯”–≥¨ ±
+    // Á≠âÂæÖÂèëÈÄÅÁºìÂÜ≤Âå∫‰∏∫Á©∫Ôºå‰ΩÜÂ∏¶ÊúâË∂ÖÊó∂
     while ((RESET == usart_flag_get(USART0, USART_FLAG_TBE)) && (timeout > 0)) {
         timeout--;
     }
-    // ≥¨ ±¡À£¨≥¢ ‘«ø––∑¢ÀÕ
+    // Ë∂ÖÊó∂‰∫ÜÔºåÂ∞ùËØïÂº∫Ë°åÂèëÈÄÅ
     usart_data_transmit(USART0, (uint8_t) c);
-    // »Áπ˚–Ë“™»∑±£∑¢ÀÕÕÍ≥…£¨ø…“‘‘Ÿº”“ª∏ˆ¥¯≥¨ ±µƒµ»¥˝
+    // Â¶ÇÊûúÈúÄË¶ÅÁ°Æ‰øùÂèëÈÄÅÂÆåÊàêÔºåÂèØ‰ª•ÂÜçÂä†‰∏Ä‰∏™Â∏¶Ë∂ÖÊó∂ÁöÑÁ≠âÂæÖ
     timeout = 0x000FFFFF;
     while ((RESET == usart_flag_get(USART0, USART_FLAG_TC)) && (timeout > 0)) {
         timeout--;
@@ -84,7 +84,7 @@ static const StreamInterface_t g_console_stream_interface = {
 };
 static Stream_t g_console_stream_instance;
 
-// --- π´π≤API ---
+// --- ÂÖ¨ÂÖ±API ---
 void Platform_Console_HwInit(void) {
     rcu_periph_clock_enable(CONSOLE_RCU_GPIO);
     rcu_periph_clock_enable(CONSOLE_RCU_USART);
@@ -110,7 +110,7 @@ void Platform_Console_OSInit(void) { g_rx_semaphore = Semaphore_Create(PLATFORM_
 
 StreamHandle_t Platform_Console_GetStream(void) { return &g_console_stream_instance; }
 
-// --- ÷–∂œ¥¶¿Ì∫Ø ˝ ---
+// --- ‰∏≠Êñ≠Â§ÑÁêÜÂáΩÊï∞ ---
 void CONSOLE_IRQHandler(void) {
     if (RESET != usart_interrupt_flag_get(CONSOLE_USART, USART_INT_FLAG_RBNE)) {
         char received_char = (char) usart_data_receive(CONSOLE_USART);

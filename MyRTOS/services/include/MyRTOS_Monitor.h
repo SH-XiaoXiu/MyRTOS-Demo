@@ -1,7 +1,7 @@
 /**
  * @file  MyRTOS_Monitor.h
- * @brief MyRTOS ¼à¿Ø·şÎñ - ¹«¹²½Ó¿Ú
- * @details Ìá¹©»ñÈ¡ÈÎÎñÔËĞĞÊ±×´Ì¬¡¢CPUÊ¹ÓÃÂÊ¡¢Õ»Ê¹ÓÃºÍ¶ÑÄÚ´æÍ³¼ÆµÄ¹¦ÄÜ¡£
+ * @brief MyRTOS ç›‘æ§æœåŠ¡ - å…¬å…±æ¥å£
+ * @details æä¾›è·å–ä»»åŠ¡è¿è¡Œæ—¶çŠ¶æ€ã€CPUä½¿ç”¨ç‡ã€æ ˆä½¿ç”¨å’Œå †å†…å­˜ç»Ÿè®¡çš„åŠŸèƒ½ã€‚
  */
 #ifndef MYRTOS_MONITOR_H
 #define MYRTOS_MONITOR_H
@@ -18,66 +18,66 @@
 #include "MyRTOS_Monitor_Standards.h"
 
 /**
- * @brief ÈÎÎñÍ³¼ÆĞÅÏ¢½á¹¹Ìå (¶ÔÍâ±©Â¶)¡£
+ * @brief ä»»åŠ¡ç»Ÿè®¡ä¿¡æ¯ç»“æ„ä½“ (å¯¹å¤–æš´éœ²)ã€‚
  */
 typedef struct {
-    TaskHandle_t task_handle; // ÈÎÎñ¾ä±ú
-    const char *task_name; // ÈÎÎñÃû³Æ
-    TaskState_t state; // µ±Ç°×´Ì¬ (Running, Ready, Blocked...)
-    uint8_t current_priority; // µ±Ç°ÓÅÏÈ¼¶ (¿ÉÄÜÒòÓÅÏÈ¼¶¼Ì³Ğ¶ø¸Ä±ä)
-    uint8_t base_priority; // »ù´¡ÓÅÏÈ¼¶
-    uint32_t stack_size_bytes; // ×ÜÕ»´óĞ¡ (×Ö½Ú)
-    uint32_t stack_high_water_mark_bytes; // Õ»ÀúÊ·×î¸ßÊ¹ÓÃÁ¿ (×Ö½Ú)£¬ÖµÔ½Ğ¡±íÊ¾Ê£ÓàÕ»¿Õ¼äÔ½¶à
-    uint64_t total_runtime; // ×ÜÔËĞĞÊ±¼ä (µ¥Î»: ¸ß¾«¶Ètimer ticks)
-    uint32_t cpu_usage_permille; // CPUÊ¹ÓÃÂÊ (Ç§·Ö±È)£¬ĞèÓÉµ÷ÓÃÕßÔÚÁ½¸öÊ±¼äµãÉÏ¼ÆËã²îÖµµÃ³ö
+    TaskHandle_t task_handle; // ä»»åŠ¡å¥æŸ„
+    const char *task_name; // ä»»åŠ¡åç§°
+    TaskState_t state; // å½“å‰çŠ¶æ€ (Running, Ready, Blocked...)
+    uint8_t current_priority; // å½“å‰ä¼˜å…ˆçº§ (å¯èƒ½å› ä¼˜å…ˆçº§ç»§æ‰¿è€Œæ”¹å˜)
+    uint8_t base_priority; // åŸºç¡€ä¼˜å…ˆçº§
+    uint32_t stack_size_bytes; // æ€»æ ˆå¤§å° (å­—èŠ‚)
+    uint32_t stack_high_water_mark_bytes; // æ ˆå†å²æœ€é«˜ä½¿ç”¨é‡ (å­—èŠ‚)ï¼Œå€¼è¶Šå°è¡¨ç¤ºå‰©ä½™æ ˆç©ºé—´è¶Šå¤š
+    uint64_t total_runtime; // æ€»è¿è¡Œæ—¶é—´ (å•ä½: é«˜ç²¾åº¦timer ticks)
+    uint32_t cpu_usage_permille; // CPUä½¿ç”¨ç‡ (åƒåˆ†æ¯”)ï¼Œéœ€ç”±è°ƒç”¨è€…åœ¨ä¸¤ä¸ªæ—¶é—´ç‚¹ä¸Šè®¡ç®—å·®å€¼å¾—å‡º
 } TaskStats_t;
 
 
 /**
- * @brief ¶ÑÄÚ´æÍ³¼ÆĞÅÏ¢½á¹¹Ìå (¶ÔÍâ±©Â¶)¡£
+ * @brief å †å†…å­˜ç»Ÿè®¡ä¿¡æ¯ç»“æ„ä½“ (å¯¹å¤–æš´éœ²)ã€‚
  */
 typedef struct {
-    size_t total_heap_size; // ×Ü¶Ñ´óĞ¡ (×Ö½Ú)
-    size_t free_bytes_remaining; // µ±Ç°Ê£Óà¿ÕÏĞ×Ö½ÚÊı
-    size_t minimum_ever_free_bytes; // ÀúÊ·×îĞ¡Ê£Óà×Ö½ÚÊı (¶ÑµÄË®Ïß)
+    size_t total_heap_size; // æ€»å †å¤§å° (å­—èŠ‚)
+    size_t free_bytes_remaining; // å½“å‰å‰©ä½™ç©ºé—²å­—èŠ‚æ•°
+    size_t minimum_ever_free_bytes; // å†å²æœ€å°å‰©ä½™å­—èŠ‚æ•° (å †çš„æ°´çº¿)
 } HeapStats_t;
 
 
 /**
- * @brief Monitor ³õÊ¼»¯ÅäÖÃ½á¹¹Ìå (ÓÃÓÚÒÀÀµ×¢Èë)¡£
+ * @brief Monitor åˆå§‹åŒ–é…ç½®ç»“æ„ä½“ (ç”¨äºä¾èµ–æ³¨å…¥)ã€‚
  */
 typedef struct {
-    /** ±ØĞëÌá¹©Ò»¸ö»ñÈ¡¸ß¾«¶ÈÊ±ÖÓÖµµÄº¯ÊıÖ¸Õë£¬ÓÃÓÚÍ³¼ÆÈÎÎñÔËĞĞÊ±¼ä */
+    /** å¿…é¡»æä¾›ä¸€ä¸ªè·å–é«˜ç²¾åº¦æ—¶é’Ÿå€¼çš„å‡½æ•°æŒ‡é’ˆï¼Œç”¨äºç»Ÿè®¡ä»»åŠ¡è¿è¡Œæ—¶é—´ */
     MonitorGetHiresTimerValueFn get_hires_timer_value;
 } MonitorConfig_t;
 
 /**
- * @brief ³õÊ¼»¯Monitor·şÎñ¡£
- * @details ´Ëº¯Êı»áÏòÄÚºË×¢²áÊÂ¼ş¼àÌıÆ÷£¬ÒÔ±»¶¯·½Ê½ÊÕ¼¯Í³¼ÆÊı¾İ£¬¿ªÏú¼«Ğ¡¡£
- * @param config [in] Ö¸ÏòMonitorÅäÖÃµÄÖ¸Õë¡£
- * @return int 0 ³É¹¦, -1 Ê§°Ü (ÈçÅäÖÃÎª¿Õ)¡£
+ * @brief åˆå§‹åŒ–MonitoræœåŠ¡ã€‚
+ * @details æ­¤å‡½æ•°ä¼šå‘å†…æ ¸æ³¨å†Œäº‹ä»¶ç›‘å¬å™¨ï¼Œä»¥è¢«åŠ¨æ–¹å¼æ”¶é›†ç»Ÿè®¡æ•°æ®ï¼Œå¼€é”€æå°ã€‚
+ * @param config [in] æŒ‡å‘Monitoré…ç½®çš„æŒ‡é’ˆã€‚
+ * @return int 0 æˆåŠŸ, -1 å¤±è´¥ (å¦‚é…ç½®ä¸ºç©º)ã€‚
  */
 int Monitor_Init(const MonitorConfig_t *config);
 
 /**
- * @brief (ÄÚºËAPIÀ©Õ¹) »ñÈ¡ÈÎÎñÁ´±íÖĞµÄÏÂÒ»¸öÈÎÎñ¾ä±ú¡£
- * @details ÓÃÓÚ±éÀúÏµÍ³ÖĞËùÓĞÈÎÎñ¡£
- * @param previous_handle ÉÏÒ»¸öÈÎÎñµÄ
- * @return TaskHandle_t ÏÂÒ»¸öÈÎÎñµÄ¾ä±ú, »ò NULL Èç¹ûÒÑ±éÀúÍê¡£
+ * @brief (å†…æ ¸APIæ‰©å±•) è·å–ä»»åŠ¡é“¾è¡¨ä¸­çš„ä¸‹ä¸€ä¸ªä»»åŠ¡å¥æŸ„ã€‚
+ * @details ç”¨äºéå†ç³»ç»Ÿä¸­æ‰€æœ‰ä»»åŠ¡ã€‚
+ * @param previous_handle ä¸Šä¸€ä¸ªä»»åŠ¡çš„
+ * @return TaskHandle_t ä¸‹ä¸€ä¸ªä»»åŠ¡çš„å¥æŸ„, æˆ– NULL å¦‚æœå·²éå†å®Œã€‚
  */
 TaskHandle_t Monitor_GetNextTask(TaskHandle_t previous_handle);
 
 /**
- * @brief »ñÈ¡Ö¸¶¨ÈÎÎñµÄÏêÏ¸Í³¼ÆĞÅÏ¢¡£
- * @param task_h      [in]  Òª²éÑ¯µÄÈÎÎñ¾ä±ú¡£
- * @param p_stats_out [out] ÓÃÓÚÌî³äÍ³¼ÆĞÅÏ¢µÄ½á¹¹ÌåÖ¸Õë¡£
- * @return int 0 ³É¹¦, -1 Ê§°Ü (Èç¾ä±úÎŞĞ§)¡£
+ * @brief è·å–æŒ‡å®šä»»åŠ¡çš„è¯¦ç»†ç»Ÿè®¡ä¿¡æ¯ã€‚
+ * @param task_h      [in]  è¦æŸ¥è¯¢çš„ä»»åŠ¡å¥æŸ„ã€‚
+ * @param p_stats_out [out] ç”¨äºå¡«å……ç»Ÿè®¡ä¿¡æ¯çš„ç»“æ„ä½“æŒ‡é’ˆã€‚
+ * @return int 0 æˆåŠŸ, -1 å¤±è´¥ (å¦‚å¥æŸ„æ— æ•ˆ)ã€‚
  */
 int Monitor_GetTaskInfo(TaskHandle_t task_h, TaskStats_t *p_stats_out);
 
 /**
- * @brief »ñÈ¡¶ÑÄÚ´æµÄÍ³¼ÆĞÅÏ¢¡£
- * @param p_stats_out [out] ÓÃÓÚÌî³ä¶ÑÍ³¼ÆĞÅÏ¢µÄ½á¹¹ÌåÖ¸Õë¡£
+ * @brief è·å–å †å†…å­˜çš„ç»Ÿè®¡ä¿¡æ¯ã€‚
+ * @param p_stats_out [out] ç”¨äºå¡«å……å †ç»Ÿè®¡ä¿¡æ¯çš„ç»“æ„ä½“æŒ‡é’ˆã€‚
  */
 void Monitor_GetHeapStats(HeapStats_t *p_stats_out);
 

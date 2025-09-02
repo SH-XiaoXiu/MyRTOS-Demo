@@ -4,14 +4,14 @@
 #include "gd32f4xx_rcu.h"
 #include "gd32f4xx_timer.h"
 
-// ¸ù¾İÅäÖÃÑ¡ÔñTIMERÍâÉè
+// æ ¹æ®é…ç½®é€‰æ‹©TIMERå¤–è®¾
 #if (PLATFORM_HIRES_TIMER_NUM == 1)
 #define HIRES_TIMER TIMER1
 #define HIRES_TIMER_RCU RCU_TIMER1
 #elif (PLATFORM_HIRES_TIMER_NUM == 2)
 #define HIRES_TIMER TIMER2
 #define HIRES_TIMER_RCU RCU_TIMER2
-// ... ÎªÆäËû¶¨Ê±Æ÷Ìí¼Óºê¶¨Òå ...
+// ... ä¸ºå…¶ä»–å®šæ—¶å™¨æ·»åŠ å®å®šä¹‰ ...
 #else
 #error "Invalid PLATFORM_HIRES_TIMER_NUM selected in platform_config.h"
 #endif
@@ -21,11 +21,11 @@ void Platform_HiresTimer_Init(void) {
     rcu_periph_clock_enable(HIRES_TIMER_RCU);
     timer_deinit(HIRES_TIMER);
     timer_struct_para_init(&timer_initpara);
-    // ÅäÖÃÔ¤·ÖÆµÆ÷£¬Ê¹¶¨Ê±Æ÷ÆµÂÊ´ïµ½ÅäÖÃÖµ
+    // é…ç½®é¢„åˆ†é¢‘å™¨ï¼Œä½¿å®šæ—¶å™¨é¢‘ç‡è¾¾åˆ°é…ç½®å€¼
     timer_initpara.prescaler = (uint16_t) (SystemCoreClock / PLATFORM_HIRES_TIMER_FREQ_HZ - 1);
     timer_initpara.alignedmode = TIMER_COUNTER_EDGE;
     timer_initpara.counterdirection = TIMER_COUNTER_UP;
-    timer_initpara.period = 0xFFFFFFFF; // 32Î»×ÔÓÉÔËĞĞ
+    timer_initpara.period = 0xFFFFFFFF; // 32ä½è‡ªç”±è¿è¡Œ
     timer_initpara.clockdivision = TIMER_CKDIV_DIV1;
     timer_initpara.repetitioncounter = 0;
     timer_init(HIRES_TIMER, &timer_initpara);

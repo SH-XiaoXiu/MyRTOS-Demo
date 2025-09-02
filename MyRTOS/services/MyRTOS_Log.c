@@ -13,32 +13,32 @@
 #define MYRTOS_LOG_TASK_STACK_SIZE 2048
 #endif
 #ifndef MYRTOS_LOG_TASK_PRIORITY
-#define MYRTOS_LOG_TASK_PRIORITY (MYRTOS_MAX_PRIORITIES - 1) // Ä¬ÈÏ¸ßÓÅÏÈ¼¶
+#define MYRTOS_LOG_TASK_PRIORITY (MYRTOS_MAX_PRIORITIES - 1) // é»˜è®¤é«˜ä¼˜å…ˆçº§
 #endif
 #ifndef MYRTOS_LOG_FORMAT
 #define MYRTOS_LOG_FORMAT "[%5llu][%c][%s][%s] "
 #endif
 
-// ·þÎñµÄÄÚ²¿×´Ì¬
+// æœåŠ¡çš„å†…éƒ¨çŠ¶æ€
 static LogLevel_t g_log_level = LOG_LEVEL_DEBUG;
 static QueueHandle_t g_io_request_queue;
 
-// ÈÎÎñÊµÏÖ
+// ä»»åŠ¡å®žçŽ°
 static void IOServer_Task(void *param) {
-    // ÖØÃüÃûÎª¸üÍ¨ÓÃµÄÃû×Ö
+    // é‡å‘½åä¸ºæ›´é€šç”¨çš„åå­—
     (void) param;
     AsyncWriteRequest_t request;
     for (;;) {
         if (Queue_Receive(g_io_request_queue, &request, MYRTOS_MAX_DELAY) == 1) {
             if (request.target_stream) {
-                // Ö´ÐÐÕæÕýµÄÐ´Èë²Ù×÷
+                // æ‰§è¡ŒçœŸæ­£çš„å†™å…¥æ“ä½œ
                 Stream_Write(request.target_stream, request.message, strlen(request.message), MYRTOS_MAX_DELAY);
             }
         }
     }
 }
 
-// ¹«¹²APIÊµÏÖ
+// å…¬å…±APIå®žçŽ°
 int Log_Init(void) {
     g_io_request_queue = Queue_Create(MYRTOS_LOG_QUEUE_LENGTH, sizeof(AsyncWriteRequest_t));
     if (!g_io_request_queue)
@@ -129,7 +129,7 @@ void MyRTOS_AsyncVprintf(StreamHandle_t stream, const char *format, va_list args
     request.target_stream = stream;
     int len = vsnprintf(request.message, sizeof(request.message), format, args);
 
-    // È·±£ÒÔ¿Õ×Ö·û½áÎ²
+    // ç¡®ä¿ä»¥ç©ºå­—ç¬¦ç»“å°¾
     if (len >= sizeof(request.message)) {
         request.message[sizeof(request.message) - 1] = '\0';
     }

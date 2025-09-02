@@ -1,7 +1,7 @@
 /**
  * @file  MyRTOS_Stream_Def.h
- * @brief MyRTOS IOÁ÷·şÎñ - ºËĞÄ¶¨Òå
- * @details ¶¨ÒåÁËÁ÷½Ó¿ÚµÄµ×²ã½á¹¹ºÍÀàĞÍ, ÊÇIO¡¢ÈÕÖ¾¡¢ShellµÈÄ£¿éµÄ»ù´¡¡£
+ * @brief MyRTOS IOæµæœåŠ¡ - æ ¸å¿ƒå®šä¹‰
+ * @details å®šä¹‰äº†æµæ¥å£çš„åº•å±‚ç»“æ„å’Œç±»å‹, æ˜¯IOã€æ—¥å¿—ã€Shellç­‰æ¨¡å—çš„åŸºç¡€ã€‚
  */
 
 #ifndef MYRTOS_STREAM_DEF_H
@@ -19,25 +19,25 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// Ç°ÖÃÉùÃ÷Á÷µÄ½á¹¹Ìå
+// å‰ç½®å£°æ˜æµçš„ç»“æ„ä½“
 struct Stream_t;
 
-/** @brief Á÷µÄ¾ä±ú£¨Handle£©ÀàĞÍ£¬ÎªÖ¸ÏòÁ÷½á¹¹ÌåµÄ²»Í¸Ã÷Ö¸Õë¡£ */
+/** @brief æµçš„å¥æŸ„ï¼ˆHandleï¼‰ç±»å‹ï¼Œä¸ºæŒ‡å‘æµç»“æ„ä½“çš„ä¸é€æ˜æŒ‡é’ˆã€‚ */
 typedef struct Stream_t *StreamHandle_t;
 
-/** @brief Á÷µÄ¶Áº¯ÊıÖ¸Õë£¨Function Pointer£©ÀàĞÍ¹æ·¶¡£ */
+/** @brief æµçš„è¯»å‡½æ•°æŒ‡é’ˆï¼ˆFunction Pointerï¼‰ç±»å‹è§„èŒƒã€‚ */
 typedef size_t (*StreamReadFn_t)(StreamHandle_t stream, void *buffer, size_t bytes_to_read, uint32_t block_ticks);
 
-/** @brief Á÷µÄĞ´º¯ÊıÖ¸Õë£¨Function Pointer£©ÀàĞÍ¹æ·¶¡£ */
+/** @brief æµçš„å†™å‡½æ•°æŒ‡é’ˆï¼ˆFunction Pointerï¼‰ç±»å‹è§„èŒƒã€‚ */
 typedef size_t (*StreamWriteFn_t)(StreamHandle_t stream, const void *buffer, size_t bytes_to_write,
                                   uint32_t block_ticks);
 
-/** @brief Á÷µÄ¿ØÖÆº¯ÊıÖ¸Õë£¨Function Pointer£©ÀàĞÍ¹æ·¶¡£ */
+/** @brief æµçš„æ§åˆ¶å‡½æ•°æŒ‡é’ˆï¼ˆFunction Pointerï¼‰ç±»å‹è§„èŒƒã€‚ */
 typedef int (*StreamControlFn_t)(StreamHandle_t stream, int command, void *arg);
 
 /**
- * @brief Á÷½Ó¿Ú£¨Interface£©½á¹¹Ìå¶¨Òå¡£
- * @details ÕâÊÇÒ»¸ö°üº¬ËùÓĞÁ÷²Ù×÷º¯ÊıÖ¸ÕëµÄ¡°Ğéº¯Êı±í¡±£¬¶¨ÒåÁËÒ»ÖÖÁ÷µÄĞĞÎª¡£
+ * @brief æµæ¥å£ï¼ˆInterfaceï¼‰ç»“æ„ä½“å®šä¹‰ã€‚
+ * @details è¿™æ˜¯ä¸€ä¸ªåŒ…å«æ‰€æœ‰æµæ“ä½œå‡½æ•°æŒ‡é’ˆçš„â€œè™šå‡½æ•°è¡¨â€ï¼Œå®šä¹‰äº†ä¸€ç§æµçš„è¡Œä¸ºã€‚
  */
 typedef struct {
     StreamReadFn_t read;
@@ -46,12 +46,12 @@ typedef struct {
 } StreamInterface_t;
 
 /**
- * @brief Á÷µÄ»ùÀà£¨Base Class£©½á¹¹Ìå¡£
- * @details ËùÓĞ¾ßÌåµÄÁ÷¶ÔÏó¶¼±ØĞëÒÔ´Ë½á¹¹Ìå×÷ÎªÆäµÚÒ»¸ö³ÉÔ±£¬ÒÔÖ§³ÖÍ³Ò»µÄ½Ó¿Úµ÷ÓÃ¡£
+ * @brief æµçš„åŸºç±»ï¼ˆBase Classï¼‰ç»“æ„ä½“ã€‚
+ * @details æ‰€æœ‰å…·ä½“çš„æµå¯¹è±¡éƒ½å¿…é¡»ä»¥æ­¤ç»“æ„ä½“ä½œä¸ºå…¶ç¬¬ä¸€ä¸ªæˆå‘˜ï¼Œä»¥æ”¯æŒç»Ÿä¸€çš„æ¥å£è°ƒç”¨ã€‚
  */
 typedef struct Stream_t {
-    const StreamInterface_t *p_iface; // Ö¸ÏòÊµÏÖÁË´ËÁ÷¹¦ÄÜµÄ½Ó¿Ú±í
-    void *p_private_data; // Ö¸Ïò¾ßÌåÁ÷µÄË½ÓĞÊı¾İ
+    const StreamInterface_t *p_iface; // æŒ‡å‘å®ç°äº†æ­¤æµåŠŸèƒ½çš„æ¥å£è¡¨
+    void *p_private_data; // æŒ‡å‘å…·ä½“æµçš„ç§æœ‰æ•°æ®
 } Stream_t;
 
 #endif

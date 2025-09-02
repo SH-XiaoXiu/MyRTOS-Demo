@@ -18,7 +18,7 @@
 #include "platform_hires_timer.h"
 extern ShellHandle_t g_platform_shell_handle;
 
-// --- ÃüÁîÊµÏÖº¯Êı ---
+// --- å‘½ä»¤å®ç°å‡½æ•° ---
 static int cmd_help(ShellHandle_t shell_h, int argc, char *argv[]);
 
 static int cmd_reboot(ShellHandle_t shell_h, int argc, char *argv[]);
@@ -26,9 +26,9 @@ static int cmd_reboot(ShellHandle_t shell_h, int argc, char *argv[]);
 static int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]);
 
 void platform_register_default_commands(ShellHandle_t shell_h) {
-    Shell_RegisterCommand(shell_h, "help", "ÏÔÊ¾ËùÓĞ¿ÉÓÃÃüÁî", cmd_help);
-    Shell_RegisterCommand(shell_h, "reboot", "ÖØÆôÏµÍ³", cmd_reboot);
-    Shell_RegisterCommand(shell_h, "ps", "ÏÔÊ¾ÏµÍ³×´Ì¬", cmd_ps);
+    Shell_RegisterCommand(shell_h, "help", "æ˜¾ç¤ºæ‰€æœ‰å¯ç”¨å‘½ä»¤", cmd_help);
+    Shell_RegisterCommand(shell_h, "reboot", "é‡å¯ç³»ç»Ÿ", cmd_reboot);
+    Shell_RegisterCommand(shell_h, "ps", "æ˜¾ç¤ºç³»ç»ŸçŠ¶æ€", cmd_ps);
 }
 
 
@@ -67,7 +67,7 @@ static uint8_t g_is_first_ps_run = 1;
 
 int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
     (void) argc;
-    (void) argv; // Î´Ê¹ÓÃµÄ²ÎÊı
+    (void) argv; // æœªä½¿ç”¨çš„å‚æ•°
     StreamHandle_t stream = Shell_GetStream(shell_h);
 
     const int COL_WIDTH_NAME = 16;
@@ -78,11 +78,11 @@ int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
     TaskStats_t current_stats[MYRTOS_MAX_CONCURRENT_TASKS];
     int current_stats_count = 0;
 
-    // (ÕâÀïÊ¹ÓÃÁËÁÙ½çÇø£¬ÒòÎªÎÒÃÇÒª±éÀúÒ»¸ö¿ÉÄÜÔÚÖĞ¶ÏÖĞ±»ĞŞ¸ÄµÄÁ´±í)
+    // (è¿™é‡Œä½¿ç”¨äº†ä¸´ç•ŒåŒºï¼Œå› ä¸ºæˆ‘ä»¬è¦éå†ä¸€ä¸ªå¯èƒ½åœ¨ä¸­æ–­ä¸­è¢«ä¿®æ”¹çš„é“¾è¡¨)
     MyRTOS_Port_EnterCritical();
     TaskHandle_t task_h = Monitor_GetNextTask(NULL);
     while (task_h != NULL && current_stats_count < MYRTOS_MAX_CONCURRENT_TASKS) {
-        // Monitor_GetTaskInfo ÏÖÔÚÊÇ°²È«µÄ£¬ÒòÎªËüÄÚ²¿µÄÁÙ½çÇøºÜ¶Ì
+        // Monitor_GetTaskInfo ç°åœ¨æ˜¯å®‰å…¨çš„ï¼Œå› ä¸ºå®ƒå†…éƒ¨çš„ä¸´ç•ŒåŒºå¾ˆçŸ­
         if (Monitor_GetTaskInfo(task_h, &current_stats[current_stats_count]) == 0) {
             current_stats_count++;
         }
@@ -90,33 +90,33 @@ int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
     }
     MyRTOS_Port_ExitCritical();
 
-    // »ñÈ¡µ±Ç°¸ß¾«¶ÈÊ±¼ä£¬²¢¼ÆËã×ÜÊ±¼äÔöÁ¿
+    // è·å–å½“å‰é«˜ç²¾åº¦æ—¶é—´ï¼Œå¹¶è®¡ç®—æ€»æ—¶é—´å¢é‡
     uint32_t now_hires = Platform_Timer_GetHiresValue();
     uint32_t total_hires_delta;
 
     if (g_is_first_ps_run) {
-        // Ê×´ÎÔËĞĞÊ±£¬×ÜÊ±¼äÔöÁ¿Ã»ÓĞÒâÒå£¬µ«ĞèÒªÒ»¸ö·ÇÁãµÄ·ÖÄ¸
+        // é¦–æ¬¡è¿è¡Œæ—¶ï¼Œæ€»æ—¶é—´å¢é‡æ²¡æœ‰æ„ä¹‰ï¼Œä½†éœ€è¦ä¸€ä¸ªéé›¶çš„åˆ†æ¯
         total_hires_delta = 1;
     } else {
         if (now_hires >= g_last_ps_hires_time) {
             total_hires_delta = now_hires - g_last_ps_hires_time;
         } else {
-            // ÕıÈ·´¦Àí32Î»¼ÆÊ±Æ÷»ØÈÆ
+            // æ­£ç¡®å¤„ç†32ä½è®¡æ—¶å™¨å›ç»•
             total_hires_delta = (0xFFFFFFFF - g_last_ps_hires_time) + now_hires + 1;
         }
-        // ·ÀÖ¹³ıÁã´íÎó
+        // é˜²æ­¢é™¤é›¶é”™è¯¯
         if (total_hires_delta == 0) {
             total_hires_delta = 1;
         }
     }
 
-    // ¼ÆËãÈÎÎñCPUÊ¹ÓÃÂÊ
+    // è®¡ç®—ä»»åŠ¡CPUä½¿ç”¨ç‡
     uint64_t total_task_runtime_delta = 0;
     TaskStats_t *idle_task_stats = NULL;
 
     for (int i = 0; i < current_stats_count; ++i) {
         uint64_t last_task_runtime = 0;
-        // ²éÕÒ¸ÃÈÎÎñÉÏÒ»´ÎµÄÍ³¼Æ¿ìÕÕ
+        // æŸ¥æ‰¾è¯¥ä»»åŠ¡ä¸Šä¸€æ¬¡çš„ç»Ÿè®¡å¿«ç…§
         for (int j = 0; j < g_last_stats_count; ++j) {
             if (current_stats[i].task_handle == g_last_stats[j].task_handle) {
                 last_task_runtime = g_last_stats[j].total_runtime;
@@ -126,25 +126,25 @@ int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
 
         uint64_t task_runtime_delta = current_stats[i].total_runtime - last_task_runtime;
 
-        // Ê¹ÓÃÇ§·Ö±È (permille) ½øĞĞ¼ÆËãÒÔÌá¸ß¾«¶È
+        // ä½¿ç”¨åƒåˆ†æ¯” (permille) è¿›è¡Œè®¡ç®—ä»¥æé«˜ç²¾åº¦
         current_stats[i].cpu_usage_permille = (uint32_t) ((task_runtime_delta * 1000) / total_hires_delta);
 
-        // ÀÛ¼ÓËùÓĞÈÎÎñµÄÔËĞĞÊ±¼äÔöÁ¿£¬ÓÃÓÚ¼ÆËã×ÜCPUÊ¹ÓÃÂÊ
+        // ç´¯åŠ æ‰€æœ‰ä»»åŠ¡çš„è¿è¡Œæ—¶é—´å¢é‡ï¼Œç”¨äºè®¡ç®—æ€»CPUä½¿ç”¨ç‡
         total_task_runtime_delta += task_runtime_delta;
 
-        // ÕÒµ½¿ÕÏĞÈÎÎñµÄÍ³¼ÆĞÅÏ¢
+        // æ‰¾åˆ°ç©ºé—²ä»»åŠ¡çš„ç»Ÿè®¡ä¿¡æ¯
         if (current_stats[i].task_handle == idleTask) {
             idle_task_stats = &current_stats[i];
         }
     }
 
-    // ´òÓ¡±íÍ· ---
+    // æ‰“å°è¡¨å¤´ ---
     Stream_Printf(stream, "\nMyRTOS Monitor (Uptime: %llu ms)\n", TICK_TO_MS(MyRTOS_GetTick()));
     Stream_Printf(stream, "%-*s %-4s %-8s %-10s %-18s %-8s %s\n", COL_WIDTH_NAME, "Task Name", "ID", "State",
                   "Prio(B/C)", "Stack (Used/Size)", "CPU%", "Runtime(us)");
     Stream_Printf(stream, "%s\n", SEPARATOR_LINE);
 
-    // ´òÓ¡Ã¿¸öÈÎÎñµÄĞÅÏ¢
+    // æ‰“å°æ¯ä¸ªä»»åŠ¡çš„ä¿¡æ¯
     for (int i = 0; i < current_stats_count; ++i) {
         TaskStats_t *s = &current_stats[i];
         char prio_str[12];
@@ -153,26 +153,26 @@ int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
         snprintf(stack_str, sizeof(stack_str), "%u/%u", (unsigned) s->stack_high_water_mark_bytes,
                  (unsigned) s->stack_size_bytes);
 
-        // ½«¸ß¾«¶ÈÊ±ÖÓµÄÔ­Ê¼tick×ª»»ÎªÎ¢Ãë(us)
-        // ¼ÙÉè platform_get_hires_timer_value µÄÆµÂÊÊÇ 1MHz (1 tick = 1 us)
+        // å°†é«˜ç²¾åº¦æ—¶é’Ÿçš„åŸå§‹tickè½¬æ¢ä¸ºå¾®ç§’(us)
+        // å‡è®¾ platform_get_hires_timer_value çš„é¢‘ç‡æ˜¯ 1MHz (1 tick = 1 us)
         uint64_t runtime_us = s->total_runtime;
 
         if (g_is_first_ps_run) {
             Stream_Printf(stream, "%-*s %-4u %-8s %-10s %-18s %-8s %llu\n", COL_WIDTH_NAME, s->task_name,
                           (unsigned) Task_GetId(s->task_handle), taskStateToStr[s->state], prio_str, stack_str,
-                          "n/a", // Ê×´ÎÔËĞĞ²»¼ÆËãCPUÕ¼ÓÃÂÊ
+                          "n/a", // é¦–æ¬¡è¿è¡Œä¸è®¡ç®—CPUå ç”¨ç‡
                           runtime_us);
         } else {
             Stream_Printf(stream, "%-*s %-4u %-8s %-10s %-18s %3u.%-1u    %llu\n", COL_WIDTH_NAME, s->task_name,
                           (unsigned) Task_GetId(s->task_handle), taskStateToStr[s->state], prio_str, stack_str,
-                          s->cpu_usage_permille / 10, s->cpu_usage_permille % 10, // ´òÓ¡Îª xx.x%
+                          s->cpu_usage_permille / 10, s->cpu_usage_permille % 10, // æ‰“å°ä¸º xx.x%
                           runtime_us);
         }
     }
 
     Stream_Printf(stream, "%s\n", SEPARATOR_LINE);
 
-    // ´òÓ¡¶ÑĞÅÏ¢ºÍ×ÜCPUÊ¹ÓÃÂÊ
+    // æ‰“å°å †ä¿¡æ¯å’Œæ€»CPUä½¿ç”¨ç‡
     HeapStats_t heap;
     Monitor_GetHeapStats(&heap);
     Stream_Printf(stream, "Heap Info -> Total: %-5u | Free: %-5u | Min Ever Free: %-5u\n",
@@ -180,13 +180,13 @@ int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
                   (unsigned) heap.minimum_ever_free_bytes);
 
     if (!g_is_first_ps_run) {
-        // Í¨¹ı¿ÕÏĞÈÎÎñµÄCPUÕ¼ÓÃÂÊÀ´·´ÍÆ×ÜµÄ·±Ã¦ÂÊ
+        // é€šè¿‡ç©ºé—²ä»»åŠ¡çš„CPUå ç”¨ç‡æ¥åæ¨æ€»çš„ç¹å¿™ç‡
         uint32_t idle_permille = 0;
         if (idle_task_stats != NULL) {
             idle_permille = idle_task_stats->cpu_usage_permille;
         }
         if (idle_permille > 1000)
-            idle_permille = 1000; // ·ÀÖ¹¼ÆËãÎó²î³¬¹ı100%
+            idle_permille = 1000; // é˜²æ­¢è®¡ç®—è¯¯å·®è¶…è¿‡100%
 
         uint32_t busy_permille = 1000 - idle_permille;
 
@@ -194,40 +194,40 @@ int cmd_ps(ShellHandle_t shell_h, int argc, char *argv[]) {
                       busy_permille % 10, idle_permille / 10, idle_permille % 10);
     }
 
-    // ±£´æµ±Ç°×´Ì¬£¬×÷ÎªÏÂÒ»´Î¼ÆËãµÄ»ù×¼
+    // ä¿å­˜å½“å‰çŠ¶æ€ï¼Œä½œä¸ºä¸‹ä¸€æ¬¡è®¡ç®—çš„åŸºå‡†
     memcpy(g_last_stats, current_stats, sizeof(TaskStats_t) * current_stats_count);
     g_last_stats_count = current_stats_count;
     g_last_ps_hires_time = now_hires;
-    g_is_first_ps_run = 0; // Çå³ıÊ×´ÎÔËĞĞ±ê¼Ç
+    g_is_first_ps_run = 0; // æ¸…é™¤é¦–æ¬¡è¿è¡Œæ ‡è®°
 
     return 0;
 }
 
 
 /**
- * @brief ÏòÆ½Ì¨×¢²áÒ»¸ö»ò¶à¸öÓÃ»§×Ô¶¨ÒåµÄShellÃüÁî¡£
+ * @brief å‘å¹³å°æ³¨å†Œä¸€ä¸ªæˆ–å¤šä¸ªç”¨æˆ·è‡ªå®šä¹‰çš„Shellå‘½ä»¤ã€‚
  */
 int Platform_RegisterShellCommands(const struct ShellCommand_t *commands, size_t command_count) {
-    // Ç¿ÖÆ×ª»»ÀàĞÍ
+    // å¼ºåˆ¶è½¬æ¢ç±»å‹
     const ShellCommand_t *cmd_array = (const ShellCommand_t *) commands;
     int result = 0;
 
     if (g_platform_shell_handle == NULL) {
-        // Shell ·şÎñÎ´³õÊ¼»¯»òÎ´Ê¹ÄÜ
+        // Shell æœåŠ¡æœªåˆå§‹åŒ–æˆ–æœªä½¿èƒ½
         return -1;
     }
 
     for (size_t i = 0; i < command_count; ++i) {
-        // Öğ¸öµ÷ÓÃµ×²ãµÄ¶¯Ì¬×¢²áº¯Êı
+        // é€ä¸ªè°ƒç”¨åº•å±‚çš„åŠ¨æ€æ³¨å†Œå‡½æ•°
         result = Shell_RegisterCommand(g_platform_shell_handle, cmd_array[i].name, cmd_array[i].help,
                                        cmd_array[i].callback);
         if (result != 0) {
-            // Èç¹ûÆäÖĞÒ»¸öÃüÁî×¢²áÊ§°Ü£¬Á¢¼´Í£Ö¹²¢·µ»Ø´íÎó´úÂë
-            // -2: ÃüÁîÒÑ´æÔÚ, -3: ÄÚ´æ²»×ã
+            // å¦‚æœå…¶ä¸­ä¸€ä¸ªå‘½ä»¤æ³¨å†Œå¤±è´¥ï¼Œç«‹å³åœæ­¢å¹¶è¿”å›é”™è¯¯ä»£ç 
+            // -2: å‘½ä»¤å·²å­˜åœ¨, -3: å†…å­˜ä¸è¶³
             return result;
         }
     }
-    return 0; // ËùÓĞÃüÁî¶¼³É¹¦×¢²á
+    return 0; // æ‰€æœ‰å‘½ä»¤éƒ½æˆåŠŸæ³¨å†Œ
 }
 
 

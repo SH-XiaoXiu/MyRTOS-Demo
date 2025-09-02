@@ -1,39 +1,39 @@
 /**
- *  @brief MyRTOS À©Õ¹·þÎñ²ã - È«¾ÖÅäÖÃÎÄ¼þ
+ *  @brief MyRTOS æ‰©å±•æœåŠ¡å±‚ - å…¨å±€é…ç½®æ–‡ä»¶
  */
 #ifndef MYRTOS_SERVICE_CONFIG_H
 #define MYRTOS_SERVICE_CONFIG_H
 
 /*==================================================================================================
- *                                    Ä£¿é¹¦ÄÜ¿ª¹Ø
+ *                                    æ¨¡å—åŠŸèƒ½å¼€å…³
  *================================================================================================*/
 
-/** @brief ÆôÓÃ IO Á÷·þÎñÄ£¿é (ÈÕÖ¾ºÍShellÄ£¿éµÄ»ù´¡) */
+/** @brief å¯ç”¨ IO æµæœåŠ¡æ¨¡å— (æ—¥å¿—å’ŒShellæ¨¡å—çš„åŸºç¡€) */
 #define MYRTOS_SERVICE_IO_ENABLE 1
 
-/** @brief ÆôÓÃÈí¼þ¶¨Ê±Æ÷·þÎñÄ£¿é */
+/** @brief å¯ç”¨è½¯ä»¶å®šæ—¶å™¨æœåŠ¡æ¨¡å— */
 #define MYRTOS_SERVICE_TIMER_ENABLE 1
 
-/** @brief ÆôÓÃÈÕÖ¾·þÎñÄ£¿é (ÒÀÀµ IO Á÷) */
+/** @brief å¯ç”¨æ—¥å¿—æœåŠ¡æ¨¡å— (ä¾èµ– IO æµ) */
 #define MYRTOS_SERVICE_LOG_ENABLE 1
 
-/** @brief ÆôÓÃ Shell ·þÎñÄ£¿é (ÒÀÀµ IO Á÷) */
+/** @brief å¯ç”¨ Shell æœåŠ¡æ¨¡å— (ä¾èµ– IO æµ) */
 #define MYRTOS_SERVICE_SHELL_ENABLE 1
 
-/** @brief ÆôÓÃÏµÍ³¼à¿Ø·þÎñÄ£¿é */
+/** @brief å¯ç”¨ç³»ç»Ÿç›‘æŽ§æœåŠ¡æ¨¡å— */
 #define MYRTOS_SERVICE_MONITOR_ENABLE 1
 
-/** @brief ÆôÓÃÐéÄâÖÕ¶Ë·þÎñÄ£¿é */
+/** @brief å¯ç”¨è™šæ‹Ÿç»ˆç«¯æœåŠ¡æ¨¡å— */
 #define MYRTOS_SERVICE_VTS_ENABLE 1
 
 
 /*==================================================================================================
- *                                    Ä£¿é²ÎÊýÅäÖÃ
- *                            (½öÔÚ¶ÔÓ¦Ä£¿é¿ªÆôÊ±£¬ÒÔÏÂÅäÖÃ²ÅÓÐÐ§)
+ *                                    æ¨¡å—å‚æ•°é…ç½®
+ *                            (ä»…åœ¨å¯¹åº”æ¨¡å—å¼€å¯æ—¶ï¼Œä»¥ä¸‹é…ç½®æ‰æœ‰æ•ˆ)
  *================================================================================================*/
 
 #if MYRTOS_SERVICE_IO_ENABLE == 1
-/** @brief Stream_Printf ºÍ Stream_VPrintf Ê¹ÓÃµÄÄÚ²¿¸ñÊ½»¯»º³åÇø´óÐ¡ (×Ö½Ú) */
+/** @brief Stream_Printf å’Œ Stream_VPrintf ä½¿ç”¨çš„å†…éƒ¨æ ¼å¼åŒ–ç¼“å†²åŒºå¤§å° (å­—èŠ‚) */
 #define MYRTOS_IO_PRINTF_BUFFER_SIZE 128
 #endif
 
@@ -51,14 +51,14 @@
 #endif
 
 #if MYRTOS_SERVICE_TIMER_ENABLE == 1
-/** @brief ¶¨Ê±Æ÷·þÎñÈÎÎñÃüÁî¶ÓÁÐµÄÉî¶È (ÄÜ»º´æ¶àÉÙ¸öÃüÁî) */
+/** @brief å®šæ—¶å™¨æœåŠ¡ä»»åŠ¡å‘½ä»¤é˜Ÿåˆ—çš„æ·±åº¦ (èƒ½ç¼“å­˜å¤šå°‘ä¸ªå‘½ä»¤) */
 #define MYRTOS_TIMER_COMMAND_QUEUE_SIZE 10
 #endif
 
 #if MYRTOS_SERVICE_SHELL_ENABLE == 1
-/** @brief Shell ÃüÁîÖ§³ÖµÄ×î´ó²ÎÊýÊýÁ¿ (°üÀ¨ÃüÁî±¾Éí) */
+/** @brief Shell å‘½ä»¤æ”¯æŒçš„æœ€å¤§å‚æ•°æ•°é‡ (åŒ…æ‹¬å‘½ä»¤æœ¬èº«) */
 #define SHELL_MAX_ARGS 10
-/** @brief Shell ÃüÁîÐÐÊäÈë»º³åÇøµÄ×î´ó³¤¶È (×Ö½Ú) */
+/** @brief Shell å‘½ä»¤è¡Œè¾“å…¥ç¼“å†²åŒºçš„æœ€å¤§é•¿åº¦ (å­—èŠ‚) */
 #define SHELL_CMD_BUFFER_SIZE 64
 #endif
 
@@ -67,33 +67,33 @@
 #define VTS_TASK_STACK_SIZE 256
 #define VTS_RW_BUFFER_SIZE 128
 #define VTS_PIPE_BUFFER_SIZE 512
-#define VTS_MAX_BACK_CMD_LEN 16 // "back"ÃüÁîÐòÁÐµÄ×î´ó³¤¶È
-#define VTS_RW_BUFFER_SIZE 128 // ÄÚ²¿¶ÁÐ´»º³åÇø´óÐ¡
+#define VTS_MAX_BACK_CMD_LEN 16 // "back"å‘½ä»¤åºåˆ—çš„æœ€å¤§é•¿åº¦
+#define VTS_RW_BUFFER_SIZE 128 // å†…éƒ¨è¯»å†™ç¼“å†²åŒºå¤§å°
 #endif
 
 
 /*==================================================================================================
- *                                      ÒÀÀµ¹ØÏµ¼ì²é
- *                                (½ûÖ¹²»ºÏÀíµÄÅäÖÃ×éºÏ)
+ *                                      ä¾èµ–å…³ç³»æ£€æŸ¥
+ *                                (ç¦æ­¢ä¸åˆç†çš„é…ç½®ç»„åˆ)
  *================================================================================================*/
 
 #if defined(MYRTOS_SERVICE_LOG_ENABLE) && !defined(MYRTOS_SERVICE_IO_ENABLE)
-#error "ÅäÖÃ´íÎó: ÈÕÖ¾Ä£¿é (MYRTOS_LOG_ENABLE) ÒÀÀµÓÚ IOÁ÷Ä£¿é (MYRTOS_IO_ENABLE)!"
+#error "é…ç½®é”™è¯¯: æ—¥å¿—æ¨¡å— (MYRTOS_LOG_ENABLE) ä¾èµ–äºŽ IOæµæ¨¡å— (MYRTOS_IO_ENABLE)!"
 #endif
 
 #if defined(MYRTOS_SERVICE_SHELL_ENABLE) && !defined(MYRTOS_SERVICE_IO_ENABLE)
-#error "ÅäÖÃ´íÎó: ShellÄ£¿é (MYRTOS_SHELL_ENABLE) ÒÀÀµÓÚ IOÁ÷Ä£¿é (MYRTOS_IO_ENABLE)!"
+#error "é…ç½®é”™è¯¯: Shellæ¨¡å— (MYRTOS_SHELL_ENABLE) ä¾èµ–äºŽ IOæµæ¨¡å— (MYRTOS_IO_ENABLE)!"
 #endif
 
 #if defined(MYRTOS_SERVICE_VTS_ENABLE) && !defined(MYRTOS_SERVICE_IO_ENABLE)
-#error "ÅäÖÃ´íÎó: ÐéÄâÖÕ¶ËÄ£¿é (MYRTOS_VTS_ENABLE) ÒÀÀµÓÚ IOÁ÷Ä£¿é (MYRTOS_IO_ENABLE)!"
+#error "é…ç½®é”™è¯¯: è™šæ‹Ÿç»ˆç«¯æ¨¡å— (MYRTOS_VTS_ENABLE) ä¾èµ–äºŽ IOæµæ¨¡å— (MYRTOS_IO_ENABLE)!"
 #endif
 
 /*==================================================================================================
- *                                      ¿Õºê¶¨Òå
- *                  (Èç¹ûÄ£¿é±»½ûÓÃ, ¶¨Òå¿ÕºêÒÔ±£Ö¤ÉÏ²ã´úÂëÎÞÐèÐÞ¸Ä¼´¿É±àÒë)
+ *                                      ç©ºå®å®šä¹‰
+ *                  (å¦‚æžœæ¨¡å—è¢«ç¦ç”¨, å®šä¹‰ç©ºå®ä»¥ä¿è¯ä¸Šå±‚ä»£ç æ— éœ€ä¿®æ”¹å³å¯ç¼–è¯‘)
  *================================================================================================*/
-// --- ÈÕÖ¾Ä£¿é ---
+// --- æ—¥å¿—æ¨¡å— ---
 #if MYRTOS_SERVICE_LOG_ENABLE == 0
 #define LOG_E(tag, format, ...) ((void) 0)
 #define LOG_W(tag, format, ...) ((void) 0)
@@ -107,7 +107,7 @@
 #define Log_VOutput(level, tag, format, args) ((void) 0)
 #endif
 
-// --- ¶¨Ê±Æ÷Ä£¿é ---
+// --- å®šæ—¶å™¨æ¨¡å— ---
 #if MYRTOS_SERVICE_TIMER_ENABLE == 0
 #define TimerHandle_t void *
 #define TimerService_Init(prio, stack) (0)
@@ -119,14 +119,14 @@
 #define Timer_GetArg(timer) ((void *) 0)
 #endif
 
-// --- Shell Ä£¿é ---
+// --- Shell æ¨¡å— ---
 #if MYRTOS_SERVICE_SHELL_ENABLE == 0
 #define Shell_Init(config, commands, count) ((void *) 0)
 #define Shell_Start(shell_h, name, prio, stack) (-1)
 #define Shell_GetStream(shell_h) ((void *) 0)
 #endif
 
-// --- ¼à¿ØÄ£¿é ---
+// --- ç›‘æŽ§æ¨¡å— ---
 #if MYRTOS_SERVICE_MONITOR_ENABLE == 0
 #define Monitor_Init(config) (-1)
 #define Monitor_GetNextTask(prev_h) ((void *) 0)

@@ -3,49 +3,49 @@
 
 #include <stdint.h>
 
-// Æ½Ì¨ÎÞ¹ØµÄÊý¾Ý½á¹¹
-typedef uint32_t StackType_t; // CPUÕ»µÄ×ÔÈ»¿í¶È
-typedef int32_t BaseType_t; // CPUµÄÓÐ·ûºÅ×îÓÅ¿í¶È
-typedef uint32_t UBaseType_t; // CPUµÄÎÞ·ûºÅ×îÓÅ¿í¶È
+// å¹³å°æ— å…³çš„æ•°æ®ç»“æž„
+typedef uint32_t StackType_t; // CPUæ ˆçš„è‡ªç„¶å®½åº¦
+typedef int32_t BaseType_t; // CPUçš„æœ‰ç¬¦å·æœ€ä¼˜å®½åº¦
+typedef uint32_t UBaseType_t; // CPUçš„æ— ç¬¦å·æœ€ä¼˜å®½åº¦
 
 
-// ÒÆÖ²²ãº¯ÊýÔ­ÐÍ
+// ç§»æ¤å±‚å‡½æ•°åŽŸåž‹
 /**
- * @brief ³õÊ¼»¯ÈÎÎñµÄÕ»Ö¡¡£
- * @param pxTopOfStack ÈÎÎñÕ»µÄ×î¸ßµØÖ·¡£
- * @param pxCode ÈÎÎñº¯ÊýµÄÈë¿ÚµØÖ·¡£
- * @param pvParameters ´«µÝ¸øÈÎÎñµÄ²ÎÊý¡£
- * @return ·µ»Ø³õÊ¼»¯ºóÈÎÎñµÄÕ»¶¥Ö¸Õë (SP)¡£
+ * @brief åˆå§‹åŒ–ä»»åŠ¡çš„æ ˆå¸§ã€‚
+ * @param pxTopOfStack ä»»åŠ¡æ ˆçš„æœ€é«˜åœ°å€ã€‚
+ * @param pxCode ä»»åŠ¡å‡½æ•°çš„å…¥å£åœ°å€ã€‚
+ * @param pvParameters ä¼ é€’ç»™ä»»åŠ¡çš„å‚æ•°ã€‚
+ * @return è¿”å›žåˆå§‹åŒ–åŽä»»åŠ¡çš„æ ˆé¡¶æŒ‡é’ˆ (SP)ã€‚
  */
 StackType_t *MyRTOS_Port_InitialiseStack(StackType_t *pxTopOfStack, void (*pxCode)(void *), void *pvParameters);
 
 /**
- * @brief Æô¶¯RTOSµ÷¶ÈÆ÷¡£
- *        ´Ëº¯Êý¸ºÔðÅäÖÃÓ²¼þ²¢Æô¶¯µÚÒ»¸öÈÎÎñ£¬ÇÒÓÀÔ¶²»»á·µ»Ø¡£
- * @return Èç¹û³É¹¦Æô¶¯Ôò²»·µ»Ø£¬Èç¹ûÊ§°ÜÔò·µ»Ø·ÇÁãÖµ¡£
+ * @brief å¯åŠ¨RTOSè°ƒåº¦å™¨ã€‚
+ *        æ­¤å‡½æ•°è´Ÿè´£é…ç½®ç¡¬ä»¶å¹¶å¯åŠ¨ç¬¬ä¸€ä¸ªä»»åŠ¡ï¼Œä¸”æ°¸è¿œä¸ä¼šè¿”å›žã€‚
+ * @return å¦‚æžœæˆåŠŸå¯åŠ¨åˆ™ä¸è¿”å›žï¼Œå¦‚æžœå¤±è´¥åˆ™è¿”å›žéžé›¶å€¼ã€‚
  */
 BaseType_t MyRTOS_Port_StartScheduler(void);
 
 /**
- * @brief ½øÈëÁÙ½çÇø¡£
- *        ±ØÐëÓÉÆ½Ì¨ÒÆÖ²²ãÊµÏÖ£¬ÒÔ±£Ö¤²Ù×÷µÄÔ­×ÓÐÔ¡£
+ * @brief è¿›å…¥ä¸´ç•ŒåŒºã€‚
+ *        å¿…é¡»ç”±å¹³å°ç§»æ¤å±‚å®žçŽ°ï¼Œä»¥ä¿è¯æ“ä½œçš„åŽŸå­æ€§ã€‚
  */
 void MyRTOS_Port_EnterCritical(void);
 
 /**
- * @brief ÍË³öÁÙ½çÇø¡£
+ * @brief é€€å‡ºä¸´ç•ŒåŒºã€‚
  */
 void MyRTOS_Port_ExitCritical(void);
 
 /**
- * @brief ÔÚÈÎÎñÉÏÏÂÎÄÖÐÇëÇóÒ»´ÎÉÏÏÂÎÄÇÐ»»¡£
+ * @brief åœ¨ä»»åŠ¡ä¸Šä¸‹æ–‡ä¸­è¯·æ±‚ä¸€æ¬¡ä¸Šä¸‹æ–‡åˆ‡æ¢ã€‚
  */
 void MyRTOS_Port_Yield(void);
 
 /**
- * @brief ÔÚÖÐ¶Ï·þÎñ³ÌÐò(ISR)ÉÏÏÂÎÄÖÐÇëÇóÒ»´ÎÉÏÏÂÎÄÇÐ»»¡£
- * @param higherPriorityTaskWoken Èç¹ûÔÚISRÖÐ»½ÐÑÁËÒ»¸ö¸ü¸ßÓÅÏÈ¼¶µÄÈÎÎñ£¬
- *                                 Ôò´Ë±äÁ¿Ó¦Îª·ÇÁãÖµ£¬´ËÊ±²ÅÐèÒª´¥·¢ÇÐ»»¡£
+ * @brief åœ¨ä¸­æ–­æœåŠ¡ç¨‹åº(ISR)ä¸Šä¸‹æ–‡ä¸­è¯·æ±‚ä¸€æ¬¡ä¸Šä¸‹æ–‡åˆ‡æ¢ã€‚
+ * @param higherPriorityTaskWoken å¦‚æžœåœ¨ISRä¸­å”¤é†’äº†ä¸€ä¸ªæ›´é«˜ä¼˜å…ˆçº§çš„ä»»åŠ¡ï¼Œ
+ *                                 åˆ™æ­¤å˜é‡åº”ä¸ºéžé›¶å€¼ï¼Œæ­¤æ—¶æ‰éœ€è¦è§¦å‘åˆ‡æ¢ã€‚
  */
 void MyRTOS_Port_YieldFromISR(BaseType_t higherPriorityTaskWoken);
 

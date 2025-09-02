@@ -6,7 +6,7 @@
 #include "MyRTOS_Shell.h"
 
 
-// ShellÊµÀıµÄÄÚ²¿×´Ì¬
+// Shellå®ä¾‹çš„å†…éƒ¨çŠ¶æ€
 typedef struct ShellInstance_t {
     ShellConfig_t config;
     const ShellCommand_t *commands;

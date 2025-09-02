@@ -6,26 +6,26 @@
 #include "platform.h"
 #include "platform_gd32_console.h"
 
-// Ìá¹©ËùÓĞ¹³×Óº¯ÊıµÄÄ¬ÈÏ¿ÕÊµÏÖ£¬²¢Ê¹ÓÃ __weak ÊôĞÔ
+// æä¾›æ‰€æœ‰é’©å­å‡½æ•°çš„é»˜è®¤ç©ºå®ç°ï¼Œå¹¶ä½¿ç”¨ __weak å±æ€§
 
 __attribute__((weak)) void Platform_EarlyInit_Hook(void) {
-    // Ä¬ÈÏ²»×öÈÎºÎÊÂ
+    // é»˜è®¤ä¸åšä»»ä½•äº‹
 }
 
 __attribute__((weak)) void Platform_BSP_Init_Hook(void) {
-    // Ä¬ÈÏ²»×öÈÎºÎÊÂ
+    // é»˜è®¤ä¸åšä»»ä½•äº‹
 }
 
 __attribute__((weak)) void Platform_AppSetup_Hook(ShellHandle_t shell_h) {}
 
 __attribute__((weak)) void Platform_CreateTasks_Hook(void) {
-    // Ä¬ÈÏ²»×öÈÎºÎÊÂ
+    // é»˜è®¤ä¸åšä»»ä½•äº‹
 }
 
 __attribute__((weak)) void Platform_IdleTask_Hook(void *pv) {
     (void) pv;
     for (;;) {
-        __WFI(); // µÈ´ıÖĞ¶Ï£¬½øÈëµÍ¹¦ºÄÄ£Ê½
+        __WFI(); // ç­‰å¾…ä¸­æ–­ï¼Œè¿›å…¥ä½åŠŸè€—æ¨¡å¼
     }
 }
 
@@ -50,7 +50,7 @@ static void fault_print_hex(uint32_t val) {
 }
 
 __attribute__((weak)) void Platform_HardFault_Hook(uint32_t *pulFaultStackAddress) {
-    // Ä¬ÈÏÊµÏÖ£º´òÓ¡¹Ø¼ü¼Ä´æÆ÷ĞÅÏ¢²¢¹ÒÆğ
+    // é»˜è®¤å®ç°ï¼šæ‰“å°å…³é”®å¯„å­˜å™¨ä¿¡æ¯å¹¶æŒ‚èµ·
     fault_print_string("\r\n--- HARD FAULT ---\r\n");
     fault_print_string("  PC  = ");
     fault_print_hex(pulFaultStackAddress[6]);
@@ -73,7 +73,7 @@ __attribute__((weak)) void Platform_StackOverflow_Hook(TaskHandle_t pxTask) {
 }
 
 __attribute__((weak)) void Platform_MallocFailed_Hook(size_t wantedSize) {
-    // Ä¬ÈÏÊµÏÖ£º´òÓ¡ÇëÇóµÄ´óĞ¡²¢¹ÒÆğ
+    // é»˜è®¤å®ç°ï¼šæ‰“å°è¯·æ±‚çš„å¤§å°å¹¶æŒ‚èµ·
     fault_print_string("\r\n--- MALLOC FAILED ---\r\n");
     fault_print_string("  Requested Size: ");
     fault_print_hex((uint32_t) wantedSize);

@@ -1,6 +1,6 @@
 /**
  * @file  MyRTOS_Log.h
- * @brief MyRTOS ÈÕÖ¾·şÎñÓëÒì²½IO
+ * @brief MyRTOS æ—¥å¿—æœåŠ¡ä¸å¼‚æ­¥IO
  */
 #ifndef MYRTOS_LOG_H
 #define MYRTOS_LOG_H
@@ -12,7 +12,7 @@
 
 #if (MYRTOS_SERVICE_LOG_ENABLE == 1)
 
-// ÈÕÖ¾µÈ¼¶Ã¶¾Ù
+// æ—¥å¿—ç­‰çº§æšä¸¾
 typedef enum {
     LOG_LEVEL_NONE,
     LOG_LEVEL_ERROR,
@@ -26,36 +26,36 @@ typedef enum {
 #endif
 
 
-// Òì²½IOÇëÇó½á¹¹Ìå
+// å¼‚æ­¥IOè¯·æ±‚ç»“æ„ä½“
 typedef struct {
-    StreamHandle_t target_stream; // Ä¿±êÁ÷
-    char message[MYRTOS_LOG_MSG_MAX_SIZE]; // ÏûÏ¢ÄÚÈİ
+    StreamHandle_t target_stream; // ç›®æ ‡æµ
+    char message[MYRTOS_LOG_MSG_MAX_SIZE]; // æ¶ˆæ¯å†…å®¹
 } AsyncWriteRequest_t;
 
 
-// ¹«¹² API
+// å…¬å…± API
 
 /**
- * @brief ³õÊ¼»¯Òì²½ÈÕÖ¾/IO·şÎñ¡£
- * @details ¸Ãº¯Êı»á´´½¨Ò»¸ö¸ßÓÅÏÈ¼¶µÄºóÌ¨ÈÎÎñÀ´´¦ÀíËùÓĞµÄ´òÓ¡ÇëÇó£¬
- *          È·±£µ÷ÓÃ´òÓ¡º¯ÊıµÄÒµÎñÈÎÎñ²»»á±»IO×èÈû¡£
- * @return int 0 ±íÊ¾³É¹¦, -1 ±íÊ¾Ê§°Ü¡£
+ * @brief åˆå§‹åŒ–å¼‚æ­¥æ—¥å¿—/IOæœåŠ¡ã€‚
+ * @details è¯¥å‡½æ•°ä¼šåˆ›å»ºä¸€ä¸ªé«˜ä¼˜å…ˆçº§çš„åå°ä»»åŠ¡æ¥å¤„ç†æ‰€æœ‰çš„æ‰“å°è¯·æ±‚ï¼Œ
+ *          ç¡®ä¿è°ƒç”¨æ‰“å°å‡½æ•°çš„ä¸šåŠ¡ä»»åŠ¡ä¸ä¼šè¢«IOé˜»å¡ã€‚
+ * @return int 0 è¡¨ç¤ºæˆåŠŸ, -1 è¡¨ç¤ºå¤±è´¥ã€‚
  */
 int Log_Init(void);
 
 /**
- * @brief ÉèÖÃÈ«¾ÖÈÕÖ¾¹ıÂËµÈ¼¶¡£
- * @param level [in] ĞÂµÄÈÕÖ¾µÈ¼¶¡£µÍÓÚ´ËµÈ¼¶µÄÈÕÖ¾½«±»ºöÂÔ¡£
+ * @brief è®¾ç½®å…¨å±€æ—¥å¿—è¿‡æ»¤ç­‰çº§ã€‚
+ * @param level [in] æ–°çš„æ—¥å¿—ç­‰çº§ã€‚ä½äºæ­¤ç­‰çº§çš„æ—¥å¿—å°†è¢«å¿½ç•¥ã€‚
  */
 void Log_SetLevel(LogLevel_t level);
 
-// ÈÕÖ¾´òÓ¡ºê (¸øÓ¦ÓÃ¿ª·¢ÕßÊ¹ÓÃµÄ±ã½İ½Ó¿Ú)
+// æ—¥å¿—æ‰“å°å® (ç»™åº”ç”¨å¼€å‘è€…ä½¿ç”¨çš„ä¾¿æ·æ¥å£)
 
 #ifndef MYRTOS_LOG_MAX_LEVEL
 #define MYRTOS_LOG_MAX_LEVEL LOG_LEVEL_DEBUG
 #endif
 
-// ÈÕÖ¾ºêÏÖÔÚµ÷ÓÃ Log_Printf£¬ËüÄÚ²¿»áÊ¹ÓÃÒì²½»úÖÆ
+// æ—¥å¿—å®ç°åœ¨è°ƒç”¨ Log_Printfï¼Œå®ƒå†…éƒ¨ä¼šä½¿ç”¨å¼‚æ­¥æœºåˆ¶
 #if (MYRTOS_LOG_MAX_LEVEL >= LOG_LEVEL_ERROR)
 #define LOG_E(tag, format, ...) Log_Printf(LOG_LEVEL_ERROR, tag, format, ##__VA_ARGS__)
 #else
@@ -88,35 +88,35 @@ void Log_SetLevel(LogLevel_t level);
     } while (0)
 #endif
 
-// µ×²ã´òÓ¡º¯Êı
+// åº•å±‚æ‰“å°å‡½æ•°
 
 /**
- * @brief (µ×²ãº¯Êı) ¹©ÈÕÖ¾ºêµ÷ÓÃ£¬½«¸ñÊ½»¯µÄÈÕÖ¾ÏûÏ¢×÷ÎªIOÇëÇó·¢ËÍµ½¶ÓÁĞ¡£
+ * @brief (åº•å±‚å‡½æ•°) ä¾›æ—¥å¿—å®è°ƒç”¨ï¼Œå°†æ ¼å¼åŒ–çš„æ—¥å¿—æ¶ˆæ¯ä½œä¸ºIOè¯·æ±‚å‘é€åˆ°é˜Ÿåˆ—ã€‚
  */
 void Log_Printf(LogLevel_t level, const char *tag, const char *format, ...);
 
 /**
- * @brief (µ×²ãº¯Êı) Òì²½µØÏòÖ¸¶¨Á÷´òÓ¡¸ñÊ½»¯×Ö·û´® (va_list°æ±¾)¡£
+ * @brief (åº•å±‚å‡½æ•°) å¼‚æ­¥åœ°å‘æŒ‡å®šæµæ‰“å°æ ¼å¼åŒ–å­—ç¬¦ä¸² (va_listç‰ˆæœ¬)ã€‚
  */
 void MyRTOS_AsyncVprintf(StreamHandle_t stream, const char *format, va_list args);
 
 /**
- * @brief Òì²½µØÏòÖ¸¶¨Á÷´òÓ¡¸ñÊ½»¯×Ö·û´®¡£
+ * @brief å¼‚æ­¥åœ°å‘æŒ‡å®šæµæ‰“å°æ ¼å¼åŒ–å­—ç¬¦ä¸²ã€‚
  */
 void MyRTOS_AsyncPrintf(StreamHandle_t stream, const char *format, ...);
 
-// MyRTOS_printf ÏÖÔÚÓ¦¸ÃÒ²±ä³ÉÒì²½µÄ£¬ÒÔ±£³ÖÏµÍ³ĞĞÎªÒ»ÖÂ
+// MyRTOS_printf ç°åœ¨åº”è¯¥ä¹Ÿå˜æˆå¼‚æ­¥çš„ï¼Œä»¥ä¿æŒç³»ç»Ÿè¡Œä¸ºä¸€è‡´
 #undef MyRTOS_printf
 #define MyRTOS_printf(format, ...) MyRTOS_AsyncPrintf(Task_GetStdOut(NULL), format, ##__VA_ARGS__)
 
-#else // Èç¹û·şÎñ±»½ûÓÃ
+#else // å¦‚æœæœåŠ¡è¢«ç¦ç”¨
 #define Log_Init() (0)
 #define Log_SetLevel(level)
 #define LOG_E(tag, format, ...)
 #define LOG_W(tag, format, ...)
 #define LOG_I(tag, format, ...)
 #define LOG_D(tag, format, ...)
-#define MyRTOS_printf(format, ...) // Èç¹ûÈÕÖ¾·şÎñ½ûÓÃ£¬printfÒ²Ó¦±»½ûÓÃ»òÖØ¶¨Ïòµ½Í¬²½°æ±¾
+#define MyRTOS_printf(format, ...) // å¦‚æœæ—¥å¿—æœåŠ¡ç¦ç”¨ï¼Œprintfä¹Ÿåº”è¢«ç¦ç”¨æˆ–é‡å®šå‘åˆ°åŒæ­¥ç‰ˆæœ¬
 #endif // MYRTOS_SERVICE_LOG_ENABLE
 
 #endif // MYRTOS_LOG_H

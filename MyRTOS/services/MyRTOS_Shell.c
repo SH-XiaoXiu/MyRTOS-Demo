@@ -21,33 +21,33 @@
 
 static TaskHandle_t shell_task_h;
 
-// ½âÎöÃüÁîĞĞ×Ö·û´®Îª argc/argv
+// è§£æå‘½ä»¤è¡Œå­—ç¬¦ä¸²ä¸º argc/argv
 static void parse_command(ShellInstance_t *shell) {
     char *p = shell->cmd_buffer;
     shell->argc = 0;
 
     while (*p && shell->argc < SHELL_MAX_ARGS) {
-        // Ìø¹ıÇ°µ¼¿Õ¸ñ
+        // è·³è¿‡å‰å¯¼ç©ºæ ¼
         while (*p && isspace((unsigned char) *p)) {
             p++;
         }
         if (*p == '\0') {
             break;
         }
-        // ¼ÇÂ¼²ÎÊıÆğÊ¼Î»ÖÃ
+        // è®°å½•å‚æ•°èµ·å§‹ä½ç½®
         shell->argv[shell->argc++] = p;
-        // Ñ°ÕÒ²ÎÊı½áÊøÎ»ÖÃ (¿Õ¸ñ»ò×Ö·û´®Ä©Î²)
+        // å¯»æ‰¾å‚æ•°ç»“æŸä½ç½® (ç©ºæ ¼æˆ–å­—ç¬¦ä¸²æœ«å°¾)
         while (*p && !isspace((unsigned char) *p)) {
             p++;
         }
-        // Èç¹û²»ÊÇ×Ö·û´®Ä©Î²£¬ÔòÓÃ'\0'½Ø¶Ï
+        // å¦‚æœä¸æ˜¯å­—ç¬¦ä¸²æœ«å°¾ï¼Œåˆ™ç”¨'\0'æˆªæ–­
         if (*p) {
             *p++ = '\0';
         }
     }
 }
 
-// ·Ö·¢²¢Ö´ĞĞÃüÁî
+// åˆ†å‘å¹¶æ‰§è¡Œå‘½ä»¤
 static void dispatch_command(ShellInstance_t *shell) {
     if (shell->argc == 0) {
         return;
@@ -64,8 +64,8 @@ static void dispatch_command(ShellInstance_t *shell) {
     MyRTOS_printf("Command not found: %s\n", shell->argv[0]);
 }
 
-// ShellºóÌ¨ÈÎÎñ
-// ÔÚ MyRTOS_Shell.c ÖĞ
+// Shellåå°ä»»åŠ¡
+// åœ¨ MyRTOS_Shell.c ä¸­
 
 static void Shell_Task(void *param) {
     ShellInstance_t *shell = (ShellInstance_t *) param;
@@ -75,10 +75,10 @@ static void Shell_Task(void *param) {
     MyRTOS_printf("%s", shell->config.prompt);
 
     for (;;) {
-        // ´Ó×Ô¼ºµÄ stdin ¶ÁÈ¡Ò»¸ö×Ö·û
+        // ä»è‡ªå·±çš„ stdin è¯»å–ä¸€ä¸ªå­—ç¬¦
         if (Stream_Read(Task_GetStdIn(NULL), &ch, 1, MYRTOS_MAX_DELAY) == 1) {
             if (ch == '\r' || ch == '\n') {
-                MyRTOS_printf("\r\n"); // »ØÏÔ»»ĞĞ
+                MyRTOS_printf("\r\n"); // å›æ˜¾æ¢è¡Œ
 
                 shell->cmd_buffer[shell->buffer_len] = '\0';
                 if (shell->buffer_len > 0) {
@@ -87,15 +87,15 @@ static void Shell_Task(void *param) {
                 }
 
                 shell->buffer_len = 0;
-                MyRTOS_printf("%s", shell->config.prompt); // ´òÓ¡ĞÂÌáÊ¾·û
-            } else if (ch == '\b' || ch == 127) { // ÍË¸ñ¼ü
+                MyRTOS_printf("%s", shell->config.prompt); // æ‰“å°æ–°æç¤ºç¬¦
+            } else if (ch == '\b' || ch == 127) { // é€€æ ¼é”®
                 if (shell->buffer_len > 0) {
                     shell->buffer_len--;
-                    MyRTOS_printf("\b \b"); // ×Ô¼º¸ºÔğ»ØÏÔÍË¸ñ
+                    MyRTOS_printf("\b \b"); // è‡ªå·±è´Ÿè´£å›æ˜¾é€€æ ¼
                 }
             } else if (isprint((unsigned char) ch) && shell->buffer_len < SHELL_CMD_BUFFER_SIZE - 1) {
                 shell->cmd_buffer[shell->buffer_len++] = ch;
-                MyRTOS_putchar(ch); // ×Ô¼º¸ºÔğ»ØÏÔ×Ö·û
+                MyRTOS_putchar(ch); // è‡ªå·±è´Ÿè´£å›æ˜¾å­—ç¬¦
             }
         }
     }
@@ -117,7 +117,7 @@ ShellHandle_t Shell_Init(const ShellConfig_t *config) {
 
     memset(shell, 0, sizeof(ShellInstance_t));
     shell->config = *config;
-    shell->commands_head = NULL; // ³õÊ¼»¯Ò»¸ö¿ÕÁ´±í
+    shell->commands_head = NULL; // åˆå§‹åŒ–ä¸€ä¸ªç©ºé“¾è¡¨
 
     if (shell->config.prompt == NULL) {
         shell->config.prompt = "> ";
@@ -133,7 +133,7 @@ TaskHandle_t Shell_Start(ShellHandle_t shell_h, const char *task_name, uint8_t t
     }
     shell_task_h = Task_Create(Shell_Task, task_name, task_stack_size, shell_h, task_priority);
 
-    return shell_task_h; // ·µ»ØÈÎÎñ¾ä±ú
+    return shell_task_h; // è¿”å›ä»»åŠ¡å¥æŸ„
 }
 
 StreamHandle_t Shell_GetStream(ShellHandle_t shell_h) {
@@ -149,25 +149,25 @@ int Shell_RegisterCommand(ShellHandle_t shell_h, const char *name, const char *h
     }
     ShellInstance_t *shell = (ShellInstance_t *) shell_h;
 
-    // ¼ì²éÃüÁîÊÇ·ñÒÑ´æÔÚ
+    // æ£€æŸ¥å‘½ä»¤æ˜¯å¦å·²å­˜åœ¨
     ShellCommandNode_t *current = shell->commands_head;
     while (current != NULL) {
         if (strcmp(current->name, name) == 0) {
-            return -2; // ÃüÁîÒÑ´æÔÚ
+            return -2; // å‘½ä»¤å·²å­˜åœ¨
         }
         current = current->next;
     }
 
-    // ´´½¨ĞÂµÄÃüÁî½Úµã
+    // åˆ›å»ºæ–°çš„å‘½ä»¤èŠ‚ç‚¹
     ShellCommandNode_t *new_node = (ShellCommandNode_t *) MyRTOS_Malloc(sizeof(ShellCommandNode_t));
     if (!new_node) {
-        return -3; // ÄÚ´æ·ÖÅäÊ§°Ü
+        return -3; // å†…å­˜åˆ†é…å¤±è´¥
     }
     new_node->name = name;
     new_node->help = help;
     new_node->callback = callback;
 
-    // ½«ĞÂ½Úµã²åÈëµ½Á´±íÍ·²¿ (×î¼òµ¥µÄ·½Ê½)
+    // å°†æ–°èŠ‚ç‚¹æ’å…¥åˆ°é“¾è¡¨å¤´éƒ¨ (æœ€ç®€å•çš„æ–¹å¼)
     new_node->next = shell->commands_head;
     shell->commands_head = new_node;
 
@@ -186,18 +186,18 @@ int Shell_UnregisterCommand(ShellHandle_t shell_h, const char *name) {
     while (current != NULL) {
         if (strcmp(current->name, name) == 0) {
             if (prev == NULL) {
-                // ÊÇÍ·½Úµã
+                // æ˜¯å¤´èŠ‚ç‚¹
                 shell->commands_head = current->next;
             } else {
                 prev->next = current->next;
             }
-            MyRTOS_Free(current); // ÊÍ·Å½ÚµãÄÚ´æ
+            MyRTOS_Free(current); // é‡Šæ”¾èŠ‚ç‚¹å†…å­˜
             return 0;
         }
         prev = current;
         current = current->next;
     }
-    return -4; // Î´ÕÒµ½ÃüÁî
+    return -4; // æœªæ‰¾åˆ°å‘½ä»¤
 }
 
 #endif

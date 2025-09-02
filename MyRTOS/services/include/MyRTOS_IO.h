@@ -1,7 +1,7 @@
 /**
  * @file  MyRTOS_IO.h
- * @brief MyRTOS IOÁ÷·şÎñ - ¹«¹²½Ó¿Ú
- * @details Ìá¹©ÈÎÎñ±ê×¼IOÖØ¶¨Ïò¡¢Á÷Ê½¶ÁĞ´¡¢¹ÜµÀ(Pipe)µÈ¹¦ÄÜ¡£
+ * @brief MyRTOS IOæµæœåŠ¡ - å…¬å…±æ¥å£
+ * @details æä¾›ä»»åŠ¡æ ‡å‡†IOé‡å®šå‘ã€æµå¼è¯»å†™ã€ç®¡é“(Pipe)ç­‰åŠŸèƒ½ã€‚
  */
 #ifndef MYRTOS_IO_H
 #define MYRTOS_IO_H
@@ -21,95 +21,95 @@
 #include "MyRTOS_Stream_Def.h"
 
 
-/*================================== ±ê×¼Á÷ API ==================================*/
+/*================================== æ ‡å‡†æµ API ==================================*/
 
 /**
- * @brief ³õÊ¼»¯±ê×¼IO·şÎñÀ©Õ¹¡£
- * @details ±ØĞëÔÚ´´½¨ÈÎºÎÈÎÎñÖ®Ç°µ÷ÓÃ£¬ÒÔ×¢²áÄÚºËÊÂ¼ş¼àÌıÆ÷£¬
- *          È·±£ÈÎÎñÄÜ¹»ÕıÈ·¼Ì³Ğ¸¸ÈÎÎñµÄ±ê×¼Á÷¡£
- * @return int 0 ±íÊ¾³É¹¦, -1 ±íÊ¾Ê§°Ü¡£
+ * @brief åˆå§‹åŒ–æ ‡å‡†IOæœåŠ¡æ‰©å±•ã€‚
+ * @details å¿…é¡»åœ¨åˆ›å»ºä»»ä½•ä»»åŠ¡ä¹‹å‰è°ƒç”¨ï¼Œä»¥æ³¨å†Œå†…æ ¸äº‹ä»¶ç›‘å¬å™¨ï¼Œ
+ *          ç¡®ä¿ä»»åŠ¡èƒ½å¤Ÿæ­£ç¡®ç»§æ‰¿çˆ¶ä»»åŠ¡çš„æ ‡å‡†æµã€‚
+ * @return int 0 è¡¨ç¤ºæˆåŠŸ, -1 è¡¨ç¤ºå¤±è´¥ã€‚
  */
 int StdIOService_Init(void);
 
 /**
- * @brief »ñÈ¡Ö¸¶¨ÈÎÎñµÄ±ê×¼ÊäÈëÁ÷¡£
- * @param task_h ÈÎÎñ¾ä±ú (ÈôÎªNULL£¬Ôò»ñÈ¡µ±Ç°ÈÎÎñµÄÁ÷)
- * @return StreamHandle_t Ö¸Ïò¸ÃÈÎÎñstdinÁ÷µÄ¾ä±ú
+ * @brief è·å–æŒ‡å®šä»»åŠ¡çš„æ ‡å‡†è¾“å…¥æµã€‚
+ * @param task_h ä»»åŠ¡å¥æŸ„ (è‹¥ä¸ºNULLï¼Œåˆ™è·å–å½“å‰ä»»åŠ¡çš„æµ)
+ * @return StreamHandle_t æŒ‡å‘è¯¥ä»»åŠ¡stdinæµçš„å¥æŸ„
  */
 StreamHandle_t Task_GetStdIn(TaskHandle_t task_h);
 
 /**
- * @brief »ñÈ¡Ö¸¶¨ÈÎÎñµÄ±ê×¼Êä³öÁ÷¡£
- * @param task_h ÈÎÎñ¾ä±ú (ÈôÎªNULL£¬Ôò»ñÈ¡µ±Ç°ÈÎÎñµÄÁ÷)
- * @return StreamHandle_t Ö¸Ïò¸ÃÈÎÎñstdoutÁ÷µÄ¾ä±ú
+ * @brief è·å–æŒ‡å®šä»»åŠ¡çš„æ ‡å‡†è¾“å‡ºæµã€‚
+ * @param task_h ä»»åŠ¡å¥æŸ„ (è‹¥ä¸ºNULLï¼Œåˆ™è·å–å½“å‰ä»»åŠ¡çš„æµ)
+ * @return StreamHandle_t æŒ‡å‘è¯¥ä»»åŠ¡stdoutæµçš„å¥æŸ„
  */
 StreamHandle_t Task_GetStdOut(TaskHandle_t task_h);
 
 /**
- * @brief »ñÈ¡Ö¸¶¨ÈÎÎñµÄ±ê×¼´íÎóÁ÷¡£
- * @param task_h ÈÎÎñ¾ä±ú (ÈôÎªNULL£¬Ôò»ñÈ¡µ±Ç°ÈÎÎñµÄÁ÷)
- * @return StreamHandle_t Ö¸Ïò¸ÃÈÎÎñstderrÁ÷µÄ¾ä±ú
+ * @brief è·å–æŒ‡å®šä»»åŠ¡çš„æ ‡å‡†é”™è¯¯æµã€‚
+ * @param task_h ä»»åŠ¡å¥æŸ„ (è‹¥ä¸ºNULLï¼Œåˆ™è·å–å½“å‰ä»»åŠ¡çš„æµ)
+ * @return StreamHandle_t æŒ‡å‘è¯¥ä»»åŠ¡stderræµçš„å¥æŸ„
  */
 StreamHandle_t Task_GetStdErr(TaskHandle_t task_h);
 
 /**
- * @brief ÖØ¶¨ÏòÈÎÎñµÄ±ê×¼ÊäÈëÁ÷¡£
- * @param task_h Òª²Ù×÷µÄÈÎÎñ¾ä±ú (NULL ±íÊ¾µ±Ç°ÈÎÎñ)
- * @param new_stdin ĞÂµÄ±ê×¼ÊäÈëÁ÷¾ä±ú
+ * @brief é‡å®šå‘ä»»åŠ¡çš„æ ‡å‡†è¾“å…¥æµã€‚
+ * @param task_h è¦æ“ä½œçš„ä»»åŠ¡å¥æŸ„ (NULL è¡¨ç¤ºå½“å‰ä»»åŠ¡)
+ * @param new_stdin æ–°çš„æ ‡å‡†è¾“å…¥æµå¥æŸ„
  */
 void Task_SetStdIn(TaskHandle_t task_h, StreamHandle_t new_stdin);
 
 /**
- * @brief ÖØ¶¨ÏòÈÎÎñµÄ±ê×¼Êä³öÁ÷¡£
- * @param task_h Òª²Ù×÷µÄÈÎÎñ¾ä±ú (NULL ±íÊ¾µ±Ç°ÈÎÎñ)
- * @param new_stdout ĞÂµÄ±ê×¼Êä³öÁ÷¾ä±ú
+ * @brief é‡å®šå‘ä»»åŠ¡çš„æ ‡å‡†è¾“å‡ºæµã€‚
+ * @param task_h è¦æ“ä½œçš„ä»»åŠ¡å¥æŸ„ (NULL è¡¨ç¤ºå½“å‰ä»»åŠ¡)
+ * @param new_stdout æ–°çš„æ ‡å‡†è¾“å‡ºæµå¥æŸ„
  */
 void Task_SetStdOut(TaskHandle_t task_h, StreamHandle_t new_stdout);
 
 /**
- * @brief ÖØ¶¨ÏòÈÎÎñµÄ±ê×¼´íÎóÁ÷¡£
- * @param task_h Òª²Ù×÷µÄÈÎÎñ¾ä±ú (NULL ±íÊ¾µ±Ç°ÈÎÎñ)
- * @param new_stderr ĞÂµÄ±ê×¼´íÎóÁ÷¾ä±ú
+ * @brief é‡å®šå‘ä»»åŠ¡çš„æ ‡å‡†é”™è¯¯æµã€‚
+ * @param task_h è¦æ“ä½œçš„ä»»åŠ¡å¥æŸ„ (NULL è¡¨ç¤ºå½“å‰ä»»åŠ¡)
+ * @param new_stderr æ–°çš„æ ‡å‡†é”™è¯¯æµå¥æŸ„
  */
 void Task_SetStdErr(TaskHandle_t task_h, StreamHandle_t new_stderr);
 
-/*================================ Á÷Ê½ I/O ²Ù×÷ API ===============================*/
+/*================================ æµå¼ I/O æ“ä½œ API ===============================*/
 
 /**
- * @brief ´ÓÖ¸¶¨µÄÁ÷ÖĞ¶ÁÈ¡Êı¾İ¡£
- * @param stream        [in] Á÷¾ä±ú
- * @param buffer        [out] ´æ·Å¶ÁÈ¡Êı¾İµÄ»º³åÇø
- * @param bytes_to_read [in] Ï£Íû¶ÁÈ¡µÄ×Ö½ÚÊı
- * @param block_ticks   [in] ×èÈûµÈ´ıÊ±¼ä (ticks)
- * @return size_t Êµ¼Ê¶ÁÈ¡µ½µÄ×Ö½ÚÊı
+ * @brief ä»æŒ‡å®šçš„æµä¸­è¯»å–æ•°æ®ã€‚
+ * @param stream        [in] æµå¥æŸ„
+ * @param buffer        [out] å­˜æ”¾è¯»å–æ•°æ®çš„ç¼“å†²åŒº
+ * @param bytes_to_read [in] å¸Œæœ›è¯»å–çš„å­—èŠ‚æ•°
+ * @param block_ticks   [in] é˜»å¡ç­‰å¾…æ—¶é—´ (ticks)
+ * @return size_t å®é™…è¯»å–åˆ°çš„å­—èŠ‚æ•°
  */
 size_t Stream_Read(StreamHandle_t stream, void *buffer, size_t bytes_to_read, uint32_t block_ticks);
 
 /**
- * @brief ÏòÖ¸¶¨µÄÁ÷ÖĞĞ´ÈëÊı¾İ¡£
- * @param stream         [in] Á÷¾ä±ú
- * @param buffer         [in] ´ıĞ´ÈëÊı¾İµÄ»º³åÇø
- * @param bytes_to_write [in] Ï£ÍûĞ´ÈëµÄ×Ö½ÚÊı
- * @param block_ticks    [in] ×èÈûµÈ´ıÊ±¼ä (ticks)
- * @return size_t Êµ¼ÊĞ´ÈëµÄ×Ö½ÚÊı
+ * @brief å‘æŒ‡å®šçš„æµä¸­å†™å…¥æ•°æ®ã€‚
+ * @param stream         [in] æµå¥æŸ„
+ * @param buffer         [in] å¾…å†™å…¥æ•°æ®çš„ç¼“å†²åŒº
+ * @param bytes_to_write [in] å¸Œæœ›å†™å…¥çš„å­—èŠ‚æ•°
+ * @param block_ticks    [in] é˜»å¡ç­‰å¾…æ—¶é—´ (ticks)
+ * @return size_t å®é™…å†™å…¥çš„å­—èŠ‚æ•°
  */
 size_t Stream_Write(StreamHandle_t stream, const void *buffer, size_t bytes_to_write, uint32_t block_ticks);
 
 /**
- * @brief ÏòÖ¸¶¨µÄÁ÷ÖĞĞ´Èë¸ñÊ½»¯×Ö·û´®¡£
- * @param stream [in] Á÷¾ä±ú
- * @param format [in] ¸ñÊ½»¯×Ö·û´®
- * @param ...    [in] ¿É±ä²ÎÊı
- * @return int ³É¹¦Ğ´ÈëµÄ×Ö·ûÊı
+ * @brief å‘æŒ‡å®šçš„æµä¸­å†™å…¥æ ¼å¼åŒ–å­—ç¬¦ä¸²ã€‚
+ * @param stream [in] æµå¥æŸ„
+ * @param format [in] æ ¼å¼åŒ–å­—ç¬¦ä¸²
+ * @param ...    [in] å¯å˜å‚æ•°
+ * @return int æˆåŠŸå†™å…¥çš„å­—ç¬¦æ•°
  */
 int Stream_Printf(StreamHandle_t stream, const char *format, ...);
 
 /**
- * @brief Stream_PrintfµÄva_list°æ±¾¡£
+ * @brief Stream_Printfçš„va_listç‰ˆæœ¬ã€‚
  */
 int Stream_VPrintf(StreamHandle_t stream, const char *format, va_list args);
 
-// Ä¬ÈÏ²Ù×÷µ±Ç°ÈÎÎñµÄ±ê×¼Á÷µÄ±ã½İºê
+// é»˜è®¤æ“ä½œå½“å‰ä»»åŠ¡çš„æ ‡å‡†æµçš„ä¾¿æ·å®
 #define MyRTOS_printf(format, ...) Stream_Printf(Task_GetStdOut(NULL), format, ##__VA_ARGS__)
 #define MyRTOS_putchar(c) Stream_Write(Task_GetStdOut(NULL), &(c), 1, MYRTOS_MAX_DELAY)
 #define MyRTOS_getchar()                                                                                               \
@@ -119,20 +119,20 @@ int Stream_VPrintf(StreamHandle_t stream, const char *format, va_list args);
         __ch;                                                                                                          \
     })
 
-/*============================== Pipe (ÈÎÎñ¼äÍ¨ĞÅÁ÷) API =============================*/
+/*============================== Pipe (ä»»åŠ¡é—´é€šä¿¡æµ) API =============================*/
 
 /**
- * @brief ´´½¨Ò»¸ö¹ÜµÀ£¨Pipe£©¡£
- * @details ¹ÜµÀÊÇÒ»¸öÄÚºË¹ÜÀíµÄFIFO×Ö½Ú»º³åÇø£¬ËüÊµÏÖÁËÁ÷½Ó¿Ú£¬
- *          ¿ÉÓÃÓÚÁ¬½ÓÒ»¸öÈÎÎñµÄstdoutºÍÁíÒ»¸öÈÎÎñµÄstdin£¬ÊµÏÖÈÎÎñ¼äÍ¨ĞÅ¡£
- * @param buffer_size ¹ÜµÀÄÚ²¿»º³åÇøµÄ´óĞ¡£¨×Ö½Ú£©¡£
- * @return StreamHandle_t ³É¹¦Ôò·µ»Ø¹ÜµÀÁ÷µÄ¾ä±ú£¬Ê§°ÜÔò·µ»Ø NULL¡£
+ * @brief åˆ›å»ºä¸€ä¸ªç®¡é“ï¼ˆPipeï¼‰ã€‚
+ * @details ç®¡é“æ˜¯ä¸€ä¸ªå†…æ ¸ç®¡ç†çš„FIFOå­—èŠ‚ç¼“å†²åŒºï¼Œå®ƒå®ç°äº†æµæ¥å£ï¼Œ
+ *          å¯ç”¨äºè¿æ¥ä¸€ä¸ªä»»åŠ¡çš„stdoutå’Œå¦ä¸€ä¸ªä»»åŠ¡çš„stdinï¼Œå®ç°ä»»åŠ¡é—´é€šä¿¡ã€‚
+ * @param buffer_size ç®¡é“å†…éƒ¨ç¼“å†²åŒºçš„å¤§å°ï¼ˆå­—èŠ‚ï¼‰ã€‚
+ * @return StreamHandle_t æˆåŠŸåˆ™è¿”å›ç®¡é“æµçš„å¥æŸ„ï¼Œå¤±è´¥åˆ™è¿”å› NULLã€‚
  */
 StreamHandle_t Pipe_Create(size_t buffer_size);
 
 /**
- * @brief É¾³ıÒ»¸ö¹ÜµÀ¡£
- * @param pipe_stream ÒªÉ¾³ıµÄ¹ÜµÀÁ÷¾ä±ú¡£
+ * @brief åˆ é™¤ä¸€ä¸ªç®¡é“ã€‚
+ * @param pipe_stream è¦åˆ é™¤çš„ç®¡é“æµå¥æŸ„ã€‚
  */
 void Pipe_Delete(StreamHandle_t pipe_stream);
 

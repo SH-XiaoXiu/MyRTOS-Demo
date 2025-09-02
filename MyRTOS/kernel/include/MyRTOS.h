@@ -6,24 +6,24 @@
 #include "MyRTOS_Config.h"
 
 // -----------------------------
-// Ê±¼ä×ª»»ºê
+// æ—¶é—´è½¬æ¢å®
 // -----------------------------
 /**
- * @brief ½«ºÁÃë×ª»»ÎªÏµÍ³Ê±ÖÓ½ÚÅÄÊı
- * @param ms ºÁÃëÊı
- * @return ¶ÔÓ¦µÄÏµÍ³Ê±ÖÓ½ÚÅÄÊı
+ * @brief å°†æ¯«ç§’è½¬æ¢ä¸ºç³»ç»Ÿæ—¶é’ŸèŠ‚æ‹æ•°
+ * @param ms æ¯«ç§’æ•°
+ * @return å¯¹åº”çš„ç³»ç»Ÿæ—¶é’ŸèŠ‚æ‹æ•°
  */
 #define MS_TO_TICKS(ms) (((uint64_t) (ms) * MYRTOS_TICK_RATE_HZ) / 1000)
 
 /**
- * @brief ½«ÏµÍ³Ê±ÖÓ½ÚÅÄÊı×ª»»ÎªºÁÃë
- * @param tick ÏµÍ³Ê±ÖÓ½ÚÅÄÊı
- * @return ¶ÔÓ¦µÄºÁÃëÊı
+ * @brief å°†ç³»ç»Ÿæ—¶é’ŸèŠ‚æ‹æ•°è½¬æ¢ä¸ºæ¯«ç§’
+ * @param tick ç³»ç»Ÿæ—¶é’ŸèŠ‚æ‹æ•°
+ * @return å¯¹åº”çš„æ¯«ç§’æ•°
  */
 #define TICK_TO_MS(tick) (((uint64_t) (tick) * 1000) / MYRTOS_TICK_RATE_HZ)
 
 // -----------------------------
-// Ç°ÖÃÉùÃ÷ (Opaque Pointers)
+// å‰ç½®å£°æ˜ (Opaque Pointers)
 // -----------------------------
 struct Task_t;
 struct Mutex_t;
@@ -31,321 +31,321 @@ struct Queue_t;
 struct Semaphore_t;
 
 // -----------------------------
-// ÈÎÎñ×´Ì¬Ã¶¾Ù
+// ä»»åŠ¡çŠ¶æ€æšä¸¾
 // -----------------------------
 /**
- * @brief ÈÎÎñ×´Ì¬Ã¶¾ÙÀàĞÍ
+ * @brief ä»»åŠ¡çŠ¶æ€æšä¸¾ç±»å‹
  */
 typedef enum {
-    TASK_STATE_UNUSED = 0, // ÈÎÎñÎ´Ê¹ÓÃ
-    TASK_STATE_READY, // ÈÎÎñ¾ÍĞ÷×´Ì¬
-    TASK_STATE_DELAYED, // ÈÎÎñÑÓÊ±×´Ì¬
-    TASK_STATE_BLOCKED // ÈÎÎñ×èÈû×´Ì¬
+    TASK_STATE_UNUSED = 0, // ä»»åŠ¡æœªä½¿ç”¨
+    TASK_STATE_READY, // ä»»åŠ¡å°±ç»ªçŠ¶æ€
+    TASK_STATE_DELAYED, // ä»»åŠ¡å»¶æ—¶çŠ¶æ€
+    TASK_STATE_BLOCKED // ä»»åŠ¡é˜»å¡çŠ¶æ€
 } TaskState_t;
 
 
 /**
- * @brief ÄÚºË´íÎóÀàĞÍÃ¶¾Ù
+ * @brief å†…æ ¸é”™è¯¯ç±»å‹æšä¸¾
  */
 typedef enum {
-    KERNEL_ERROR_NONE = 0, // ÎŞ´íÎó
-    KERNEL_ERROR_STACK_OVERFLOW, // Õ»Òç³ö´íÎó
-    KERNEL_ERROR_MALLOC_FAILED, // ÄÚ´æ·ÖÅäÊ§°Ü
-    KERNEL_ERROR_HARD_FAULT, // Ó²¼ş´íÎó
+    KERNEL_ERROR_NONE = 0, // æ— é”™è¯¯
+    KERNEL_ERROR_STACK_OVERFLOW, // æ ˆæº¢å‡ºé”™è¯¯
+    KERNEL_ERROR_MALLOC_FAILED, // å†…å­˜åˆ†é…å¤±è´¥
+    KERNEL_ERROR_HARD_FAULT, // ç¡¬ä»¶é”™è¯¯
 } KernelErrorType_t;
 
 // -----------------------------
-// ºËĞÄ¶ÔÏó¾ä±ú
+// æ ¸å¿ƒå¯¹è±¡å¥æŸ„
 // -----------------------------
-typedef struct Task_t *TaskHandle_t; // ÈÎÎñ¾ä±ú
-typedef struct Mutex_t *MutexHandle_t; // »¥³âËø¾ä±ú
-typedef void *QueueHandle_t; // ¶ÓÁĞ¾ä±ú
-typedef struct Semaphore_t *SemaphoreHandle_t; // ĞÅºÅÁ¿¾ä±ú
+typedef struct Task_t *TaskHandle_t; // ä»»åŠ¡å¥æŸ„
+typedef struct Mutex_t *MutexHandle_t; // äº’æ–¥é”å¥æŸ„
+typedef void *QueueHandle_t; // é˜Ÿåˆ—å¥æŸ„
+typedef struct Semaphore_t *SemaphoreHandle_t; // ä¿¡å·é‡å¥æŸ„
 
 // -----------------------------
-// È«¾ÖÄÚºË±äÁ¿
+// å…¨å±€å†…æ ¸å˜é‡
 // -----------------------------
-extern TaskHandle_t currentTask; // µ±Ç°ÔËĞĞµÄÈÎÎñ
-extern TaskHandle_t idleTask; // ¿ÕÏĞÈÎÎñ
-extern volatile uint8_t g_scheduler_started; // µ÷¶ÈÆ÷ÊÇ·ñÒÑÆô¶¯
+extern TaskHandle_t currentTask; // å½“å‰è¿è¡Œçš„ä»»åŠ¡
+extern TaskHandle_t idleTask; // ç©ºé—²ä»»åŠ¡
+extern volatile uint8_t g_scheduler_started; // è°ƒåº¦å™¨æ˜¯å¦å·²å¯åŠ¨
 
 // =============================
 // System Core API
 // =============================
 /**
- * @brief ³õÊ¼»¯MyRTOSÄÚºË
- * @details ³õÊ¼»¯ÄÚºËÏà¹ØÊı¾İ½á¹¹ºÍ±äÁ¿
+ * @brief åˆå§‹åŒ–MyRTOSå†…æ ¸
+ * @details åˆå§‹åŒ–å†…æ ¸ç›¸å…³æ•°æ®ç»“æ„å’Œå˜é‡
  */
 void MyRTOS_Init(void);
 
 /**
- * @brief Ö´ĞĞÈÎÎñµ÷¶È
- * @details ¸ù¾İÈÎÎñÓÅÏÈ¼¶ºÍ×´Ì¬Ñ¡ÔñÏÂÒ»¸öÒªÔËĞĞµÄÈÎÎñ
+ * @brief æ‰§è¡Œä»»åŠ¡è°ƒåº¦
+ * @details æ ¹æ®ä»»åŠ¡ä¼˜å…ˆçº§å’ŒçŠ¶æ€é€‰æ‹©ä¸‹ä¸€ä¸ªè¦è¿è¡Œçš„ä»»åŠ¡
  */
 void MyRTOS_Schedule(void);
 
 /**
- * @brief Æô¶¯ÈÎÎñµ÷¶ÈÆ÷
- * @param idle_task_hook ¿ÕÏĞÈÎÎñ¹³×Óº¯ÊıÖ¸Õë
+ * @brief å¯åŠ¨ä»»åŠ¡è°ƒåº¦å™¨
+ * @param idle_task_hook ç©ºé—²ä»»åŠ¡é’©å­å‡½æ•°æŒ‡é’ˆ
  */
 void Task_StartScheduler(void (*idle_task_hook)(void *));
 
 /**
- * @brief »ñÈ¡ÏµÍ³µ±Ç°Ê±ÖÓ½ÚÅÄÊı
- * @return µ±Ç°ÏµÍ³Ê±ÖÓ½ÚÅÄÊı
+ * @brief è·å–ç³»ç»Ÿå½“å‰æ—¶é’ŸèŠ‚æ‹æ•°
+ * @return å½“å‰ç³»ç»Ÿæ—¶é’ŸèŠ‚æ‹æ•°
  */
 uint64_t MyRTOS_GetTick(void);
 
 /**
- * @brief ÏµÍ³Ê±ÖÓ½ÚÅÄ´¦Àíº¯Êı
- * @details ÓÉÏµÍ³¶¨Ê±Æ÷ÖĞ¶Ïµ÷ÓÃ£¬ÓÃÓÚ¸üĞÂÏµÍ³Ê±ÖÓºÍ´¦ÀíÑÓÊ±ÈÎÎñ
+ * @brief ç³»ç»Ÿæ—¶é’ŸèŠ‚æ‹å¤„ç†å‡½æ•°
+ * @details ç”±ç³»ç»Ÿå®šæ—¶å™¨ä¸­æ–­è°ƒç”¨ï¼Œç”¨äºæ›´æ–°ç³»ç»Ÿæ—¶é’Ÿå’Œå¤„ç†å»¶æ—¶ä»»åŠ¡
  */
 int MyRTOS_Tick_Handler(void);
 
 /**
- * @brief ¼ì²éµ÷¶ÈÆ÷ÊÇ·ñÕıÔÚÔËĞĞ
- * @return 1±íÊ¾µ÷¶ÈÆ÷ÕıÔÚÔËĞĞ£¬0±íÊ¾Î´ÔËĞĞ
+ * @brief æ£€æŸ¥è°ƒåº¦å™¨æ˜¯å¦æ­£åœ¨è¿è¡Œ
+ * @return 1è¡¨ç¤ºè°ƒåº¦å™¨æ­£åœ¨è¿è¡Œï¼Œ0è¡¨ç¤ºæœªè¿è¡Œ
  */
 uint8_t MyRTOS_Schedule_IsRunning(void);
 
 /**
- * @brief ±¨¸æÄÚºËÑÏÖØ´íÎó¡£
- *        ´Ëº¯ÊıÓÉÆ½Ì¨²ã»òÄÚ²¿¼ì²éµ÷ÓÃ£¬ÓÃÓÚÍ¨ÖªÄÚºË·¢ÉúÁËÖÂÃüÊÂ¼ş£¬
- *        È»ºóÒÔÄÚ¹³×ÓÊÂ¼şµÄĞÎÊ½¹ã²¥³öÈ¥¡£
- * @param error_type ·¢ÉúµÄ´íÎóÀàĞÍ¡£
- * @param p_context  Ö¸ÏòÉÏÏÂÎÄÌØ¶¨Êı¾İµÄÖ¸Õë£¨ÀıÈç£¬¶ÔÓÚÕ»Òç³ö£¬
- *                   Ö¸ÏòÎ¥¹æÈÎÎñµÄTCB£©¡£
+ * @brief æŠ¥å‘Šå†…æ ¸ä¸¥é‡é”™è¯¯ã€‚
+ *        æ­¤å‡½æ•°ç”±å¹³å°å±‚æˆ–å†…éƒ¨æ£€æŸ¥è°ƒç”¨ï¼Œç”¨äºé€šçŸ¥å†…æ ¸å‘ç”Ÿäº†è‡´å‘½äº‹ä»¶ï¼Œ
+ *        ç„¶åä»¥å†…é’©å­äº‹ä»¶çš„å½¢å¼å¹¿æ’­å‡ºå»ã€‚
+ * @param error_type å‘ç”Ÿçš„é”™è¯¯ç±»å‹ã€‚
+ * @param p_context  æŒ‡å‘ä¸Šä¸‹æ–‡ç‰¹å®šæ•°æ®çš„æŒ‡é’ˆï¼ˆä¾‹å¦‚ï¼Œå¯¹äºæ ˆæº¢å‡ºï¼Œ
+ *                   æŒ‡å‘è¿è§„ä»»åŠ¡çš„TCBï¼‰ã€‚
  */
 
 void MyRTOS_ReportError(KernelErrorType_t error_type, void *p_context);
 
 // =============================
-// ÄÚºËÄÚ´æ¹ÜÀí API
+// å†…æ ¸å†…å­˜ç®¡ç† API
 // =============================
 /**
- * @brief ÄÚºËÄÚ´æ·ÖÅäº¯Êı
- * @param wantedSize ĞèÒª·ÖÅäµÄÄÚ´æ´óĞ¡(×Ö½Ú)
- * @return ³É¹¦Ê±·µ»ØÖ¸Ïò·ÖÅäÄÚ´æµÄÖ¸Õë£¬Ê§°ÜÊ±·µ»ØNULL
+ * @brief å†…æ ¸å†…å­˜åˆ†é…å‡½æ•°
+ * @param wantedSize éœ€è¦åˆ†é…çš„å†…å­˜å¤§å°(å­—èŠ‚)
+ * @return æˆåŠŸæ—¶è¿”å›æŒ‡å‘åˆ†é…å†…å­˜çš„æŒ‡é’ˆï¼Œå¤±è´¥æ—¶è¿”å›NULL
  */
 void *MyRTOS_Malloc(size_t wantedSize);
 
 /**
- * @brief ÄÚºËÄÚ´æÊÍ·Åº¯Êı
- * @param pv Ö¸ÏòĞèÒªÊÍ·ÅµÄÄÚ´æ¿éµÄÖ¸Õë
+ * @brief å†…æ ¸å†…å­˜é‡Šæ”¾å‡½æ•°
+ * @param pv æŒ‡å‘éœ€è¦é‡Šæ”¾çš„å†…å­˜å—çš„æŒ‡é’ˆ
  */
 void MyRTOS_Free(void *pv);
 
 // =============================
-// ÈÎÎñ¹ÜÀí API
+// ä»»åŠ¡ç®¡ç† API
 // =============================
 /**
- * @brief ´´½¨Ò»¸öĞÂÈÎÎñ
- * @param func ÈÎÎñº¯ÊıÖ¸Õë
- * @param taskName ÈÎÎñÃû³Æ
- * @param stack_size ÈÎÎñ¶ÑÕ»´óĞ¡(×Ö½Ú)
- * @param param ´«µİ¸øÈÎÎñº¯ÊıµÄ²ÎÊı
- * @param priority ÈÎÎñÓÅÏÈ¼¶
- * @return ³É¹¦Ê±·µ»ØÈÎÎñ¾ä±ú£¬Ê§°ÜÊ±·µ»ØNULL
+ * @brief åˆ›å»ºä¸€ä¸ªæ–°ä»»åŠ¡
+ * @param func ä»»åŠ¡å‡½æ•°æŒ‡é’ˆ
+ * @param taskName ä»»åŠ¡åç§°
+ * @param stack_size ä»»åŠ¡å †æ ˆå¤§å°(å­—èŠ‚)
+ * @param param ä¼ é€’ç»™ä»»åŠ¡å‡½æ•°çš„å‚æ•°
+ * @param priority ä»»åŠ¡ä¼˜å…ˆçº§
+ * @return æˆåŠŸæ—¶è¿”å›ä»»åŠ¡å¥æŸ„ï¼Œå¤±è´¥æ—¶è¿”å›NULL
  */
 TaskHandle_t Task_Create(void (*func)(void *), const char *taskName, uint16_t stack_size, void *param,
                          uint8_t priority);
 
 /**
- * @brief É¾³ıÖ¸¶¨ÈÎÎñ
- * @param task_h ÒªÉ¾³ıµÄÈÎÎñ¾ä±ú
- * @return 0±íÊ¾³É¹¦£¬·Ç0±íÊ¾Ê§°Ü
+ * @brief åˆ é™¤æŒ‡å®šä»»åŠ¡
+ * @param task_h è¦åˆ é™¤çš„ä»»åŠ¡å¥æŸ„
+ * @return 0è¡¨ç¤ºæˆåŠŸï¼Œé0è¡¨ç¤ºå¤±è´¥
  */
 int Task_Delete(TaskHandle_t task_h);
 
 /**
- * @brief ÑÓÊ±µ±Ç°ÈÎÎñÖ¸¶¨µÄÊ±ÖÓ½ÚÅÄÊı
- * @param tick ĞèÒªÑÓÊ±µÄÊ±ÖÓ½ÚÅÄÊı
+ * @brief å»¶æ—¶å½“å‰ä»»åŠ¡æŒ‡å®šçš„æ—¶é’ŸèŠ‚æ‹æ•°
+ * @param tick éœ€è¦å»¶æ—¶çš„æ—¶é’ŸèŠ‚æ‹æ•°
  */
 void Task_Delay(uint32_t tick);
 
 /**
- * @brief Í¨ÖªÖ¸¶¨ÈÎÎñ½â³ı×èÈû
- * @param task_h ±»Í¨ÖªµÄÈÎÎñ¾ä±ú
- * @return 0±íÊ¾³É¹¦£¬·Ç0±íÊ¾Ê§°Ü
+ * @brief é€šçŸ¥æŒ‡å®šä»»åŠ¡è§£é™¤é˜»å¡
+ * @param task_h è¢«é€šçŸ¥çš„ä»»åŠ¡å¥æŸ„
+ * @return 0è¡¨ç¤ºæˆåŠŸï¼Œé0è¡¨ç¤ºå¤±è´¥
  */
 int Task_Notify(TaskHandle_t task_h);
 
 /**
- * @brief ´ÓÖĞ¶Ï·şÎñÀı³ÌÖĞÍ¨ÖªÖ¸¶¨ÈÎÎñ½â³ı×èÈû
- * @param task_h ±»Í¨ÖªµÄÈÎÎñ¾ä±ú
- * @param higherPriorityTaskWoken ÓÃÓÚÖ¸Ê¾ÊÇ·ñÓĞ¸ü¸ßÓÅÏÈ¼¶ÈÎÎñ±»»½ĞÑ
- * @return 0±íÊ¾³É¹¦£¬·Ç0±íÊ¾Ê§°Ü
+ * @brief ä»ä¸­æ–­æœåŠ¡ä¾‹ç¨‹ä¸­é€šçŸ¥æŒ‡å®šä»»åŠ¡è§£é™¤é˜»å¡
+ * @param task_h è¢«é€šçŸ¥çš„ä»»åŠ¡å¥æŸ„
+ * @param higherPriorityTaskWoken ç”¨äºæŒ‡ç¤ºæ˜¯å¦æœ‰æ›´é«˜ä¼˜å…ˆçº§ä»»åŠ¡è¢«å”¤é†’
+ * @return 0è¡¨ç¤ºæˆåŠŸï¼Œé0è¡¨ç¤ºå¤±è´¥
  */
 int Task_NotifyFromISR(TaskHandle_t task_h, int *higherPriorityTaskWoken);
 
 /**
- * @brief µ±Ç°ÈÎÎñ½øÈëµÈ´ı×´Ì¬
- * @details ½«µ±Ç°ÈÎÎñÖÃÓÚ×èÈû×´Ì¬£¬Ö±µ½±»ÆäËûÈÎÎñ»òÖĞ¶Ï»½ĞÑ
+ * @brief å½“å‰ä»»åŠ¡è¿›å…¥ç­‰å¾…çŠ¶æ€
+ * @details å°†å½“å‰ä»»åŠ¡ç½®äºé˜»å¡çŠ¶æ€ï¼Œç›´åˆ°è¢«å…¶ä»–ä»»åŠ¡æˆ–ä¸­æ–­å”¤é†’
  */
 void Task_Wait(void);
 
 /**
- * @brief »ñÈ¡Ö¸¶¨ÈÎÎñµÄµ±Ç°×´Ì¬
- * @param task_h ÈÎÎñ¾ä±ú
- * @return ÈÎÎñµÄµ±Ç°×´Ì¬
+ * @brief è·å–æŒ‡å®šä»»åŠ¡çš„å½“å‰çŠ¶æ€
+ * @param task_h ä»»åŠ¡å¥æŸ„
+ * @return ä»»åŠ¡çš„å½“å‰çŠ¶æ€
  */
 TaskState_t Task_GetState(TaskHandle_t task_h);
 
 /**
- * @brief »ñÈ¡Ö¸¶¨ÈÎÎñµÄÓÅÏÈ¼¶
- * @param task_h ÈÎÎñ¾ä±ú
- * @return ÈÎÎñÓÅÏÈ¼¶
+ * @brief è·å–æŒ‡å®šä»»åŠ¡çš„ä¼˜å…ˆçº§
+ * @param task_h ä»»åŠ¡å¥æŸ„
+ * @return ä»»åŠ¡ä¼˜å…ˆçº§
  */
 uint8_t Task_GetPriority(TaskHandle_t task_h);
 
 /**
- * @brief »ñÈ¡µ±Ç°ÔËĞĞÈÎÎñµÄ¾ä±ú
- * @return µ±Ç°ÈÎÎñµÄ¾ä±ú
+ * @brief è·å–å½“å‰è¿è¡Œä»»åŠ¡çš„å¥æŸ„
+ * @return å½“å‰ä»»åŠ¡çš„å¥æŸ„
  */
 TaskHandle_t Task_GetCurrentTaskHandle(void);
 
 /**
- * @brief »ñÈ¡Ö¸¶¨ÈÎÎñµÄID
- * @param task_h ÈÎÎñ¾ä±ú
- * @return ÈÎÎñID
+ * @brief è·å–æŒ‡å®šä»»åŠ¡çš„ID
+ * @param task_h ä»»åŠ¡å¥æŸ„
+ * @return ä»»åŠ¡ID
  */
 uint32_t Task_GetId(TaskHandle_t task_h);
 
 /**
- * @brief »ñÈ¡ÈÎÎñµÄÃû³Æ¡£
- * @param task_h Òª²éÑ¯µÄÈÎÎñ¾ä±ú¡£
- * @return ·µ»ØÖ¸ÏòÈÎÎñÃû³Æ×Ö·û´®µÄÖ¸Õë¡£Èç¹û¾ä±úÎŞĞ§£¬¿ÉÄÜ·µ»ØNULL»ò¿Õ×Ö·û´®¡£
+ * @brief è·å–ä»»åŠ¡çš„åç§°ã€‚
+ * @param task_h è¦æŸ¥è¯¢çš„ä»»åŠ¡å¥æŸ„ã€‚
+ * @return è¿”å›æŒ‡å‘ä»»åŠ¡åç§°å­—ç¬¦ä¸²çš„æŒ‡é’ˆã€‚å¦‚æœå¥æŸ„æ— æ•ˆï¼Œå¯èƒ½è¿”å›NULLæˆ–ç©ºå­—ç¬¦ä¸²ã€‚
  */
 char *Task_GetName(TaskHandle_t task_h);
 /**
- * @brief ¸ù¾İÈÎÎñÃû³Æ²éÕÒÈÎÎñ¾ä±ú¡£
- * @param taskName Òª²éÕÒµÄÈÎÎñµÄÃû³Æ×Ö·û´®¡£
- * @return Èç¹ûÕÒµ½£¬Ôò·µ»ØÈÎÎñµÄ¾ä±ú£»Èç¹ûÎ´ÕÒµ½£¬Ôò·µ»Ø NULL¡£
+ * @brief æ ¹æ®ä»»åŠ¡åç§°æŸ¥æ‰¾ä»»åŠ¡å¥æŸ„ã€‚
+ * @param taskName è¦æŸ¥æ‰¾çš„ä»»åŠ¡çš„åç§°å­—ç¬¦ä¸²ã€‚
+ * @return å¦‚æœæ‰¾åˆ°ï¼Œåˆ™è¿”å›ä»»åŠ¡çš„å¥æŸ„ï¼›å¦‚æœæœªæ‰¾åˆ°ï¼Œåˆ™è¿”å› NULLã€‚
  */
 TaskHandle_t Task_FindByName(const char *taskName);
 
 
 // =============================
-// ¶ÓÁĞ¹ÜÀí API
+// é˜Ÿåˆ—ç®¡ç† API
 // =============================
 /**
- * @brief ´´½¨Ò»¸ö¶ÓÁĞ
- * @param length ¶ÓÁĞ³¤¶È(¿É´æ´¢µÄÏîÄ¿Êı)
- * @param itemSize ¶ÓÁĞÖĞÃ¿¸öÏîÄ¿µÄ´óĞ¡(×Ö½Ú)
- * @return ³É¹¦Ê±·µ»Ø¶ÓÁĞ¾ä±ú£¬Ê§°ÜÊ±·µ»ØNULL
+ * @brief åˆ›å»ºä¸€ä¸ªé˜Ÿåˆ—
+ * @param length é˜Ÿåˆ—é•¿åº¦(å¯å­˜å‚¨çš„é¡¹ç›®æ•°)
+ * @param itemSize é˜Ÿåˆ—ä¸­æ¯ä¸ªé¡¹ç›®çš„å¤§å°(å­—èŠ‚)
+ * @return æˆåŠŸæ—¶è¿”å›é˜Ÿåˆ—å¥æŸ„ï¼Œå¤±è´¥æ—¶è¿”å›NULL
  */
 QueueHandle_t Queue_Create(uint32_t length, uint32_t itemSize);
 
 /**
- * @brief É¾³ıÖ¸¶¨¶ÓÁĞ
- * @param delQueue ÒªÉ¾³ıµÄ¶ÓÁĞ¾ä±ú
+ * @brief åˆ é™¤æŒ‡å®šé˜Ÿåˆ—
+ * @param delQueue è¦åˆ é™¤çš„é˜Ÿåˆ—å¥æŸ„
  */
 void Queue_Delete(QueueHandle_t delQueue);
 
 /**
- * @brief Ïò¶ÓÁĞ·¢ËÍÊı¾İ
- * @param queue ¶ÓÁĞ¾ä±ú
- * @param item Ö¸ÏòÒª·¢ËÍÊı¾İµÄÖ¸Õë
- * @param block_ticks ÔÚ¶ÓÁĞÂúÊ±µÈ´ıµÄÊ±ÖÓ½ÚÅÄÊı(0±íÊ¾²»µÈ´ı)
- * @return 0±íÊ¾³É¹¦£¬·Ç0±íÊ¾Ê§°Ü»ò³¬Ê±
+ * @brief å‘é˜Ÿåˆ—å‘é€æ•°æ®
+ * @param queue é˜Ÿåˆ—å¥æŸ„
+ * @param item æŒ‡å‘è¦å‘é€æ•°æ®çš„æŒ‡é’ˆ
+ * @param block_ticks åœ¨é˜Ÿåˆ—æ»¡æ—¶ç­‰å¾…çš„æ—¶é’ŸèŠ‚æ‹æ•°(0è¡¨ç¤ºä¸ç­‰å¾…)
+ * @return 0è¡¨ç¤ºæˆåŠŸï¼Œé0è¡¨ç¤ºå¤±è´¥æˆ–è¶…æ—¶
  */
 int Queue_Send(QueueHandle_t queue, const void *item, uint32_t block_ticks);
 
 /**
- * @brief ´Ó¶ÓÁĞ½ÓÊÕÊı¾İ
- * @param queue ¶ÓÁĞ¾ä±ú
- * @param buffer ÓÃÓÚ´æ´¢½ÓÊÕÊı¾İµÄ»º³åÇøÖ¸Õë
- * @param block_ticks ÔÚ¶ÓÁĞ¿ÕÊ±µÈ´ıµÄÊ±ÖÓ½ÚÅÄÊı(0±íÊ¾²»µÈ´ı)
- * @return 0±íÊ¾³É¹¦£¬·Ç0±íÊ¾Ê§°Ü»ò³¬Ê±
+ * @brief ä»é˜Ÿåˆ—æ¥æ”¶æ•°æ®
+ * @param queue é˜Ÿåˆ—å¥æŸ„
+ * @param buffer ç”¨äºå­˜å‚¨æ¥æ”¶æ•°æ®çš„ç¼“å†²åŒºæŒ‡é’ˆ
+ * @param block_ticks åœ¨é˜Ÿåˆ—ç©ºæ—¶ç­‰å¾…çš„æ—¶é’ŸèŠ‚æ‹æ•°(0è¡¨ç¤ºä¸ç­‰å¾…)
+ * @return 0è¡¨ç¤ºæˆåŠŸï¼Œé0è¡¨ç¤ºå¤±è´¥æˆ–è¶…æ—¶
  */
 int Queue_Receive(QueueHandle_t queue, void *buffer, uint32_t block_ticks);
 
 // =============================
-// »¥³âËø¹ÜÀí API
+// äº’æ–¥é”ç®¡ç† API
 // =============================
 /**
- * @brief ´´½¨Ò»¸ö»¥³âËø
- * @return ³É¹¦Ê±·µ»Ø»¥³âËø¾ä±ú£¬Ê§°ÜÊ±·µ»ØNULL
+ * @brief åˆ›å»ºä¸€ä¸ªäº’æ–¥é”
+ * @return æˆåŠŸæ—¶è¿”å›äº’æ–¥é”å¥æŸ„ï¼Œå¤±è´¥æ—¶è¿”å›NULL
  */
 MutexHandle_t Mutex_Create(void);
 
 /**
- * @brief É¾³ıÖ¸¶¨»¥³âËø
- * @param mutex ÒªÉ¾³ıµÄ»¥³âËø¾ä±ú
+ * @brief åˆ é™¤æŒ‡å®šäº’æ–¥é”
+ * @param mutex è¦åˆ é™¤çš„äº’æ–¥é”å¥æŸ„
  */
 void Mutex_Delete(MutexHandle_t mutex);
 
 /**
- * @brief »ñÈ¡»¥³âËø(×èÈû)
- * @param mutex »¥³âËø¾ä±ú
+ * @brief è·å–äº’æ–¥é”(é˜»å¡)
+ * @param mutex äº’æ–¥é”å¥æŸ„
  */
 void Mutex_Lock(MutexHandle_t mutex);
 
 /**
- * @brief ÔÚÖ¸¶¨Ê±¼äÄÚ³¢ÊÔ»ñÈ¡»¥³âËø
- * @param mutex »¥³âËø¾ä±ú
- * @param block_ticks µÈ´ıµÄ×î´óÊ±ÖÓ½ÚÅÄÊı(0±íÊ¾²»µÈ´ı)
- * @return 0±íÊ¾³É¹¦»ñÈ¡Ëø£¬·Ç0±íÊ¾Ê§°Ü»ò³¬Ê±
+ * @brief åœ¨æŒ‡å®šæ—¶é—´å†…å°è¯•è·å–äº’æ–¥é”
+ * @param mutex äº’æ–¥é”å¥æŸ„
+ * @param block_ticks ç­‰å¾…çš„æœ€å¤§æ—¶é’ŸèŠ‚æ‹æ•°(0è¡¨ç¤ºä¸ç­‰å¾…)
+ * @return 0è¡¨ç¤ºæˆåŠŸè·å–é”ï¼Œé0è¡¨ç¤ºå¤±è´¥æˆ–è¶…æ—¶
  */
 int Mutex_Lock_Timeout(MutexHandle_t mutex, uint32_t block_ticks);
 
 /**
- * @brief ÊÍ·Å»¥³âËø
- * @param mutex »¥³âËø¾ä±ú
+ * @brief é‡Šæ”¾äº’æ–¥é”
+ * @param mutex äº’æ–¥é”å¥æŸ„
  */
 void Mutex_Unlock(MutexHandle_t mutex);
 
 /**
- * @brief »ñÈ¡µİ¹é»¥³âËø
- * @param mutex »¥³âËø¾ä±ú
- * @note Í¬Ò»¸öÈÎÎñ¿ÉÒÔ¶à´Î»ñÈ¡µİ¹é»¥³âËø
+ * @brief è·å–é€’å½’äº’æ–¥é”
+ * @param mutex äº’æ–¥é”å¥æŸ„
+ * @note åŒä¸€ä¸ªä»»åŠ¡å¯ä»¥å¤šæ¬¡è·å–é€’å½’äº’æ–¥é”
  */
 void Mutex_Lock_Recursive(MutexHandle_t mutex);
 
 /**
- * @brief ÊÍ·Åµİ¹é»¥³âËø
- * @param mutex »¥³âËø¾ä±ú
- * @note ±ØĞëÓëMutex_Lock_RecursiveÅä¶ÔÊ¹ÓÃ
+ * @brief é‡Šæ”¾é€’å½’äº’æ–¥é”
+ * @param mutex äº’æ–¥é”å¥æŸ„
+ * @note å¿…é¡»ä¸Mutex_Lock_Recursiveé…å¯¹ä½¿ç”¨
  */
 void Mutex_Unlock_Recursive(MutexHandle_t mutex);
 
 // =============================
-// ĞÅºÅÁ¿¹ÜÀí API
+// ä¿¡å·é‡ç®¡ç† API
 // =============================
 /**
- * @brief ´´½¨Ò»¸öĞÅºÅÁ¿
- * @param maxCount ĞÅºÅÁ¿×î´ó¼ÆÊıÖµ
- * @param initialCount ĞÅºÅÁ¿³õÊ¼¼ÆÊıÖµ
- * @return ³É¹¦Ê±·µ»ØĞÅºÅÁ¿¾ä±ú£¬Ê§°ÜÊ±·µ»ØNULL
+ * @brief åˆ›å»ºä¸€ä¸ªä¿¡å·é‡
+ * @param maxCount ä¿¡å·é‡æœ€å¤§è®¡æ•°å€¼
+ * @param initialCount ä¿¡å·é‡åˆå§‹è®¡æ•°å€¼
+ * @return æˆåŠŸæ—¶è¿”å›ä¿¡å·é‡å¥æŸ„ï¼Œå¤±è´¥æ—¶è¿”å›NULL
  */
 SemaphoreHandle_t Semaphore_Create(uint32_t maxCount, uint32_t initialCount);
 
 /**
- * @brief É¾³ıÖ¸¶¨ĞÅºÅÁ¿
- * @param semaphore ÒªÉ¾³ıµÄĞÅºÅÁ¿¾ä±ú
+ * @brief åˆ é™¤æŒ‡å®šä¿¡å·é‡
+ * @param semaphore è¦åˆ é™¤çš„ä¿¡å·é‡å¥æŸ„
  */
 void Semaphore_Delete(SemaphoreHandle_t semaphore);
 
 /**
- * @brief »ñÈ¡ĞÅºÅÁ¿
- * @param semaphore ĞÅºÅÁ¿¾ä±ú
- * @param block_ticks µÈ´ıµÄ×î´óÊ±ÖÓ½ÚÅÄÊı(0±íÊ¾²»µÈ´ı)
- * @return 0±íÊ¾³É¹¦»ñÈ¡ĞÅºÅÁ¿£¬·Ç0±íÊ¾Ê§°Ü»ò³¬Ê±
+ * @brief è·å–ä¿¡å·é‡
+ * @param semaphore ä¿¡å·é‡å¥æŸ„
+ * @param block_ticks ç­‰å¾…çš„æœ€å¤§æ—¶é’ŸèŠ‚æ‹æ•°(0è¡¨ç¤ºä¸ç­‰å¾…)
+ * @return 0è¡¨ç¤ºæˆåŠŸè·å–ä¿¡å·é‡ï¼Œé0è¡¨ç¤ºå¤±è´¥æˆ–è¶…æ—¶
  */
 int Semaphore_Take(SemaphoreHandle_t semaphore, uint32_t block_ticks);
 
 /**
- * @brief ÊÍ·ÅĞÅºÅÁ¿
- * @param semaphore ĞÅºÅÁ¿¾ä±ú
- * @return 0±íÊ¾³É¹¦£¬·Ç0±íÊ¾Ê§°Ü
+ * @brief é‡Šæ”¾ä¿¡å·é‡
+ * @param semaphore ä¿¡å·é‡å¥æŸ„
+ * @return 0è¡¨ç¤ºæˆåŠŸï¼Œé0è¡¨ç¤ºå¤±è´¥
  */
 int Semaphore_Give(SemaphoreHandle_t semaphore);
 
 /**
- * @brief ´ÓÖĞ¶Ï·şÎñÀı³ÌÖĞÊÍ·ÅĞÅºÅÁ¿
- * @param semaphore ĞÅºÅÁ¿¾ä±ú
- * @param higherPriorityTaskWoken ÓÃÓÚÖ¸Ê¾ÊÇ·ñÓĞ¸ü¸ßÓÅÏÈ¼¶ÈÎÎñ±»»½ĞÑ
- * @return 0±íÊ¾³É¹¦£¬·Ç0±íÊ¾Ê§°Ü
+ * @brief ä»ä¸­æ–­æœåŠ¡ä¾‹ç¨‹ä¸­é‡Šæ”¾ä¿¡å·é‡
+ * @param semaphore ä¿¡å·é‡å¥æŸ„
+ * @param higherPriorityTaskWoken ç”¨äºæŒ‡ç¤ºæ˜¯å¦æœ‰æ›´é«˜ä¼˜å…ˆçº§ä»»åŠ¡è¢«å”¤é†’
+ * @return 0è¡¨ç¤ºæˆåŠŸï¼Œé0è¡¨ç¤ºå¤±è´¥
  */
 int Semaphore_GiveFromISR(SemaphoreHandle_t semaphore, int *higherPriorityTaskWoken);
 
