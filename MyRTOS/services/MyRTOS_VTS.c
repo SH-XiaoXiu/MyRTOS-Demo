@@ -5,112 +5,186 @@
 #include "MyRTOS_VTS.h"
 
 #if (MYRTOS_SERVICE_VTS_ENABLE == 1)
-
-#include "MyRTOS_IO.h"
 #include <string.h>
-
 
 //内部数据结构 
 typedef struct {
-    //流句柄
-    StreamHandle_t physical_stream;
-    StreamHandle_t primary_in;
-    StreamHandle_t primary_out;
-    StreamHandle_t background_in;
+    VTS_Config_t config; //保存初始化配置
 
-    //状态变量
+    //内部状态
+    volatile bool log_all_mode;
+    char back_cmd_buffer[VTS_MAX_BACK_CMD_LEN];
+    size_t back_cmd_buffer_idx;
+
+    //当前焦点流
     volatile StreamHandle_t focused_stream;
 
+    //RTOS 对象
+    TaskHandle_t vts_task_handle;
     MutexHandle_t lock;
+    StreamHandle_t background_stream; //后台任务的统一输出流
 } VTS_Instance_t;
 
-//全局实例 
+
+//全局实例指针 
 static VTS_Instance_t *g_vts = NULL;
 
+
+//私有辅助函数 
+
+/**
+ * @brief 处理从物理终端接收到的单个字符。
+ * @details 检查字符是否匹配'back'命令序列。如果不匹配，则将其转发到根输入流。
+ * @param vts VTS实例指针。
+ * @param ch 接收到的字符。
+ */
+static void vts_process_input_char(VTS_Instance_t *vts, char ch) {
+    if (ch == vts->config.back_command_sequence[vts->back_cmd_buffer_idx]) {
+        vts->back_cmd_buffer[vts->back_cmd_buffer_idx++] = ch;
+
+        if (vts->back_cmd_buffer_idx == vts->config.back_command_len) {
+            //完整匹配'back'命令
+            vts->back_cmd_buffer_idx = 0; //重置缓冲区
+
+            //将焦点重置回根流
+            Mutex_Lock(vts->lock);
+            vts->focused_stream = vts->config.root_output_stream;
+            Mutex_Unlock(vts->lock);
+
+            //调用回调通知平台层
+            if (vts->config.on_back_command) {
+                vts->config.on_back_command();
+            }
+        }
+    } else {
+        if (vts->back_cmd_buffer_idx > 0) {
+            Stream_Write(vts->config.root_input_stream, vts->back_cmd_buffer, vts->back_cmd_buffer_idx,
+                         MYRTOS_MAX_DELAY);
+        }
+        Stream_Write(vts->config.root_input_stream, &ch, 1, MYRTOS_MAX_DELAY);
+        vts->back_cmd_buffer_idx = 0;
+    }
+}
+
+static void vts_forward_output(VTS_Instance_t *vts, StreamHandle_t stream, char *buffer, size_t buffer_size) {
+    size_t bytes_read = Stream_Read(stream, buffer, buffer_size, 0);
+    if (bytes_read > 0) {
+        Stream_Write(vts->config.physical_stream, buffer, bytes_read, MYRTOS_MAX_DELAY);
+    }
+}
+
+static void vts_drain_stream(StreamHandle_t stream, char *buffer, size_t buffer_size) {
+    while (Stream_Read(stream, buffer, buffer_size, 0) > 0);
+}
+
+
 //VTS 主任务 
+
 static void VTS_Task(void *param) {
-    VTS_Instance_t *vts = (VTS_Instance_t *)param;
+    VTS_Instance_t *vts = (VTS_Instance_t *) param;
     char buffer[VTS_RW_BUFFER_SIZE];
-    size_t bytes_read;
-    StreamHandle_t streams_to_drain[] = { vts->primary_out, vts->background_in };
+    char input_char;
 
     for (;;) {
-        //转发物理输入到主交互通道
-        bytes_read = Stream_Read(vts->physical_stream, buffer, VTS_RW_BUFFER_SIZE, 0);
-        if (bytes_read > 0) {
-            Stream_Write(vts->primary_in, buffer, bytes_read, MYRTOS_MAX_DELAY);
+        //处理物理输入
+        if (Stream_Read(vts->config.physical_stream, &input_char, 1, 0) > 0) {
+            vts_process_input_char(vts, input_char);
         }
-        //获取当前焦点流的快照
+
+        //处理输出
         Mutex_Lock(vts->lock);
-        StreamHandle_t current_focus = vts->focused_stream;
+        bool log_all = vts->log_all_mode;
+        StreamHandle_t current_focus_stream = vts->focused_stream;
         Mutex_Unlock(vts->lock);
-        //处理焦点流：从焦点流读取数据并写入物理终端
-        if (current_focus) {
-            bytes_read = Stream_Read(current_focus, buffer, VTS_RW_BUFFER_SIZE, 0);
-            if (bytes_read > 0) {
-                Stream_Write(vts->physical_stream, buffer, bytes_read, MYRTOS_MAX_DELAY);
+
+        if (log_all) {
+            vts_forward_output(vts, vts->config.root_output_stream, buffer, VTS_RW_BUFFER_SIZE);
+            vts_forward_output(vts, vts->background_stream, buffer, VTS_RW_BUFFER_SIZE);
+            if (current_focus_stream != vts->config.root_output_stream) {
+                vts_forward_output(vts, current_focus_stream, buffer, VTS_RW_BUFFER_SIZE);
+            }
+        } else {
+            vts_forward_output(vts, current_focus_stream, buffer, VTS_RW_BUFFER_SIZE);
+            if (vts->config.root_output_stream != current_focus_stream) {
+                vts_drain_stream(vts->config.root_output_stream, buffer, VTS_RW_BUFFER_SIZE);
+            }
+            if (vts->background_stream != current_focus_stream) {
+                vts_drain_stream(vts->background_stream, buffer, VTS_RW_BUFFER_SIZE);
             }
         }
-        //清理所有非焦点流，以防其生产者被阻塞
-        for(size_t i = 0; i < sizeof(streams_to_drain)/sizeof(streams_to_drain[0]); ++i) {
-            if (streams_to_drain[i] != current_focus) {
-                //非阻塞地读取并丢弃所有数据
-                while(Stream_Read(streams_to_drain[i], buffer, VTS_RW_BUFFER_SIZE, 0) > 0);
-            }
-        }
+
         Task_Delay(MS_TO_TICKS(10));
     }
 }
 
-//公共API实现 
-int VTS_Init(StreamHandle_t physical_stream, VTS_Handles_t *handles) {
-    if (!physical_stream || !handles) return -1;
 
-    g_vts = (VTS_Instance_t *)MyRTOS_Malloc(sizeof(VTS_Instance_t));
+//公共 API 实现 
+
+int VTS_Init(const VTS_Config_t *config) {
+    if (g_vts || !config || !config->physical_stream || !config->root_input_stream ||
+        !config->root_output_stream || !config->back_command_sequence ||
+        config->back_command_len == 0 || config->back_command_len > VTS_MAX_BACK_CMD_LEN) {
+        return -1;
+    }
+
+    g_vts = (VTS_Instance_t *) MyRTOS_Malloc(sizeof(VTS_Instance_t));
     if (!g_vts) return -1;
     memset(g_vts, 0, sizeof(VTS_Instance_t));
 
-    g_vts->physical_stream = physical_stream;
-    g_vts->primary_in = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
-    g_vts->primary_out = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
-    g_vts->background_in = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
+    g_vts->config = *config;
     g_vts->lock = Mutex_Create();
+    g_vts->background_stream = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
 
-    if (!g_vts->primary_in || !g_vts->primary_out || !g_vts->background_in || !g_vts->lock) {
-        if (g_vts->primary_in) Pipe_Delete(g_vts->primary_in);
-        if (g_vts->primary_out) Pipe_Delete(g_vts->primary_out);
-        if (g_vts->background_in) Pipe_Delete(g_vts->background_in);
-        if (g_vts->lock) Mutex_Delete(g_vts->lock);
-        MyRTOS_Free(g_vts);
-        g_vts = NULL;
-        return -1;
+    if (!g_vts->lock || !g_vts->background_stream) {
+        goto cleanup;
     }
-    //默认设置：主要交互通道拥有焦点
-    g_vts->focused_stream = g_vts->primary_out;
-    //返回句柄
-    handles->primary_input_stream = g_vts->primary_in;
-    handles->primary_output_stream = g_vts->primary_out;
-    handles->background_stream = g_vts->background_in;
-    //创建任务
-    TaskHandle_t task_h = Task_Create(VTS_Task, "VTSService", VTS_TASK_STACK_SIZE, g_vts, VTS_TASK_PRIORITY);
-    if (!task_h) {
-        Pipe_Delete(g_vts->primary_in);
-        Pipe_Delete(g_vts->primary_out);
-        Pipe_Delete(g_vts->background_in);
-        Mutex_Delete(g_vts->lock);
-        MyRTOS_Free(g_vts);
-        g_vts = NULL;
-        return -1;
+
+    //默认焦点是根流
+    g_vts->focused_stream = config->root_output_stream;
+
+    g_vts->vts_task_handle = Task_Create(VTS_Task, "VTSService", VTS_TASK_STACK_SIZE, g_vts, VTS_TASK_PRIORITY);
+    if (!g_vts->vts_task_handle) {
+        goto cleanup;
     }
+
+    return 0;
+
+cleanup:
+    if (g_vts->lock) Mutex_Delete(g_vts->lock);
+    if (g_vts->background_stream) Pipe_Delete(g_vts->background_stream);
+    MyRTOS_Free(g_vts);
+    g_vts = NULL;
+    return -1;
+}
+
+int VTS_SetFocus(StreamHandle_t output_stream) {
+    if (!g_vts) return -1;
+
+    Mutex_Lock(g_vts->lock);
+    g_vts->focused_stream = output_stream ? output_stream : g_vts->config.root_output_stream;
+    Mutex_Unlock(g_vts->lock);
     return 0;
 }
 
-int VTS_SetFocus(StreamHandle_t stream) {
-    if (!g_vts) return -1;
+void VTS_ReturnToRootFocus(void) {
+    if (!g_vts) return;
+
     Mutex_Lock(g_vts->lock);
-    g_vts->focused_stream = stream;
+    g_vts->focused_stream = g_vts->config.root_output_stream;
     Mutex_Unlock(g_vts->lock);
-    return 0;
+}
+
+void VTS_SetLogAllMode(bool enable) {
+    if (g_vts) {
+        g_vts->log_all_mode = enable;
+    }
+}
+
+StreamHandle_t VTS_GetBackgroundStream(void) {
+    if (g_vts) {
+        return g_vts->background_stream;
+    }
+    return NULL;
 }
 
 #endif
