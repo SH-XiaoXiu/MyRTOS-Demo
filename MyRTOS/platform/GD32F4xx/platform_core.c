@@ -8,33 +8,55 @@
 #include "gd32f4xx_rcu.h"
 
 #include "MyRTOS.h"
-#include "MyRTOS_IO.h"
-#include "MyRTOS_Log.h"
-#include "MyRTOS_Monitor.h"
+
+
 #include "MyRTOS_Port.h"
-#include "MyRTOS_Timer.h"
-#include "MyRTOS_Shell.h"
-#include "MyRTOS_VTS.h"
 
-#include <stdio.h>
+//==============================================================================
+// 模块导入
+//==============================================================================
+#if MYRTOS_SERVICE_IO_ENABLE == 1
+#include "MyRTOS_IO.h"
 #include <string.h>
-#include <stdlib.h>
-
-// 外部定义 
-void Platform_Console_HwInit(void);
-
-void Platform_Console_OSInit(void);
-
-void Platform_HiresTimer_Init(void);
-
-void Platform_error_handler_init(void);
+#endif
 
 
-void platform_register_default_commands(ShellHandle_t shell_h);
+#if MYRTOS_SERVICE_LOG_ENABLE == 1
+#include "MyRTOS_Log.h"
+#endif
+
+
+#if MYRTOS_SERVICE_MONITOR_ENABLE == 1
+#include "MyRTOS_Monitor.h"
+#endif
+
+
+#if MYRTOS_SERVICE_TIMER_ENABLE == 1
+#include "MyRTOS_Timer.h"
+#endif
+
+
+#if MYRTOS_SERVICE_SHELL_ENABLE == 1
+#include "MyRTOS_Shell.h"
+#endif
+
+#if MYRTOS_SERVICE_VTS_ENABLE == 1
+#include "MyRTOS_VTS.h"
+#endif
+
 
 //==============================================================================
-// 类型定义 
+// 前置声明
 //==============================================================================
+
+//------------------------------------------------------------------------------
+// 类型声明
+//------------------------------------------------------------------------------
+
+#if PLATFORM_USE_PROGRAM_MANGE == 1
+/**
+ * @brief 程序管理功能相关类型
+ */
 typedef int (*ProgramMain_t)(int argc, char *argv[]);
 
 typedef struct {
@@ -52,16 +74,11 @@ typedef struct {
     StreamHandle_t stdout_pipe_to_delete;
 } LaunchInfo_t;
 
-//==============================================================================
-// Program Registry 模块实现
-//==============================================================================
-#define MAX_REGISTERED_PROGRAMS 16
 
 typedef struct {
     char *name;
     TaskHandle_t handle;
     volatile bool shutdown_requested;
-    // [FIX] 将任务与其资源(LaunchInfo)明确绑定
     LaunchInfo_t *launch_info;
 } ProgramInfo_t;
 
@@ -74,7 +91,161 @@ typedef struct {
 typedef struct {
     void *_internal;
 } ProgramRegistry_t;
+#endif // PLATFORM_USE_PROGRAM_MANGE
 
+//------------------------------------------------------------------------------
+// 变量声明
+//------------------------------------------------------------------------------
+
+#if MYRTOS_SERVICE_IO_ENABLE == 1
+/**
+ * @brief IO及Shell服务相关外部变量
+ */
+extern StreamHandle_t g_system_stdin;
+extern StreamHandle_t g_system_stdout;
+extern StreamHandle_t g_system_stderr;
+#endif // MYRTOS_SERVICE_IO_ENABLE
+
+//------------------------------------------------------------------------------
+// 函数声明
+//------------------------------------------------------------------------------
+
+/**
+ * @brief 平台硬件与钩子函数
+ */
+#if PLATFORM_USE_CONSOLE == 1
+void Platform_Console_HwInit(void);
+
+void Platform_Console_OSInit(void);
+#else
+#define Platform_Console_HwInit()
+#define Platform_Console_OSInit()
+#endif // PLATFORM_USE_CONSOLE
+
+#if PLATFORM_HIRES_TIMER_NUM == 1
+void Platform_HiresTimer_Init(void);
+#else
+#define Platform_HiresTimer_Init()
+#endif // PLATFORM_HIRES_TIMER_NUM
+
+#if PLATFORM_USE_ERROR_HOOK == 1
+void Platform_error_handler_init(void);
+#else
+#define Platform_error_handler_init()
+#endif // PLATFORM_USE_ERROR_HOOK
+
+#if PLATFORM_USE_DEFAULT_COMMANDS == 1
+void platform_register_default_commands(ShellHandle_t shell_h);
+#else
+#define platform_register_default_commands(shell_h)
+#endif // PLATFORM_USE_DEFAULT_COMMANDS
+
+/**
+ * @brief 程序管理功能函数
+ */
+#if PLATFORM_USE_PROGRAM_MANGE == 1
+void ProgramRegistry_Init(ProgramRegistry_t *reg);
+
+int ProgramRegistry_Register(ProgramRegistry_t *reg, const char *name, TaskHandle_t handle, LaunchInfo_t *info);
+
+TaskHandle_t ProgramRegistry_Find(ProgramRegistry_t *reg, const char *name);
+
+LaunchInfo_t *ProgramRegistry_Unregister(ProgramRegistry_t *reg, TaskHandle_t handle);
+
+void ProgramRegistry_SignalShutdown(ProgramRegistry_t *reg, TaskHandle_t handle);
+
+bool Program_ShouldShutdown(void);
+
+void platform_on_back_command(void);
+
+static void cleanup_spy_state(void);
+#else
+#define ProgramRegistry_Init(reg)
+#define ProgramRegistry_Register(reg, name, handle, info) (-1)
+#define ProgramRegistry_Find(reg, name) (NULL)
+#define ProgramRegistry_Unregister(reg, handle) (NULL)
+#define ProgramRegistry_SignalShutdown(reg, handle)
+#define Program_ShouldShutdown() (false)
+#define platform_on_back_command()
+#define cleanup_spy_state()
+#endif // PLATFORM_USE_PROGRAM_MANGE
+
+
+/**
+ * @brief Shell命令及示例程序函数
+ */
+#if PLATFORM_USE_DEFAULT_COMMANDS
+// Shell命令函数
+int cmd_run(ShellHandle_t shell, int argc, char *argv[]);
+
+int cmd_kill(ShellHandle_t shell, int argc, char *argv[]);
+
+int cmd_shell(ShellHandle_t shell, int argc, char *argv[]);
+
+int cmd_log(ShellHandle_t shell, int argc, char *argv[]);
+
+int cmd_logall(ShellHandle_t shell, int argc, char *argv[]);
+
+int cmd_ls(ShellHandle_t shell, int argc, char *argv[]);
+
+// 示例程序入口
+int app_hello_main(int argc, char *argv[]);
+
+int app_counter_main(int argc, char *argv[]);
+#else
+#define cmd_run(shell, argc, argv) (0)
+#define cmd_kill(shell, argc, argv) (0)
+#define cmd_shell(shell, argc, argv) (0)
+#define cmd_log(shell, argc, argv) (0)
+#define cmd_logall(shell, argc, argv) (0)
+#define cmd_ls(shell, argc, argv) (0)
+#define app_hello_main(argc, argv) (0)
+#define app_counter_main(argc, argv) (0)
+#endif // PLATFORM_USE_DEFAULT_COMMANDS
+
+
+//==============================================================================
+// 实现
+//==============================================================================
+
+//------------------------------------------------------------------------------
+// 变量定义
+//------------------------------------------------------------------------------
+
+#if MYRTOS_SERVICE_IO_ENABLE == 1
+/**
+ * @brief IO及Shell服务相关全局/静态变量
+ */
+ShellHandle_t g_platform_shell_handle = NULL;
+static StreamHandle_t g_original_task_stdout = NULL;
+static StreamHandle_t g_spy_pipe = NULL;
+#endif // MYRTOS_SERVICE_IO_ENABLE
+
+
+#if PLATFORM_USE_PROGRAM_MANGE == 1
+/**
+ * @brief 程序管理功能相关全局/静态变量
+ */
+ProgramRegistry_t g_program_registry;
+static TaskHandle_t g_current_foreground_task = NULL;
+static TaskHandle_t g_spied_task = NULL;
+
+const ProgramEntry_t g_program_table[] = {
+    {"hello", app_hello_main},
+    {"counter", app_counter_main},
+    {NULL, NULL}
+};
+#endif // PLATFORM_USE_PROGRAM_MANGE
+
+
+//------------------------------------------------------------------------------
+// 函数
+//------------------------------------------------------------------------------
+
+#if PLATFORM_USE_PROGRAM_MANGE == 1
+/**
+ * @brief 程序管理功能实现
+ */
 void ProgramRegistry_Init(ProgramRegistry_t *reg) {
     if (!reg) return;
     ProgramRegistryInternal_t *internal = MyRTOS_Malloc(sizeof(ProgramRegistryInternal_t));
@@ -177,18 +348,7 @@ void ProgramRegistry_SignalShutdown(ProgramRegistry_t *reg, TaskHandle_t handle)
     Mutex_Unlock(internal->mutex);
 }
 
-// 全局变量 
-extern StreamHandle_t g_system_stdin;
-extern StreamHandle_t g_system_stdout;
-extern StreamHandle_t g_system_stderr;
-ShellHandle_t g_platform_shell_handle = NULL;
-ProgramRegistry_t g_program_registry;
-static TaskHandle_t g_current_foreground_task = NULL;
-static TaskHandle_t g_spied_task = NULL;
-static StreamHandle_t g_original_task_stdout = NULL;
-static StreamHandle_t g_spy_pipe = NULL;
-
-// 辅助函数 
+// 辅助函数
 static void cleanup_launch_info(LaunchInfo_t *info) {
     if (!info) return;
     for (int i = 0; i < info->argc; ++i) { MyRTOS_Free(info->argv[i]); }
@@ -197,29 +357,6 @@ static void cleanup_launch_info(LaunchInfo_t *info) {
     MyRTOS_Free(info);
 }
 
-// 可执行程序定义 
-bool Program_ShouldShutdown(void);
-
-int app_hello_main(int argc, char *argv[]) {
-    MyRTOS_printf("Hello from 'hello' app!\n");
-    return 0;
-}
-
-int app_counter_main(int argc, char *argv[]) {
-    int i = 0;
-    while (!Program_ShouldShutdown()) {
-        MyRTOS_printf("Counter: %d\n", i++);
-        Task_Delay(MS_TO_TICKS(1000));
-    }
-    MyRTOS_printf("Counter task shutting down gracefully.\n");
-    return 0;
-}
-
-const ProgramEntry_t g_program_table[] = {
-    {"hello", app_hello_main},
-    {"counter", app_counter_main},
-    {NULL, NULL}
-};
 bool Program_ShouldShutdown(void) {
     ProgramRegistryInternal_t *internal = (ProgramRegistryInternal_t *) g_program_registry._internal;
     TaskHandle_t self = Task_GetCurrentTaskHandle();
@@ -235,32 +372,8 @@ bool Program_ShouldShutdown(void) {
     return should_shutdown;
 }
 
-// 命令处理函数声明 
-int cmd_run(ShellHandle_t shell, int argc, char *argv[]);
-
-int cmd_kill(ShellHandle_t shell, int argc, char *argv[]);
-
-int cmd_shell(ShellHandle_t shell, int argc, char *argv[]);
-
-int cmd_log(ShellHandle_t shell, int argc, char *argv[]);
-
-int cmd_logall(ShellHandle_t shell, int argc, char *argv[]);
-
-int cmd_ls(ShellHandle_t shell, int argc, char *argv[]);
-
-//==============================================================================
-// 作业控制与VTS回调 
-//==============================================================================
-static void cleanup_spy_state() {
-    if (g_spied_task) { Task_SetStdOut(g_spied_task, g_original_task_stdout); }
-    if (g_spy_pipe) { Pipe_Delete(g_spy_pipe); }
-    g_spied_task = NULL;
-    g_original_task_stdout = NULL;
-    g_spy_pipe = NULL;
-}
-
 /**
- * @brief [FIXED] 最终的、健壮的任务清理函数
+ * @brief 任务清理函数
  */
 static void cleanup_task_resources(TaskHandle_t task_to_clean) {
     if (!task_to_clean) return;
@@ -297,7 +410,40 @@ void platform_on_back_command(void) {
     else if (g_spied_task) cleanup_spy_state();
 }
 
-// 平台初始化与启动 
+static void cleanup_spy_state() {
+    if (g_spied_task) { Task_SetStdOut(g_spied_task, g_original_task_stdout); }
+    if (g_spy_pipe) { Pipe_Delete(g_spy_pipe); }
+    g_spied_task = NULL;
+    g_original_task_stdout = NULL;
+    g_spy_pipe = NULL;
+}
+#endif // PLATFORM_USE_PROGRAM_MANGE
+
+
+#if PLATFORM_USE_DEFAULT_COMMANDS == 1
+/**
+ * @brief 示例程序实现
+ */
+int app_hello_main(int argc, char *argv[]) {
+    MyRTOS_printf("Hello from 'hello' app!\n");
+    return 0;
+}
+
+int app_counter_main(int argc, char *argv[]) {
+    int i = 0;
+    while (!Program_ShouldShutdown()) {
+        MyRTOS_printf("Counter: %d\n", i++);
+        Task_Delay(MS_TO_TICKS(1000));
+    }
+    MyRTOS_printf("Counter task shutting down gracefully.\n");
+    return 0;
+}
+#endif // PLATFORM_USE_DEFAULT_COMMANDS
+
+
+/**
+ * @brief 平台生命周期函数 (初始化与启动)
+ */
 static void system_clock_config(void) {
     rcu_deinit();
     rcu_osci_on(RCU_HXTAL);
@@ -314,7 +460,6 @@ static void system_clock_config(void) {
     }
 }
 
-
 void Platform_Init(void) {
     nvic_priority_group_set(NVIC_PRIGROUP_PRE4_SUB0);
     Platform_EarlyInit_Hook();
@@ -322,8 +467,11 @@ void Platform_Init(void) {
     Platform_HiresTimer_Init();
     Platform_BSP_Init_Hook();
     MyRTOS_Init();
+#if PLATFORM_USE_PROGRAM_MANGE == 1
     ProgramRegistry_Init(&g_program_registry);
+#endif
     Platform_error_handler_init();
+#if (MYRTOS_SERVICE_IO_ENABLE == 1) && (MYRTOS_SERVICE_VTS_ENABLE == 1) && (MYRTOS_SERVICE_SHELL_ENABLE == 1)
     Platform_Console_OSInit();
     StdIOService_Init();
     StreamHandle_t shell_input_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
@@ -345,6 +493,7 @@ void Platform_Init(void) {
             Task_SetStdIn(shell_task_h, shell_input_pipe);
             Task_SetStdOut(shell_task_h, shell_output_pipe);
             Task_SetStdErr(shell_task_h, shell_output_pipe);
+#if PLATFORM_USE_DEFAULT_COMMANDS == 1
             platform_register_default_commands(g_platform_shell_handle);
             Shell_RegisterCommand(g_platform_shell_handle, "run", "运行一个程序", cmd_run);
             Shell_RegisterCommand(g_platform_shell_handle, "kill", "杀死一个程序", cmd_kill);
@@ -352,12 +501,20 @@ void Platform_Init(void) {
             Shell_RegisterCommand(g_platform_shell_handle, "log", "监听日志", cmd_log);
             Shell_RegisterCommand(g_platform_shell_handle, "logall", "查看所有日志", cmd_logall);
             Shell_RegisterCommand(g_platform_shell_handle, "ls", "列出所有程序", cmd_ls);
+#endif // PLATFORM_USE_DEFAULT_COMMANDS
         }
     }
+#endif // IO, VTS, SHELL enabled
+#if MYRTOS_SERVICE_LOG_ENABLE == 1
     Log_Init();
+#endif
+#if MYRTOS_SERVICE_MONITOR_ENABLE == 1
     MonitorConfig_t m_config = {.get_hires_timer_value = Platform_Timer_GetHiresValue};
     Monitor_Init(&m_config);
+#endif
+#if MYRTOS_SERVICE_TIMER_ENABLE == 1
     TimerService_Init(MYRTOS_MAX_PRIORITIES - 2, 2048);
+#endif
     Platform_AppSetup_Hook(g_platform_shell_handle);
 }
 
@@ -367,10 +524,11 @@ void Platform_StartScheduler(void) {
     while (1);
 }
 
-//==============================================================================
-// Shell 命令实现 
-//==============================================================================
 
+#if PLATFORM_USE_DEFAULT_COMMANDS == 1
+/**
+ * @brief Shell 命令实现
+ */
 static void program_task_entry(void *param) {
     LaunchInfo_t *info = (LaunchInfo_t *) param;
     TaskHandle_t self = Task_GetCurrentTaskHandle();
@@ -380,7 +538,7 @@ static void program_task_entry(void *param) {
 
     info->main_func(info->argc, info->argv);
 
-    // 正常退出清理路径 
+    // 正常退出清理路径
     ProgramRegistry_Unregister(&g_program_registry, self); // 注销自己
     if (self == g_current_foreground_task) {
         g_current_foreground_task = NULL;
@@ -539,3 +697,4 @@ int cmd_ls(ShellHandle_t shell, int argc, char *argv[]) {
         MyRTOS_printf("  %s\n", g_program_table[i].name);
     return 0;
 }
+#endif // PLATFORM_USE_DEFAULT_COMMANDS
