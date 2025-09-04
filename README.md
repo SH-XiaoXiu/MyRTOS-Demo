@@ -160,7 +160,7 @@ int main(void) {
 
     // 启动RTOS调度器 (由平台层接管)
     Platform_StartScheduler();
-    
+
     return 0; // 永远不会执行到这里
 }
 ```
@@ -187,7 +187,7 @@ void Platform_CreateTasks_Hook(void) {
     product_queue = Queue_Create(3, sizeof(Product_t));
     Task_Create(consumer_task, "Consumer", 256, NULL, CONSUMER_PRIO);
     Task_Create(producer_task, "Producer", 256, NULL, PRODUCER_PRIO);
-    
+
     /* --- 信号量测试 (共享资源) --- */
     printer_semaphore = Semaphore_Create(2, 2); // 假设有2台打印机
     Task_Create(printer_task, "PrinterTask1", 256, (void *)"PrinterTask1", PRINTER_TASK_PRIO);
@@ -202,7 +202,7 @@ void Platform_CreateTasks_Hook(void) {
     /* --- 动态任务管理 (创建与删除) --- */
     c_task_h = Task_Create(c_task, "TaskC_dynamic", 1024, NULL, COLLABORATION_TASKS_PRIO);
     d_task_h = Task_Create(d_task, "TaskD_Creator", 256, NULL, COLLABORATION_TASKS_PRIO);
-    
+
     /* --- 其他功能任务 --- */
     high_prio_task_h = Task_Create(high_prio_task, "HighPrioTask", 256, NULL, HIGH_PRIO_TASK_PRIO);
     interrupt_task_h = Task_Create(interrupt_handler_task, "KeyHandlerTask", 128, NULL, INTERRUPT_TASK_PRIO);
@@ -331,7 +331,7 @@ void EXTI0_IRQHandler(void) {
 
         // 从ISR中释放信号量
         Semaphore_GiveFromISR(isr_semaphore, &higherPriorityTaskWoken);
-        
+
         // 如果唤醒了更高优先级的任务，请求进行一次上下文切换
         MyRTOS_Port_YieldFromISR(higherPriorityTaskWoken);
     }
