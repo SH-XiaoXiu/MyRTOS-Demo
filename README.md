@@ -360,7 +360,7 @@ MyRTOS 的调度机制核心基于 Cortex-M4 的 SysTick 与 PendSV 中断，实
 
 ### 调度流程
 
-![调度流程图](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/flow.svg)
+![调度流程图](http://public.xiuxius.cn/flow.svg)
 
 ## 📊 示例输出
 
