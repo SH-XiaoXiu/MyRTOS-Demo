@@ -4,6 +4,8 @@
  * @author XiaoXiu
  * @date  2025-08-31
  */
+#include <string.h>
+
 #include "MyRTOS.h"
 #include "MyRTOS_IO.h"
 #include "MyRTOS_Log.h"
@@ -259,7 +261,7 @@ void printer_task(void *param) {
 int cmd_114514(ShellHandle_t shell_h, int argc, char *argv[]) {
     (void) argc;
     (void) argv;
-    Stream_Printf(Shell_GetStream(shell_h), "嘿嘿嘿！！！\n");
+    MyRTOS_printf("114514\n");
     return 0;
 }
 
@@ -296,9 +298,9 @@ void Platform_BSP_Init_Hook(void) {
 void Platform_AppSetup_Hook(ShellHandle_t shell_h) {
     if (shell_h) {
         LOG_D("Hook", "Platform_AppSetup_Hook: Registering user commands...");
-        Platform_RegisterShellCommands(g_user_commands, g_user_command_count);
     }
 }
+
 
 /**
  * @brief 创建所有的应用程序任务。

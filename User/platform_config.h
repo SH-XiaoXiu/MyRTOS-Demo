@@ -11,7 +11,7 @@
 //                   可执行程序 配置
 // =========================================================================
 #if (MYRTOS_SERVICE_SHELL_ENABLE == 1)
-#define PLATFORM_PROGRAM_LAUNCH_STACK 64 // 启动任务栈大小
+#define PLATFORM_PROGRAM_LAUNCH_STACK 128 // 启动任务栈大小
 #endif
 
 

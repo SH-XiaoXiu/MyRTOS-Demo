@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "MyRTOS.h"
-#include "platform_gd32_console.h"
 
 
 // VTS内部实例结构体

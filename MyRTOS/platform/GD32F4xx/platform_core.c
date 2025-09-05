@@ -16,6 +16,11 @@
 #include "MyRTOS_IO.h"
 #endif
 
+#if MYRTOS_SERVICE_ASYNC_IO_ENABLE == 1
+#include "MyRTOS_AsyncIO.h"
+#endif
+
+
 #if MYRTOS_SERVICE_LOG_ENABLE == 1
 #include "MyRTOS_Log.h"
 #endif
@@ -119,21 +124,34 @@ void Platform_Init(void) {
 #if MYRTOS_SERVICE_IO_ENABLE == 1
     StdIOService_Init();
 #endif
+
+#if MYRTOS_SERVICE_ASYNC_IO_ENABLE == 1
+    if (AsyncIOService_Init() != 0) {
+        while (1);
+    }
+#endif
+
+#if MYRTOS_SERVICE_LOG_ENABLE == 1
+    Log_Init();
+#endif
 #if PLATFORM_USE_PROGRAM_MANGE == 1
     Platform_ProgramManager_Init();
 #endif
 
+#if MYRTOS_SERVICE_IO_ENABLE == 1
+    g_system_stdin = Platform_Console_GetStream();
+    g_system_stdout = Platform_Console_GetStream();
+    g_system_stderr = Platform_Console_GetStream();
+#endif
     // 初始化服务句柄
     StreamHandle_t shell_input_pipe = NULL;
     StreamHandle_t shell_output_pipe = NULL;
-
     // 默认将系统标准IO指向物理控制台，后续服务可能会覆盖此设置
 #if MYRTOS_SERVICE_IO_ENABLE == 1
     g_system_stdin = Platform_Console_GetStream();
     g_system_stdout = Platform_Console_GetStream();
     g_system_stderr = Platform_Console_GetStream();
 #endif
-
     // 初始化 Shell 服务 (如果启用)
     // Shell 的初始化独立于 VTS，在 VTS 之前完成，以获取任务句柄
 #if (MYRTOS_SERVICE_SHELL_ENABLE == 1)
@@ -147,7 +165,6 @@ void Platform_Init(void) {
         while (1);
     }
 #endif
-
     // 初始化 VTS 服务 (如果启用)
     // VTS 依赖 IO 服务，并可选择性地使用 Shell 任务句柄
 #if (MYRTOS_SERVICE_VTS_ENABLE == 1)
@@ -170,6 +187,12 @@ void Platform_Init(void) {
     //VTS 启动后接管后台日志输出流
     g_system_stdout = VTS_GetBackgroundStream();
     g_system_stderr = VTS_GetBackgroundStream();
+
+#if MYRTOS_SERVICE_LOG_ENABLE == 1
+    //将VTS的后台流注册为日志监听器。
+    Log_AddListener(VTS_GetBackgroundStream(), LOG_LEVEL_DEBUG,NULL);
+#endif
+
 #endif
 
     //根据 VTS 是否启用，为 Shell 配置正确的 IO 流
@@ -180,7 +203,10 @@ void Platform_Init(void) {
     Task_SetStdOut(g_shell_task_h, shell_output_pipe);
     Task_SetStdErr(g_shell_task_h, shell_output_pipe);
 #else
-    //只启用 Shell, 直接连接到物理控制台
+#if MYRTOS_SERVICE_LOG_ENABLE == 1
+    // 将物理控制台注册为监听器
+    Log_AddListener(Platform_Console_GetStream(), LOG_LEVEL_DEBUG);
+#endif
     Task_SetStdIn(g_shell_task_h, g_system_stdin);
     Task_SetStdOut(g_shell_task_h, g_system_stdout);
     Task_SetStdErr(g_shell_task_h, g_system_stderr);

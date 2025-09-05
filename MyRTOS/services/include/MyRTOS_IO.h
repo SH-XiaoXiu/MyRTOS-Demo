@@ -1,7 +1,7 @@
 /**
  * @file  MyRTOS_IO.h
  * @brief MyRTOS IO流服务 - 公共接口
- * @details 提供任务标准IO重定向、流式读写、管道(Pipe)等功能。
+ * @details 提供任务标准IO重定向、流式读写、管道(Pipe)等功能
  */
 #ifndef MYRTOS_IO_H
 #define MYRTOS_IO_H
@@ -118,7 +118,6 @@ int Stream_VPrintf(StreamHandle_t stream, const char *format, va_list args);
         Stream_Read(Task_GetStdIn(NULL), &__ch, 1, MYRTOS_MAX_DELAY);                                                  \
         __ch;                                                                                                          \
     })
-
 /*============================== Pipe (任务间通信流) API =============================*/
 
 /**

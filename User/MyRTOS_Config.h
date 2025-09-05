@@ -34,7 +34,7 @@
 // RTOS内核管理的内存堆的总大小 (单位: 字节)
 // 所有通过 MyRTOS_Malloc() 分配的内存（如TCB, 任务栈, 队列存储区）都来自这个池
 // 大小需要根据您的应用仔细估算
-#define MYRTOS_MEMORY_POOL_SIZE (64 * 1024)
+#define MYRTOS_MEMORY_POOL_SIZE (110 * 1024)
 
 // 内存分配的对齐字节数
 // 对于32位处理器，通常设置为 8 以确保最佳性能和兼容性

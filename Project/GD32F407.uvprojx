@@ -490,6 +490,11 @@
           <GroupName>MyRTOS\service</GroupName>
           <Files>
             <File>
+              <FileName>MyRTOS_AsyncIO.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\services\MyRTOS_AsyncIO.c</FilePath>
+            </File>
+            <File>
               <FileName>MyRTOS_IO.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\MyRTOS\services\MyRTOS_IO.c</FilePath>
@@ -515,6 +520,11 @@
               <FilePath>..\MyRTOS\services\MyRTOS_Timer.c</FilePath>
             </File>
             <File>
+              <FileName>MyRTOS_Utils.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\services\MyRTOS_Utils.c</FilePath>
+            </File>
+            <File>
               <FileName>MyRTOS_VTS.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\MyRTOS\services\MyRTOS_VTS.c</FilePath>
@@ -535,6 +545,11 @@
               <FilePath>..\MyRTOS\platform\GD32F4xx\platform_core.c</FilePath>
             </File>
             <File>
+              <FileName>platform_error_handler.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\platform_error_handler.c</FilePath>
+            </File>
+            <File>
               <FileName>platform_gd32_console.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\MyRTOS\platform\GD32F4xx\platform_gd32_console.c</FilePath>
@@ -553,11 +568,6 @@
               <FileName>platform_shell_commands.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\MyRTOS\platform\GD32F4xx\platform_shell_commands.c</FilePath>
-            </File>
-            <File>
-              <FileName>platform_error_handler.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MyRTOS\platform\GD32F4xx\platform_error_handler.c</FilePath>
             </File>
           </Files>
         </Group>
