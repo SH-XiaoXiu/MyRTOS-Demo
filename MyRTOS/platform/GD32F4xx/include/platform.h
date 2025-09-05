@@ -35,6 +35,7 @@ void Platform_StartScheduler(void);
 //                            平台服务获取接口
 // =========================================================================
 #if (PLATFORM_USE_CONSOLE == 1)
+#include "MyRTOS_IO.h"
 /**
  * @brief 获取已初始化的控制台流句柄。
  * @return StreamHandle_t 指向控制台流的句柄，若未使能则返回NULL。
@@ -43,6 +44,7 @@ StreamHandle_t Platform_Console_GetStream(void);
 #endif
 
 #if (PLATFORM_USE_HIRES_TIMER == 1)
+
 /**
  * @brief 获取高精度定时器的当前计数值。
  * @return uint32_t 32位计数值。
@@ -91,7 +93,11 @@ void Platform_BSP_Init_Hook(void);
  *        【推荐】这是用户注册自定义Shell命令的地方。
  * @param shell_h Shell服务的句柄（如果Shell服务被使能）。
  */
+#if MYRTOS_SERVICE_SHELL_ENABLE == 1
 void Platform_AppSetup_Hook(ShellHandle_t shell_h);
+#else
+void Platform_AppSetup_Hook();
+#endif
 
 /**
  * @brief 在调度器启动之前，用于创建所有应用程序任务。

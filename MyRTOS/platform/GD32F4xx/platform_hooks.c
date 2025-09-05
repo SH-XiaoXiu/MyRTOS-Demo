@@ -16,8 +16,13 @@ __attribute__((weak)) void Platform_BSP_Init_Hook(void) {
     // 默认不做任何事
 }
 
+#if MYRTOS_SERVICE_SHELL_ENABLE == 1
 __attribute__((weak)) void Platform_AppSetup_Hook(ShellHandle_t shell_h) {
 }
+#else
+__attribute__((weak)) void Platform_AppSetup_Hook() {
+}
+#endif
 
 __attribute__((weak)) void Platform_CreateTasks_Hook(void) {
     // 默认不做任何事
