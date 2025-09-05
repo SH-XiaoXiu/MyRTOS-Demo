@@ -1,4 +1,6 @@
 #include "MyRTOS.h"
+
+#include <stdio.h>
 #include <string.h>
 #include "MyRTOS_Extension.h"
 #include "MyRTOS_Kernel_Private.h"
@@ -43,6 +45,8 @@ static void eventListRemove(TaskHandle_t taskToRemove);
 
 // 广播内核事件给所有已注册的扩展
 static void broadcast_event(const KernelEventData_t *pEventData);
+
+static int check_signal_wait_condition(TaskHandle_t task);
 
 // 内存堆中允许的最小内存块大小，至少能容纳两个BlockLink_t结构体
 #define HEAP_MINIMUM_BLOCK_SIZE ((sizeof(BlockLink_t) * 2))
@@ -349,7 +353,9 @@ static void addTaskToReadyList(TaskHandle_t task) {
  * @brief 初始化一个事件列表
  * @param pEventList 指向要初始化的事件列表的指针
  */
-static void eventListInit(EventList_t *pEventList) { pEventList->head = NULL; }
+static void eventListInit(EventList_t *pEventList) {
+    pEventList->head = NULL;
+}
 
 /**
  * @brief 将任务按优先级插入到事件等待列表中
@@ -398,6 +404,22 @@ static void eventListRemove(TaskHandle_t taskToRemove) {
     taskToRemove->pNextEvent = NULL;
     taskToRemove->pEventList = NULL;
 }
+
+static int check_signal_wait_condition(TaskHandle_t task) {
+    if (task == NULL) return 0;
+
+    const uint32_t pending = task->signals_pending;
+    const uint32_t mask = task->signals_wait_mask;
+    const uint32_t options = task->wait_options;
+
+    if (options & SIGNAL_WAIT_ALL) {
+        return (pending & mask) == mask;
+    } else {
+        // 默认为 SIGNAL_WAIT_ANY
+        return (pending & mask) != 0;
+    }
+}
+
 
 /**
  * @brief 向所有已注册的内核扩展广播一个事件
@@ -640,7 +662,7 @@ void MyRTOS_Free(void *pv) {
 /**
  * @brief 创建一个新任务
  * @param func 任务函数指针
- * @param taskName 任务名称（字符串），用于调试
+ * @param taskName 任务名称-字符串
  * @param stack_size 任务堆栈大小（以StackType_t为单位，通常是4字节）
  * @param param 传递给任务函数的参数
  * @param priority 任务优先级 (0是最低优先级)
@@ -680,6 +702,10 @@ TaskHandle_t Task_Create(void (*func)(void *), const char *taskName, uint16_t st
     t->delay = 0;
     t->notification = 0;
     t->is_waiting_notification = 0;
+    t->signals_pending = 0;
+    t->signals_wait_mask = 0;
+    t->wait_options = 0;
+    eventListInit(&t->signal_event_list);
     t->taskId = newTaskId;
     t->stack_base = stack;
     t->priority = priority;
@@ -691,7 +717,36 @@ TaskHandle_t Task_Create(void (*func)(void *), const char *taskName, uint16_t st
     t->pEventList = NULL;
     t->held_mutexes_head = NULL;
     t->eventData = NULL;
-    t->taskName = taskName;
+    char *name_buffer = NULL;
+    char default_name_temp[16];
+    if (taskName != NULL && *taskName != '\0') {
+        // 如果提供了有效的名字
+        size_t name_len = strlen(taskName) + 1;
+        name_buffer = MyRTOS_Malloc(name_len);
+        if (name_buffer != NULL) {
+            // 内存分配成功，复制名字
+            memcpy(name_buffer, taskName, name_len);
+        }
+    }
+
+    if (name_buffer == NULL) {
+        // 如果 (1) taskName是NULL (2) taskName是空字符串 (3) Malloc失败
+        // 我们都需要创建一个默认名字
+        snprintf(default_name_temp, sizeof(default_name_temp), "Unnamed_%lu", newTaskId);
+        // 为默认名字分配内存并复制
+        size_t default_len = strlen(default_name_temp) + 1;
+        name_buffer = MyRTOS_Malloc(default_len);
+        if (name_buffer != NULL) {
+            memcpy(name_buffer, default_name_temp, default_len);
+        } else {
+            MyRTOS_Free(stack);
+            MyRTOS_Free(t);
+            return NULL;
+        }
+    }
+    if (name_buffer != NULL) {
+        t->taskName = name_buffer;
+    }
     t->stackSize_words = stack_size;
     // 使用魔法数字填充堆栈，用于堆栈溢出检测
     for (uint16_t i = 0; i < stack_size; ++i) {
@@ -762,6 +817,9 @@ int Task_Delete(TaskHandle_t task_h) {
             prev->pNextTask = curr->pNextTask;
     }
     void *stack_to_free = task_to_delete->stack_base;
+    if (task_to_delete->taskName != NULL) {
+        MyRTOS_Free((void *) task_to_delete->taskName);
+    }
     // 如果是删除自身
     if (task_h == NULL) {
         currentTask = NULL; // 标记当前任务为空，调度器将选择新任务
@@ -866,6 +924,174 @@ void Task_Wait(void) {
     MyRTOS_Port_Yield();
 }
 
+int Task_SendSignal(TaskHandle_t target_task, uint32_t signals) {
+    if (target_task == NULL || signals == 0) {
+        return -1;
+    }
+
+    Task_t *pTargetTask = (Task_t *) target_task;
+    int trigger_yield = 0;
+
+    MyRTOS_Port_EnterCritical(); {
+        // 原子地设置目标任务的待处理信号
+        pTargetTask->signals_pending |= signals;
+
+        //检查目标任务是否正在等待信号 (通过检查其pEventList是否指向自己的signal_event_list)
+        if (pTargetTask->pEventList == &pTargetTask->signal_event_list) {
+            //检查唤醒条件是否满足
+            if (check_signal_wait_condition(pTargetTask)) {
+                //唤醒任务
+                //从它自己的事件列表中移除 (这会将其pEventList设为NULL)
+                eventListRemove(pTargetTask);
+                // 如果任务因超时也存在于延迟列表中，则一并移除
+                if (pTargetTask->delay > 0) {
+                    removeTaskFromList(&delayedTaskListHead, pTargetTask);
+                    pTargetTask->delay = 0;
+                }
+                addTaskToReadyList(pTargetTask);
+                // 检查是否需要调度
+                if (pTargetTask->priority > currentTask->priority) {
+                    trigger_yield = 1;
+                }
+            }
+        }
+    }
+    MyRTOS_Port_ExitCritical();
+
+    if (trigger_yield) {
+        MyRTOS_Port_Yield();
+    }
+    return 0;
+}
+
+
+int Task_SendSignalFromISR(TaskHandle_t target_task, uint32_t signals, int *higherPriorityTaskWoken) {
+    if (target_task == NULL || signals == 0 || higherPriorityTaskWoken == NULL) {
+        return -1;
+    }
+
+    Task_t *pTargetTask = (Task_t *) target_task;
+    *higherPriorityTaskWoken = 0;
+
+    MyRTOS_Port_EnterCritical(); {
+        pTargetTask->signals_pending |= signals;
+
+        if (pTargetTask->pEventList == &pTargetTask->signal_event_list) {
+            if (check_signal_wait_condition(pTargetTask)) {
+                eventListRemove(pTargetTask);
+                if (pTargetTask->delay > 0) {
+                    removeTaskFromList(&delayedTaskListHead, pTargetTask);
+                    pTargetTask->delay = 0;
+                }
+                addTaskToReadyList(pTargetTask);
+
+                if (pTargetTask->priority > currentTask->priority) {
+                    *higherPriorityTaskWoken = 1;
+                }
+            }
+        }
+    }
+    MyRTOS_Port_ExitCritical();
+
+    return 0;
+}
+
+
+uint32_t Task_WaitSignal(uint32_t signal_mask, uint32_t block_ticks, uint32_t options) {
+    if (signal_mask == 0) {
+        return 0; // 等待一个空掩码没有意义
+    }
+
+    uint32_t received_signals = 0;
+
+    MyRTOS_Port_EnterCritical(); {
+        //检查信号是否已经存在，无需阻塞
+        uint32_t pending = currentTask->signals_pending;
+        int condition_met = 0;
+        if (options & SIGNAL_WAIT_ALL) {
+            condition_met = (pending & signal_mask) == signal_mask;
+        } else {
+            condition_met = (pending & signal_mask) != 0;
+        }
+
+        if (condition_met) {
+            // 信号已满足，直接处理并返回
+            received_signals = pending;
+            if (options & SIGNAL_CLEAR_ON_EXIT) {
+                // 清除那些满足了等待条件的信号
+                currentTask->signals_pending &= ~(pending & signal_mask);
+            }
+            MyRTOS_Port_ExitCritical();
+            return received_signals;
+        }
+
+        //信号不满足，需要阻塞
+        if (block_ticks == 0) {
+            MyRTOS_Port_ExitCritical();
+            return 0; // 不阻塞，直接返回0表示超时
+        }
+
+        //配置任务的等待状态
+        currentTask->signals_wait_mask = signal_mask;
+        currentTask->wait_options = options;
+
+        //将任务从就绪列表移除，并加入它自己的事件列表
+        removeTaskFromList(&readyTaskLists[currentTask->priority], currentTask);
+        currentTask->state = TASK_STATE_BLOCKED;
+        eventListInsert(&currentTask->signal_event_list, currentTask);
+
+        //处理超时
+        if (block_ticks != MYRTOS_MAX_DELAY) {
+            currentTask->delay = MyRTOS_GetTick() + block_ticks;
+            addTaskToSortedDelayList(currentTask);
+        }
+    }
+    MyRTOS_Port_ExitCritical();
+
+    MyRTOS_Port_Yield();
+
+    MyRTOS_Port_EnterCritical(); {
+        //判断是正常唤醒还是超时
+        // 如果pEventList不为NULL，说明任务是因超时被TickHandler移到就绪队列的，
+        // 而不是被Task_SendSignal正常唤醒（SendSignal会调用eventListRemove将pEventList清为NULL）。
+        if (currentTask->pEventList != NULL) {
+            // 超时了，手动从事件列表中移除自己
+            eventListRemove(currentTask);
+            received_signals = 0; // 返回0表示超时
+        } else {
+            // 被正常唤醒
+            received_signals = currentTask->signals_pending;
+            if (options & SIGNAL_CLEAR_ON_EXIT) {
+                currentTask->signals_pending &= ~(received_signals & signal_mask);
+            }
+        }
+
+        //清理等待状态
+        currentTask->signals_wait_mask = 0;
+        currentTask->wait_options = 0;
+    }
+    MyRTOS_Port_ExitCritical();
+
+    return received_signals;
+}
+
+
+int Task_ClearSignal(TaskHandle_t task_to_clear, uint32_t signals_to_clear) {
+    Task_t *pTask = (task_to_clear == NULL) ? currentTask : (Task_t *) task_to_clear;
+
+    if (pTask == NULL) {
+        return -1;
+    }
+
+    MyRTOS_Port_EnterCritical(); {
+        pTask->signals_pending &= ~signals_to_clear;
+    }
+    MyRTOS_Port_ExitCritical();
+
+    return 0;
+}
+
+
 /**
  * @brief 获取任务的当前状态
  * @param task_h 目标任务的句柄
@@ -884,7 +1110,9 @@ uint8_t Task_GetPriority(TaskHandle_t task_h) { return task_h ? ((Task_t *) task
  * @brief 获取当前正在运行的任务的句柄
  * @return 返回当前任务的句柄
  */
-TaskHandle_t Task_GetCurrentTaskHandle(void) { return currentTask; }
+TaskHandle_t Task_GetCurrentTaskHandle(void) {
+    return currentTask;
+}
 
 /**
  * @brief 获取任务的唯一ID

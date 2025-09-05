@@ -53,6 +53,10 @@ typedef struct Task_t {
     uint64_t delay; // 任务延时计数
     volatile uint32_t notification; // 任务通知值
     volatile uint8_t is_waiting_notification; // 是否正在等待通知
+    volatile uint32_t signals_pending; // 已收到但尚未处理的信号位掩码
+    uint32_t signals_wait_mask; // 当前任务正在等待的信号位掩码
+    uint32_t wait_options; // 当前任务的等待选项 (WAIT_ANY, WAIT_ALL, etc.)
+    EventList_t signal_event_list; // 任务自己的、用于等待信号的事件列表
     volatile TaskState_t state; // 任务状态
     uint32_t taskId; // 任务ID
     StackType_t *stack_base; // 任务栈基地址

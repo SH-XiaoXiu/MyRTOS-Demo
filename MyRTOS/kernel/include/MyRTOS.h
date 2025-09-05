@@ -23,6 +23,17 @@
 #define TICK_TO_MS(tick) (((uint64_t) (tick) * 1000) / MYRTOS_TICK_RATE_HZ)
 
 // -----------------------------
+// 信号宏
+// -----------------------------
+/**
+ * @brief Task_WaitSignal 函数的选项宏
+ * @details 这些宏可以通过按位或(|)操作组合使用
+ */
+#define SIGNAL_WAIT_ANY         (1U << 0) // 等待 signal_mask 中的任意一个信号
+#define SIGNAL_WAIT_ALL         (1U << 1) // 等待 signal_mask 中的所有信号
+#define SIGNAL_CLEAR_ON_EXIT    (1U << 2) // 从 Task_WaitSignal 返回时,自动清除满足条件的信号
+
+// -----------------------------
 // 前置声明 (Opaque Pointers)
 // -----------------------------
 struct Task_t;
@@ -183,6 +194,50 @@ int Task_NotifyFromISR(TaskHandle_t task_h, int *higherPriorityTaskWoken);
  * @details 将当前任务置于阻塞状态，直到被其他任务或中断唤醒
  */
 void Task_Wait(void);
+
+
+/**
+ * @brief 向指定任务发送一个或多个信号。
+ * @details 这是一个非阻塞操作。它会以原子方式更新目标任务的信号状态，
+ *          并唤醒可能正在等待这些信号的目标任务。
+ * @param target_task 接收信号的目标任务句柄。
+ * @param signals     要发送的信号位掩码。例如: (SIGNAL_A | SIGNAL_B)。
+ * @return int 0 表示成功, -1 表示目标任务句柄无效。
+ */
+int Task_SendSignal(TaskHandle_t target_task, uint32_t signals);
+
+/**
+ * @brief 从中断服务例程(ISR)中向指定任务发送一个或多个信号。
+ * @param target_task 接收信号的目标任务句柄。
+ * @param signals     要发送的信号位掩码。
+ * @param higherPriorityTaskWoken 指向一个int的指针，如果此操作导致一个比当前任务
+ *                                      更高优先级的任务变为就绪，该值将被设置为1。
+ * @return int 0 表示成功, -1 表示参数无效。
+ */
+int Task_SendSignalFromISR(TaskHandle_t target_task, uint32_t signals, int *higherPriorityTaskWoken);
+
+/**
+ * @brief 使当前任务阻塞，直到接收到指定的信号。
+ * @param signal_mask 要等待的信号的位掩码。
+ * @param block_ticks 阻塞等待的最大时钟节拍数 (0:不阻塞, MYRTOS_MAX_DELAY:永久阻塞)。
+ * @param options     等待选项，可以是 SIGNAL_WAIT_ANY, SIGNAL_WAIT_ALL,
+ *                         SIGNAL_CLEAR_ON_EXIT 的组合。
+ * @return uint32_t   返回任务被唤醒时，所有待处理的信号位掩码 (signals_pending)。
+ *                    如果超时，返回 0。
+ */
+uint32_t Task_WaitSignal(uint32_t signal_mask, uint32_t block_ticks, uint32_t options);
+
+/**
+ * @brief 清除一个任务中指定的待处理信号位。
+ * @details 当 Task_WaitSignal 不使用 SIGNAL_CLEAR_ON_EXIT 选项时，
+ *          任务需要手动调用此函数来清除已处理的信号。
+ * @param task_to_clear 目标任务句柄。如果为NULL，则清除当前任务的信号。
+ * @param signals_to_clear 要清除的信号位掩码。
+ * @return int 0 表示成功, -1 表示任务句柄无效。
+ */
+int Task_ClearSignal(TaskHandle_t task_to_clear, uint32_t signals_to_clear);
+
+
 
 /**
  * @brief 获取指定任务的当前状态
