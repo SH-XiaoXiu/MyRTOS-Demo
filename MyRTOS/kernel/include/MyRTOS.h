@@ -63,6 +63,7 @@ typedef enum {
     KERNEL_ERROR_STACK_OVERFLOW, // 栈溢出错误
     KERNEL_ERROR_MALLOC_FAILED, // 内存分配失败
     KERNEL_ERROR_HARD_FAULT, // 硬件错误
+    KERNEL_ERROR_TASK_RETURN, // 任务返回错误
 } KernelErrorType_t;
 
 // -----------------------------

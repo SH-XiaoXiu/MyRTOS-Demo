@@ -48,6 +48,9 @@ static void broadcast_event(const KernelEventData_t *pEventData);
 
 static int check_signal_wait_condition(TaskHandle_t task);
 
+// 任务包装器
+static void taskWrapper(void *pvParameters);
+
 // 内存堆中允许的最小内存块大小，至少能容纳两个BlockLink_t结构体
 #define HEAP_MINIMUM_BLOCK_SIZE ((sizeof(BlockLink_t) * 2))
 
@@ -433,6 +436,28 @@ static void broadcast_event(const KernelEventData_t *pEventData) {
     }
 }
 
+
+/**
+ * @brief 所有任务的实际入口包装函数
+ * @note  如果任务函数返回了,这里可以兜底, 防止系统崩溃
+ * @param parameters  指向TaskEntryPoint_t的指针
+ */
+static void taskWrapper(void *wrapperPrameters) {
+    TaskEntryPoint_t *entry = (TaskEntryPoint_t *) wrapperPrameters;
+    // 从结构体中提取出真正的用户函数和参数
+    void (*taskFunc)(void *) = entry->taskFunc;
+    void *parameters = entry->parameters;
+    MyRTOS_Free(entry);
+    // 调用真正的用户任务函数
+    taskFunc(parameters);
+    // 如果用户任务函数执行到这,捕获它,并调用 Task_Delete 来删除
+    //NULL 表示删除当前正在运行的任务
+    KernelEventData_t eventData = {.eventType = KERNEL_EVENT_ERROR_TASK_RETURN, .task = currentTask};
+    broadcast_event(&eventData);
+    Task_Delete(NULL);
+    while (1); // 永远不会执行
+}
+
 /*===========================================================================*
  * 公开接口实现
  *===========================================================================*/
@@ -554,6 +579,10 @@ void MyRTOS_ReportError(KernelErrorType_t error_type, void *p_context) {
 
         case KERNEL_ERROR_HARD_FAULT:
             eventData.eventType = KERNEL_EVENT_ERROR_HARD_FAULT;
+            break;
+        case KERNEL_ERROR_TASK_RETURN:
+            eventData.eventType = KERNEL_EVENT_ERROR_HARD_FAULT;
+            eventData.task = (TaskHandle_t) p_context;
             break;
         default:
             return; // 未知的错误类型，不处理
@@ -682,6 +711,17 @@ TaskHandle_t Task_Create(void (*func)(void *), const char *taskName, uint16_t st
         MyRTOS_Free(t);
         return NULL;
     }
+
+    TaskEntryPoint_t *entry = MyRTOS_Malloc(sizeof(TaskEntryPoint_t));
+    if (entry == NULL) {
+        MyRTOS_Free(stack);
+        MyRTOS_Free(t);
+        return NULL;
+    }
+    // 填充
+    entry->taskFunc = func;
+    entry->parameters = param;
+
     // 分配一个唯一的任务ID
     uint32_t newTaskId = (uint32_t) -1;
     MyRTOS_Port_EnterCritical();
@@ -753,7 +793,7 @@ TaskHandle_t Task_Create(void (*func)(void *), const char *taskName, uint16_t st
         stack[i] = 0xA5A5A5A5;
     }
     // 调用移植层代码初始化任务堆栈（模拟CPU上下文）
-    t->sp = MyRTOS_Port_InitialiseStack(stack + stack_size, func, param);
+    t->sp = MyRTOS_Port_InitialiseStack(stack + stack_size, taskWrapper, entry);
     MyRTOS_Port_EnterCritical(); {
         // 将新任务添加到全局任务列表中
         if (allTaskListHead == NULL) {
@@ -1133,7 +1173,7 @@ uint32_t Task_GetId(TaskHandle_t task_h) {
 char *Task_GetName(TaskHandle_t task_h) {
     // 进行一个基本的句柄有效性检查
     if (task_h == NULL) {
-        return ((Task_t *)currentTask)->taskName;
+        return ((Task_t *) currentTask)->taskName;
     }
     return ((Task_t *) task_h)->taskName;
 }
