@@ -76,6 +76,16 @@ __attribute__((weak)) void Platform_StackOverflow_Hook(TaskHandle_t pxTask) {
     while (1);
 }
 
+
+__attribute__((weak)) PlatformErrorAction_t Platform_TaskExit_Hook(TaskHandle_t pxTask) {
+    fault_print_string("\r\n--- TASK EXIT ---\r\n");
+    fault_print_string("  Task Handle: ");
+    fault_print_hex((uint32_t) pxTask);
+    fault_print_string("\r\nTask:\r\n");
+    fault_print_string(Task_GetName(pxTask));
+    return PLATFORM_ERROR_ACTION_HALT;
+}
+
 __attribute__((weak)) void Platform_MallocFailed_Hook(size_t wantedSize) {
     // 默认实现：打印请求的大小并挂起
     fault_print_string("\r\n--- MALLOC FAILED ---\r\n");

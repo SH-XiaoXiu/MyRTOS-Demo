@@ -3,6 +3,7 @@
 //
 
 #include "MyRTOS_Extension.h"
+#include "MyRTOS_Port.h"
 #include "platform.h"
 
 
@@ -12,26 +13,55 @@
  */
 static void platform_kernel_event_handler(const KernelEventData_t *pEventData) {
     switch (pEventData->eventType) {
-        case KERNEL_EVENT_HOOK_STACK_OVERFLOW:
+        case KERNEL_EVENT_HOOK_STACK_OVERFLOW: {
             // 内核报告了栈溢出
             // pEventData->task 包含了违规任务的句柄
             Platform_StackOverflow_Hook(pEventData->task);
             break;
+        }
 
-        case KERNEL_EVENT_HOOK_MALLOC_FAILED:
+        case KERNEL_EVENT_HOOK_MALLOC_FAILED: {
             // 内核报告了内存分配失败
             // pEventData->mem.size 包含了请求的字节数
             Platform_MallocFailed_Hook(pEventData->mem.size);
             break;
-
-        case KERNEL_EVENT_ERROR_HARD_FAULT:
+        }
+        case KERNEL_EVENT_ERROR_HARD_FAULT: {
             // 内核报告了硬件错误
             // pEventData->p_context_data 存储了硬件错误信息
             Platform_HardFault_Hook(pEventData->p_context_data);
+        }
+        case KERNEL_EVENT_ERROR_TASK_RETURN: {
+            // 内核报告了任务返回错误
+            PlatformErrorAction_t action = Platform_TaskExit_Hook(pEventData->p_context_data);
+            switch (action) {
+                case PLATFORM_ERROR_ACTION_HALT: {
+                    //请求挂起系统
+                    MyRTOS_printf("--- HALT --- \n");
+                    MyRTOS_Port_EnterCritical();
+                    while (1) {
+                    }
+                    break; //理论也不会执行到这里
+                }
 
+                case PLATFORM_ERROR_ACTION_REBOOT: {
+                    //重启
+                    MyRTOS_printf("--- SYSTEM REBOOTING ---\n");
+                    NVIC_SystemReset();
+                    break;
+                }
+                case PLATFORM_ERROR_ACTION_CONTINUE: {
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+        }
         // 这里可以扩展处理更多错误事件
-        default:
+        default: {
             break;
+        }
     }
 }
 

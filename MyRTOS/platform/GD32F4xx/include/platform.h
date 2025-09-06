@@ -5,6 +5,13 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
+
+typedef enum {
+    PLATFORM_ERROR_ACTION_CONTINUE,  // 默认行为: 继续执行，内核将删除出错任务，系统其他部分继续运行
+    PLATFORM_ERROR_ACTION_HALT,      // 请求挂起: 内核将使系统进入无限循环，挂起整个系统
+    PLATFORM_ERROR_ACTION_REBOOT    // 请求重启: 将调用 NVIC_SystemReset()
+} PlatformErrorAction_t;
+
 #include <stdint.h>
 #include "gd32f4xx.h"
 #include "platform_config.h"
@@ -131,5 +138,12 @@ void Platform_StackOverflow_Hook(TaskHandle_t pxTask);
  * @param wantedSize 尝试分配但失败的字节数。
  */
 void Platform_MallocFailed_Hook(size_t wantedSize);
+
+
+/**
+ * @brief 任务退出的处理器
+ * @param pxTask 正在退出的任务句柄,处理完成后,任务最终会被删除。
+ */
+PlatformErrorAction_t Platform_TaskExit_Hook(TaskHandle_t pxTask);
 
 #endif // PLATFORM_H
