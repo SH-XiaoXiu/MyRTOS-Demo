@@ -197,10 +197,11 @@ void Log_Output(LogLevel_t level, const char *tag, const char *format, ...) {
         uint8_t should_dispatch = 0;
         MyRTOS_Port_EnterCritical();
         if (g_log_context.listeners[i].is_active && level <= g_log_context.listeners[i].max_level) {
-            // 检查tag是否匹配 (空字符串为通配符)
-            if (g_log_context.listeners[i].tag_filter[0] == '\0' ||
-                strcmp(g_log_context.listeners[i].tag_filter, tag) == 0) {
-                // 复制监听器信息，以便在临界区外使用
+            const char *filter = g_log_context.listeners[i].tag_filter;
+            if (filter[0] == '\0' || // 规则1 通配符匹配
+                strcmp(filter, tag) == 0 || // 规则2 匹配显式 Tag
+                (task_name && strcmp(filter, task_name) == 0)) // 规则3: 匹配任务名
+            {
                 listener_copy = g_log_context.listeners[i];
                 should_dispatch = 1;
             }
