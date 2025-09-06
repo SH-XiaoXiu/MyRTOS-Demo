@@ -1133,7 +1133,7 @@ uint32_t Task_GetId(TaskHandle_t task_h) {
 char *Task_GetName(TaskHandle_t task_h) {
     // 进行一个基本的句柄有效性检查
     if (task_h == NULL) {
-        return "Unknown"; // 或者返回 NULL
+        return ((Task_t *)currentTask)->taskName;
     }
     return ((Task_t *) task_h)->taskName;
 }

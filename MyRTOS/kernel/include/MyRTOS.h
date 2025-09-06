@@ -268,7 +268,7 @@ uint32_t Task_GetId(TaskHandle_t task_h);
 
 /**
  * @brief 获取任务的名称。
- * @param task_h 要查询的任务句柄。
+ * @param task_h 要查询的任务句柄, NULL 表示当前任务
  * @return 返回指向任务名称字符串的指针。如果句柄无效，可能返回NULL或空字符串。
  */
 char *Task_GetName(TaskHandle_t task_h);
