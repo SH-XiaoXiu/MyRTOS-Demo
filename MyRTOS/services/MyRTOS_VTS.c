@@ -112,6 +112,18 @@ static void vts_forward_output(StreamHandle_t stream) {
     if (bytes_read > 0) vts_write_physical(buffer, bytes_read);
 }
 
+static void vts_process_background_stream(void) {
+    char buffer[VTS_RW_BUFFER_SIZE];
+    // 尝试以非阻塞方式读取后台流的数据
+    size_t bytes_read = Stream_Read(g_vts->background_stream, buffer, VTS_RW_BUFFER_SIZE, 0);
+    if (bytes_read > 0) {
+        if (g_vts->log_all_mode) {
+            vts_write_physical(buffer, bytes_read);
+        }
+    }
+}
+
+
 static void VTS_Task(void *param) {
     (void) param;
     char input_char;
@@ -122,11 +134,11 @@ static void VTS_Task(void *param) {
             Mutex_Unlock(g_vts->lock);
         }
         vts_forward_output(g_vts->focused_output_stream);
+        vts_process_background_stream();
         if (g_vts->log_all_mode) {
+            // 如果 logall 开启,需要确保Shell的输出也被显示
             if (g_vts->focused_output_stream != g_vts->config.root_output_stream)
-                vts_forward_output(
-                    g_vts->config.root_output_stream);
-            vts_forward_output(g_vts->background_stream);
+                vts_forward_output(g_vts->config.root_output_stream);
         }
         Task_Delay(MS_TO_TICKS(1));
     }
