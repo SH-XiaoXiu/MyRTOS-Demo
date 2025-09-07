@@ -569,6 +569,11 @@
               <FileType>1</FileType>
               <FilePath>..\MyRTOS\platform\GD32F4xx\platform_shell_commands.c</FilePath>
             </File>
+            <File>
+              <FileName>platform_program_manager.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\platform\GD32F4xx\platform_program_manager.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
