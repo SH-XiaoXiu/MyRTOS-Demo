@@ -96,6 +96,12 @@ void Platform_EarlyInit_Hook(void);
 void Platform_BSP_Init_Hook(void);
 
 /**
+* @brief 在所有平台驱动初始化之后，但创建任何应用任务之前调用。
+*/
+void Platform_BSP_After_Hook();
+
+
+/**
  * @brief 在RTOS服务（如Log, Shell）初始化之后，但在创建任何应用任务之前调用。
  *        【推荐】这是用户注册自定义Shell命令的地方。
  * @param shell_h Shell服务的句柄（如果Shell服务被使能）。

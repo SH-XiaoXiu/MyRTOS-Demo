@@ -118,14 +118,13 @@ void Platform_Init(void) {
     Platform_Console_HwInit();
     Platform_HiresTimer_Init();
     Platform_BSP_Init_Hook();
+    Platform_BSP_After_Hook();
     MyRTOS_Init();
     Platform_error_handler_init();
     Platform_Console_OSInit();
-
 #if MYRTOS_SERVICE_IO_ENABLE == 1
     StdIOService_Init();
 #endif
-
 #if MYRTOS_SERVICE_ASYNC_IO_ENABLE == 1
     if (AsyncIOService_Init() != 0) {
         while (1);
