@@ -193,10 +193,25 @@ void EXTI0_IRQHandler(void) {
     }
 }
 
+void Platform_BSP_After_Hook(void) {
+    StreamHandle_t console = Platform_Console_GetStream();
+    if (console == NULL) {
+        return;
+    }
+    Stream_Printf(console, "\r\n\r\n");
+    Stream_Printf(console, "==================================================\r\n");
+    Stream_Printf(console, "*                  MyRTOS 演示                   *\r\n");
+    Stream_Printf(console, "*------------------------------------------------*\r\n");
+    Stream_Printf(console, "* 作者: XiaoXiu                                  *\r\n");
+    Stream_Printf(console, "* 构建于: %s %s                *\r\n", __DATE__, __TIME__);
+    Stream_Printf(console, "* 按下用户按键可触发中断                         *\r\n");
+    Stream_Printf(console, "==================================================\r\n");
+    Stream_Printf(console, "系统启动中...\r\n");
+}
+
 // 应用程序主入口.
 int main(void) {
     Platform_Init();
-    LOG_I("Main", "系统启动...");
     Platform_StartScheduler();
     return 0; // 不会执行到此处.
 }
