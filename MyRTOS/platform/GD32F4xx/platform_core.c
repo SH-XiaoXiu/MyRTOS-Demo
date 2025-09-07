@@ -44,6 +44,7 @@
 
 #if PLATFORM_USE_PROGRAM_MANGE == 1
 #include "platform_shell_commands.h"
+#include "platform_program_manager.h"
 #endif
 
 //==============================================================================
