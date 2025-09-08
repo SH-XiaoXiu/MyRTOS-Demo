@@ -86,6 +86,23 @@ int Platform_ProgramManager_Register(const ProgramDefinition_t *prog);
  */
 void Platform_ProgramManager_TraverseInstances(ProgramInstanceVisitor_t visitor, void *arg);
 
+
+/**
+ * @brief 遍历程序定义时使用的回调函数原型.
+ * @param definition 指向程序定义的只读指针.
+ * @param arg 传递给遍历函数的用户自定义参数.
+ * @return 返回 true 继续遍历, false 则停止.
+ */
+typedef bool (*ProgramDefinitionVisitor_t)(const ProgramDefinition_t *definition, void *arg);
+
+
+/**
+ * @brief 安全地遍历所有已注册的程序定义.
+ * @param visitor 为每个定义调用的回调函数.
+ * @param arg 传递给回调函数的用户自定义参数.
+ */
+void Platform_ProgramManager_TraverseDefinitions(ProgramDefinitionVisitor_t visitor, void *arg);
+
 /**
  * @brief 启动一个已注册的程序.
  * @details 查找程序定义, 创建任务, 设置IO流并跟踪其生命周期.

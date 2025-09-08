@@ -93,6 +93,21 @@ void Platform_ProgramManager_TraverseInstances(ProgramInstanceVisitor_t visitor,
     Mutex_Unlock(g_prog_manager_lock);
 }
 
+void Platform_ProgramManager_TraverseDefinitions(ProgramDefinitionVisitor_t visitor, void *arg) {
+    if (visitor == NULL) {
+        return;
+    }
+    // 加锁以确保对注册表的线程安全遍历.
+    Mutex_Lock(g_prog_manager_lock);
+    for (size_t i = 0; i < g_registered_program_count; ++i) {
+        if (!visitor(g_registered_programs[i], arg)) {
+            break;
+        }
+    }
+    Mutex_Unlock(g_prog_manager_lock);
+}
+
+
 //启动一个已注册的程序.
 ProgramInstance_t *Platform_ProgramManager_Run(const char *name, int argc, char *argv[], ProgramMode_t mode) {
     //查找程序定义.
