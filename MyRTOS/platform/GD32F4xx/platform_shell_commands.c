@@ -86,6 +86,11 @@ static int cmd_kill(ShellHandle_t shell_h, int argc, char *argv[]);
 static int cmd_fg(ShellHandle_t shell_h, int argc, char *argv[]);
 
 static int cmd_bg(ShellHandle_t shell_h, int argc, char *argv[]);
+
+static bool print_definition_visitor(const ProgramDefinition_t *definition, void *arg);
+
+static int cmd_ls(ShellHandle_t shell_h, int argc, char *argv[]);
+
 #endif // PLATFORM_USE_PROGRAM_MANGE
 #endif // PLATFORM_USE_DEFAULT_COMMANDS
 
@@ -109,6 +114,7 @@ static const struct ShellCommandDef g_platform_commands[] = {
     {"kill", "终止一个作业. 用法: kill <pid>", cmd_kill},
     {"fg", "将作业切换到前台. 用法: fg <pid>", cmd_fg},
     {"bg", "在后台恢复一个挂起的作业. 用法: bg <pid>", cmd_bg},
+    {"ls", "列出所有可执行程序", cmd_ls},
 #endif
     {NULL, NULL, NULL}
 };
@@ -373,6 +379,24 @@ static int cmd_jobs(ShellHandle_t shell_h, int argc, char *argv[]) {
     MyRTOS_printf("PID  | STATUS       | NAME\n");
     MyRTOS_printf("-----|--------------|----------------\n");
     Platform_ProgramManager_TraverseInstances(print_job_visitor, NULL);
+    return 0;
+}
+
+
+//ls命令的visitor函数, 格式化并打印单个程序定义信息
+static bool print_definition_visitor(const ProgramDefinition_t *definition, void *arg) {
+    (void) arg;
+    MyRTOS_printf("  %-15s - %s\n", definition->name, definition->help);
+    return true; // 继续.
+}
+
+// "ls" 命令 列出所有可执行程序.
+static int cmd_ls(ShellHandle_t shell_h, int argc, char *argv[]) {
+    (void) shell_h;
+    (void) argc;
+    (void) argv;
+    MyRTOS_printf("Available programs:\n");
+    Platform_ProgramManager_TraverseDefinitions(print_definition_visitor, NULL);
     return 0;
 }
 
