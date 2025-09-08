@@ -50,6 +50,8 @@ static TaskHandle_t g_high_prio_task_h, g_interrupt_task_h, g_background_task_h;
 static TaskHandle_t g_recursive_task_h, g_timer_test_task_h;
 static TaskHandle_t g_printer_task1_h, g_printer_task2_h, g_printer_task3_h;
 static TaskHandle_t g_isr_test_task_h;
+static TaskHandle_t g_suspend_resume_test_task_h;
+static TaskHandle_t g_target_task_h;
 
 
 //可执行程序主函数
@@ -107,6 +109,9 @@ static void recursive_test_task(void *param);
 static void timer_test_task(void *param);
 
 static void printer_task(void *param);
+
+static void suspend_resume_test_task(void *param);
+static void target_task(void *param);
 
 
 // 初始化板级硬件
@@ -176,6 +181,8 @@ void Platform_CreateTasks_Hook(void) {
     g_high_prio_task_h = Task_Create(high_prio_task, "HighPrioTask", 256, NULL, HIGH_PRIO_TASK_PRIO);
     g_interrupt_task_h = Task_Create(interrupt_handler_task, "KeyHandlerTask", 128, NULL, INTERRUPT_TASK_PRIO);
     g_timer_test_task_h = Task_Create(timer_test_task, "TimerTest", 512, NULL, TIMER_TEST_TASK_PRIO);
+    g_target_task_h = Task_Create(target_task, "TargetTask", 256, NULL, 4);
+    g_suspend_resume_test_task_h = Task_Create(suspend_resume_test_task, "SuspendTest", 256, NULL, 5);
 }
 
 // EXTI0 中断服务程序.
@@ -413,13 +420,65 @@ static void printer_task(void *param) {
     }
 }
 
+
+static void target_task(void *param) {
+    (void) param;
+    int counter = 0;
+    for (;;) {
+        LOG_D("TargetTask", "I'm alive! Count = %d", counter++);
+        Task_Delay(MS_TO_TICKS(1000));
+    }
+}
+
+/**
+ * @brief 测试任务, 用于控制目标任务的挂起和恢复.
+ */
+static void suspend_resume_test_task(void *param) {
+    (void) param;
+
+    LOG_I("SuspendTest", "Test started. Target task should be running now.");
+    Task_Delay(MS_TO_TICKS(5000)); // 等待5秒, 观察目标任务运行
+
+    if (g_target_task_h != NULL) {
+        LOG_I("SuspendTest", "Suspending TargetTask...");
+        Task_Suspend(g_target_task_h);
+        LOG_I("SuspendTest", "TargetTask has been suspended. It should stop printing for 5 seconds.");
+    }
+
+    Task_Delay(MS_TO_TICKS(5000)); // 等待5秒, 确认目标任务已停止
+
+    if (g_target_task_h != NULL) {
+        LOG_I("SuspendTest", "Resuming TargetTask...");
+        Task_Resume(g_target_task_h);
+        LOG_I("SuspendTest", "TargetTask has been resumed. It should continue printing.");
+    }
+
+    Task_Delay(MS_TO_TICKS(5000)); // 再观察5秒, 确认目标任务已恢复
+
+    // 清理测试任务
+    if (g_target_task_h != NULL) {
+        LOG_I("SuspendTest", "Test finished. Deleting TargetTask.");
+        Task_Delete(g_target_task_h);
+        g_target_task_h = NULL;
+    }
+
+    LOG_I("SuspendTest", "Deleting self.");
+    Task_Delete(NULL); // 测试完成, 删除自身
+}
+
+
+
 // "looper" 程序: 在后台周期性打印消息.
 static void looper_main(int argc, char *argv[]) {
     (void) argc;
     (void) argv;
     int count = 0;
+    const char *task_name = Task_GetName(NULL);
     for (;;) {
-        MyRTOS_printf("[looper BG] Hello from background! Count: %d\n", ++count);
+        // 这个 printf 的输出, 在后台模式下应该被丢弃.
+        MyRTOS_printf("[looper BG via printf] This message should be SILENT in background. Count: %d\n", count);
+        // 这个 LOG_I 的输出, 应该总是可见的 (通过VTS后台流).
+        LOG_I(task_name, "Hello from background via LOG! Count: %d", ++count);
         Task_Delay(MS_TO_TICKS(2000));
     }
 }
@@ -429,6 +488,7 @@ static void hello_main(int argc, char *argv[]) {
     (void) argc;
     (void) argv;
     MyRTOS_printf("你好世界 喵喵喵\n");
+    Task_Delay(MS_TO_TICKS(1000));
 }
 
 // "echo" 程序: 回显用户输入, 直到输入 'q'.
