@@ -109,6 +109,17 @@ int Stream_Printf(StreamHandle_t stream, const char *format, ...);
  */
 int Stream_VPrintf(StreamHandle_t stream, const char *format, va_list args);
 
+
+/**
+ * @brief 获取一个指向 "null" 流的句柄-单例.
+ * @details 是一种特殊的流:
+ *          - 读取操作会立即返回0 (模拟文件结束 EOF).
+ *          - 写入操作会接受所有数据但直接丢弃 (黑洞流).
+ *          可用于重定向不需要的输入或输出.
+ * @return StreamHandle_t 指向 null 流的句柄.
+ */
+StreamHandle_t NullStream_Get(void);
+
 // 默认操作当前任务的标准流的便捷宏
 #define MyRTOS_printf(format, ...) Stream_Printf(Task_GetStdOut(NULL), format, ##__VA_ARGS__)
 #define MyRTOS_putchar(c) Stream_Write(Task_GetStdOut(NULL), &(c), 1, MYRTOS_MAX_DELAY)

@@ -193,6 +193,41 @@ int Stream_Printf(StreamHandle_t stream, const char *format, ...) {
     return len;
 }
 
+
+
+
+
+// NullStream 的读实现: 总是立即返回0字节
+static size_t null_read(StreamHandle_t stream, void *buffer, size_t bytes_to_read, uint32_t block_ticks) {
+    (void)stream; (void)buffer; (void)bytes_to_read; (void)block_ticks;
+    return 0; // 模拟 EOF
+}
+
+// NullStream 的写实现: 接受所有字节但直接丢弃.
+static size_t null_write(StreamHandle_t stream, const void *buffer, size_t bytes_to_write, uint32_t block_ticks) {
+    (void)stream; (void)buffer; (void)block_ticks;
+    return bytes_to_write; // 假装一下,全部写入成功:((
+}
+
+//NullStream虚函数表.
+static const StreamInterface_t g_null_stream_interface = {
+    .read = null_read,
+    .write = null_write,
+    .control = NULL,
+};
+
+// 静态的 NullStream 实例, 单例.
+static Stream_t g_null_stream_instance = {
+    .p_iface = &g_null_stream_interface,
+    .p_private_data = NULL
+};
+
+// 获取 NullStream 的单例句柄.
+StreamHandle_t NullStream_Get(void) {
+    return &g_null_stream_instance;
+}
+
+
 /*======================= Pipe (任务间通信流) API 实现 =======================*/
 
 // Pipe的读实现：从底层队列中读取字节
