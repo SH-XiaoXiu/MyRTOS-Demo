@@ -833,11 +833,12 @@ int Task_Delete(TaskHandle_t task_h) {
     if (task_to_delete->state == TASK_STATE_READY) {
         removeTaskFromList(&readyTaskLists[task_to_delete->priority], task_to_delete);
     } else if (task_to_delete->state == TASK_STATE_DELAYED || task_to_delete->state == TASK_STATE_BLOCKED) {
-        removeTaskFromList(&delayedTaskListHead, task_to_delete);
-    }
-    // 如果任务正在等待事件，也从事件列表中移除
-    if (task_to_delete->pEventList != NULL) {
-        eventListRemove(task_to_delete);
+        if(task_to_delete->delay > 0) {
+            removeTaskFromList(&delayedTaskListHead, task_to_delete);
+        }
+        if(task_to_delete->pEventList != NULL) {
+            eventListRemove(task_to_delete);
+        }
     }
     // 释放任务持有的所有互斥锁
     while (task_to_delete->held_mutexes_head != NULL) {
@@ -899,6 +900,77 @@ void Task_Delay(uint32_t tick) {
     // 触发调度
     MyRTOS_Port_Yield();
 }
+
+
+
+/**
+ * @brief 挂起指定的任务.
+ */
+void Task_Suspend(TaskHandle_t task_h) {
+    Task_t *task_to_suspend = (task_h == NULL) ? currentTask : task_h;
+    // 不允许挂起空闲任务
+    if (task_to_suspend == idleTask || task_to_suspend == NULL) {
+        return;
+    }
+    MyRTOS_Port_EnterCritical();
+    // 如果任务已经是挂起状态, 则不做任何事.
+    if (task_to_suspend->state == TASK_STATE_SUSPENDED) {
+        MyRTOS_Port_ExitCritical();
+        return;
+    }
+    // 从其当前所在的列表中移除.
+    if (task_to_suspend->state == TASK_STATE_READY) {
+        removeTaskFromList(&readyTaskLists[task_to_suspend->priority], task_to_suspend);
+    } else if (task_to_suspend->state == TASK_STATE_DELAYED || task_to_suspend->state == TASK_STATE_BLOCKED) {
+        // 任务可能同时在延迟列表和事件列表中
+        if(task_to_suspend->delay > 0) {
+            removeTaskFromList(&delayedTaskListHead, task_to_suspend);
+        }
+        if(task_to_suspend->pEventList != NULL) {
+            eventListRemove(task_to_suspend);
+        }
+    }
+    // 设置状态为挂起.
+    task_to_suspend->state = TASK_STATE_SUSPENDED;
+    MyRTOS_Port_ExitCritical();
+    // 如果挂起的是当前任务, 则需要触发一次调度来运行其他任务.
+    if (task_to_suspend == currentTask) {
+        MyRTOS_Port_Yield();
+    }
+}
+
+/**
+ * @brief 恢复一个被挂起的任务.
+ */
+void Task_Resume(TaskHandle_t task_h) {
+    Task_t *task_to_resume = (Task_t *)task_h;
+
+    if (task_to_resume == NULL) {
+        return;
+    }
+
+    int trigger_yield = 0;
+    MyRTOS_Port_EnterCritical();
+
+    // 仅当任务确实处于挂起状态时才恢复.
+    if (task_to_resume->state == TASK_STATE_SUSPENDED) {
+        // 将任务重新添加到就绪队列.
+        addTaskToReadyList(task_to_resume);
+
+        // 检查是否需要进行上下文切换.
+        if (task_to_resume->priority > currentTask->priority) {
+            trigger_yield = 1;
+        }
+    }
+
+    MyRTOS_Port_ExitCritical();
+
+    if (trigger_yield) {
+        MyRTOS_Port_Yield();
+    }
+}
+
+
 
 /**
  * @brief 向一个任务发送通知，唤醒正在等待的任务

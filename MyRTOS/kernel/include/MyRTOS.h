@@ -51,7 +51,9 @@ typedef enum {
     TASK_STATE_UNUSED = 0, // 任务未使用
     TASK_STATE_READY, // 任务就绪状态
     TASK_STATE_DELAYED, // 任务延时状态
-    TASK_STATE_BLOCKED // 任务阻塞状态
+    TASK_STATE_BLOCKED, // 任务阻塞状态
+    TASK_STATE_SUSPENDED, // 任务挂起状态
+
 } TaskState_t;
 
 
@@ -174,6 +176,22 @@ int Task_Delete(TaskHandle_t task_h);
  * @param tick 需要延时的时钟节拍数
  */
 void Task_Delay(uint32_t tick);
+
+
+/**
+ * @brief 挂起指定的任务.
+ * @details 强制将一个任务移出所有调度队列, 直到 Task_Resume 被调用.
+ * @param task_h 要挂起的任务句柄. 若为 NULL, 则挂起当前任务.
+ */
+void Task_Suspend(TaskHandle_t task_h);
+
+/**
+ * @brief 恢复一个被挂起的任务.
+ * @details 将一个处于 SUSPENDED 状态的任务重新放入就绪队列参与调度.
+ * @param task_h 要恢复的任务句柄.
+ */
+void Task_Resume(TaskHandle_t task_h);
+
 
 /**
  * @brief 通知指定任务解除阻塞
