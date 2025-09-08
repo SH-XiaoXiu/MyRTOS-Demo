@@ -44,7 +44,7 @@ void Shell_Task(void *param) {
         MyRTOS_printf("%s", shell->config.prompt);
         len = 0;
         memset(shell->cmd_buffer, 0, SHELL_CMD_BUFFER_SIZE);
-        while (Stream_Read(Task_GetStdIn(NULL), &ch, 1, MYRTOS_MAX_DELAY) == 1) {
+        while (Stream_Read(Stream_GetTaskStdIn(NULL), &ch, 1, MYRTOS_MAX_DELAY) == 1) {
             if (ch == '\n') break;
             if (len < SHELL_CMD_BUFFER_SIZE - 1) {
                 shell->cmd_buffer[len++] = ch;

@@ -110,28 +110,28 @@ int StdIOService_Init(void) {
     return MyRTOS_RegisterExtension(stdio_kernel_event_handler);
 }
 
-StreamHandle_t Task_GetStdIn(TaskHandle_t task_h) {
+StreamHandle_t Stream_GetTaskStdIn(TaskHandle_t task_h) {
     if (!task_h)
         task_h = Task_GetCurrentTaskHandle();
     TaskStdIO_t *stdio = find_task_stdio(task_h);
     return stdio ? stdio->std_in : g_system_stdin;
 }
 
-StreamHandle_t Task_GetStdOut(TaskHandle_t task_h) {
+StreamHandle_t Stream_GetTaskStdOut(TaskHandle_t task_h) {
     if (!task_h)
         task_h = Task_GetCurrentTaskHandle();
     TaskStdIO_t *stdio = find_task_stdio(task_h);
     return stdio ? stdio->std_out : g_system_stdout;
 }
 
-StreamHandle_t Task_GetStdErr(TaskHandle_t task_h) {
+StreamHandle_t Stream_GetTaskStdErr(TaskHandle_t task_h) {
     if (!task_h)
         task_h = Task_GetCurrentTaskHandle();
     TaskStdIO_t *stdio = find_task_stdio(task_h);
     return stdio ? stdio->std_err : g_system_stderr;
 }
 
-void Task_SetStdIn(TaskHandle_t task_h, StreamHandle_t new_stdin) {
+void Stream_SetTaskStdIn(TaskHandle_t task_h, StreamHandle_t new_stdin) {
     if (!task_h)
         task_h = Task_GetCurrentTaskHandle();
     TaskStdIO_t *stdio = find_task_stdio(task_h);
@@ -139,7 +139,7 @@ void Task_SetStdIn(TaskHandle_t task_h, StreamHandle_t new_stdin) {
         stdio->std_in = new_stdin;
 }
 
-void Task_SetStdOut(TaskHandle_t task_h, StreamHandle_t new_stdout) {
+void Stream_SetTaskStdOut(TaskHandle_t task_h, StreamHandle_t new_stdout) {
     if (!task_h)
         task_h = Task_GetCurrentTaskHandle();
     TaskStdIO_t *stdio = find_task_stdio(task_h);
@@ -147,7 +147,7 @@ void Task_SetStdOut(TaskHandle_t task_h, StreamHandle_t new_stdout) {
         stdio->std_out = new_stdout;
 }
 
-void Task_SetStdErr(TaskHandle_t task_h, StreamHandle_t new_stderr) {
+void Stream_SetTaskStdErr(TaskHandle_t task_h, StreamHandle_t new_stderr) {
     if (!task_h)
         task_h = Task_GetCurrentTaskHandle();
     TaskStdIO_t *stdio = find_task_stdio(task_h);
@@ -223,7 +223,7 @@ static Stream_t g_null_stream_instance = {
 };
 
 // 获取 NullStream 的单例句柄.
-StreamHandle_t NullStream_Get(void) {
+StreamHandle_t Stream_GetNull(void) {
     return &g_null_stream_instance;
 }
 

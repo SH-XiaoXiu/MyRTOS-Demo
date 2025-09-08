@@ -36,42 +36,42 @@ int StdIOService_Init(void);
  * @param task_h 任务句柄 (若为NULL，则获取当前任务的流)
  * @return StreamHandle_t 指向该任务stdin流的句柄
  */
-StreamHandle_t Task_GetStdIn(TaskHandle_t task_h);
+StreamHandle_t Stream_GetTaskStdIn(TaskHandle_t task_h);
 
 /**
  * @brief 获取指定任务的标准输出流。
  * @param task_h 任务句柄 (若为NULL，则获取当前任务的流)
  * @return StreamHandle_t 指向该任务stdout流的句柄
  */
-StreamHandle_t Task_GetStdOut(TaskHandle_t task_h);
+StreamHandle_t Stream_GetTaskStdOut(TaskHandle_t task_h);
 
 /**
  * @brief 获取指定任务的标准错误流。
  * @param task_h 任务句柄 (若为NULL，则获取当前任务的流)
  * @return StreamHandle_t 指向该任务stderr流的句柄
  */
-StreamHandle_t Task_GetStdErr(TaskHandle_t task_h);
+StreamHandle_t Stream_GetTaskStdErr(TaskHandle_t task_h);
 
 /**
  * @brief 重定向任务的标准输入流。
  * @param task_h 要操作的任务句柄 (NULL 表示当前任务)
  * @param new_stdin 新的标准输入流句柄
  */
-void Task_SetStdIn(TaskHandle_t task_h, StreamHandle_t new_stdin);
+void Stream_SetTaskStdIn(TaskHandle_t task_h, StreamHandle_t new_stdin);
 
 /**
  * @brief 重定向任务的标准输出流。
  * @param task_h 要操作的任务句柄 (NULL 表示当前任务)
  * @param new_stdout 新的标准输出流句柄
  */
-void Task_SetStdOut(TaskHandle_t task_h, StreamHandle_t new_stdout);
+void Stream_SetTaskStdOut(TaskHandle_t task_h, StreamHandle_t new_stdout);
 
 /**
  * @brief 重定向任务的标准错误流。
  * @param task_h 要操作的任务句柄 (NULL 表示当前任务)
  * @param new_stderr 新的标准错误流句柄
  */
-void Task_SetStdErr(TaskHandle_t task_h, StreamHandle_t new_stderr);
+void Stream_SetTaskStdErr(TaskHandle_t task_h, StreamHandle_t new_stderr);
 
 /*================================ 流式 I/O 操作 API ===============================*/
 
@@ -118,15 +118,15 @@ int Stream_VPrintf(StreamHandle_t stream, const char *format, va_list args);
  *          可用于重定向不需要的输入或输出.
  * @return StreamHandle_t 指向 null 流的句柄.
  */
-StreamHandle_t NullStream_Get(void);
+StreamHandle_t Stream_GetNull(void);
 
 // 默认操作当前任务的标准流的便捷宏
-#define MyRTOS_printf(format, ...) Stream_Printf(Task_GetStdOut(NULL), format, ##__VA_ARGS__)
-#define MyRTOS_putchar(c) Stream_Write(Task_GetStdOut(NULL), &(c), 1, MYRTOS_MAX_DELAY)
+#define MyRTOS_printf(format, ...) Stream_Printf(Stream_GetTaskStdOut(NULL), format, ##__VA_ARGS__)
+#define MyRTOS_putchar(c) Stream_Write(Stream_GetTaskStdOut(NULL), &(c), 1, MYRTOS_MAX_DELAY)
 #define MyRTOS_getchar()                                                                                               \
     ({                                                                                                                 \
         char __ch;                                                                                                     \
-        Stream_Read(Task_GetStdIn(NULL), &__ch, 1, MYRTOS_MAX_DELAY);                                                  \
+        Stream_Read(Stream_GetTaskStdIn(NULL), &__ch, 1, MYRTOS_MAX_DELAY);                                                  \
         __ch;                                                                                                          \
     })
 /*============================== Pipe (任务间通信流) API =============================*/
