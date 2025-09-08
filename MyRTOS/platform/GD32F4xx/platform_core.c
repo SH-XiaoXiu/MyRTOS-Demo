@@ -188,28 +188,23 @@ void Platform_Init(void) {
     g_system_stdout = VTS_GetBackgroundStream();
     g_system_stderr = VTS_GetBackgroundStream();
 
-#if MYRTOS_SERVICE_LOG_ENABLE == 1
-    //将VTS的后台流注册为日志监听器。
-    Log_AddListener(VTS_GetBackgroundStream(), LOG_LEVEL_DEBUG,NULL);
-#endif
-
 #endif
 
     //根据 VTS 是否启用，为 Shell 配置正确的 IO 流
 #if (MYRTOS_SERVICE_SHELL_ENABLE == 1)
 #if (MYRTOS_SERVICE_VTS_ENABLE == 1)
     //VTS 和 Shell 都启用，Shell 连接到 VTS 管道
-    Task_SetStdIn(g_shell_task_h, shell_input_pipe);
-    Task_SetStdOut(g_shell_task_h, shell_output_pipe);
-    Task_SetStdErr(g_shell_task_h, shell_output_pipe);
+    Stream_SetTaskStdIn(g_shell_task_h, shell_input_pipe);
+    Stream_SetTaskStdOut(g_shell_task_h, shell_output_pipe);
+    Stream_SetTaskStdErr(g_shell_task_h, shell_output_pipe);
 #else
 #if MYRTOS_SERVICE_LOG_ENABLE == 1
     // 将物理控制台注册为监听器
     Log_AddListener(Platform_Console_GetStream(), LOG_LEVEL_DEBUG);
 #endif
-    Task_SetStdIn(g_shell_task_h, g_system_stdin);
-    Task_SetStdOut(g_shell_task_h, g_system_stdout);
-    Task_SetStdErr(g_shell_task_h, g_system_stderr);
+    Stream_SetTaskStdIn(g_shell_task_h, g_system_stdin);
+    Stream_SetTaskStdOut(g_shell_task_h, g_system_stdout);
+    Stream_SetTaskStdErr(g_shell_task_h, g_system_stderr);
 #endif
 #endif
 

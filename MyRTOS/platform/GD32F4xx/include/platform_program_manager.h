@@ -32,6 +32,14 @@ typedef enum {
 } ProgramMode_t;
 
 /**
+ * @brief 程序实例的运行状态.
+ */
+typedef enum {
+    PROG_STATE_RUNNING,   // 正在运行
+    PROG_STATE_SUSPENDED, // 已挂起
+} ProgramState_t;
+
+/**
  * @brief 描述一个正在运行的程序实例.
  */
 typedef struct ProgramInstance_t {
@@ -39,10 +47,14 @@ typedef struct ProgramInstance_t {
     const ProgramDefinition_t *def; // 静态定义的指针.
     TaskHandle_t task_handle; // 任务句柄.
     ProgramMode_t mode;
+    ProgramState_t state;      // 程序的当前运行状态.
     StreamHandle_t stdin_pipe;
     StreamHandle_t stdout_pipe;
     bool is_active; // 标记此实例槽位是否正在使用.
 } ProgramInstance_t;
+
+
+
 
 /**
  * @brief 遍历程序实例时使用的回调函数原型.
@@ -99,5 +111,29 @@ void Platform_ProgramManager_Exit(int exit_code);
  * @return 若终止请求已成功发送则返回 0, 若未找到PID则返回 -1.
  */
 int Platform_ProgramManager_Kill(int pid);
+
+
+/**
+ * @brief 根据PID安全地查找一个程序实例.
+ * @param pid 要查找的程序的进程ID.
+ * @return 若找到则返回指向该实例的指针, 否则返回 NULL.
+ * @note 返回的指针仅在持有 g_prog_manager_lock 期间有效.
+ */
+ProgramInstance_t *Platform_ProgramManager_GetInstance(int pid);
+
+/**
+ * @brief 挂起一个正在运行的程序.
+ * @param pid 要挂起的程序的进程ID.
+ * @return 成功时返回 0, 若程序未找到或状态不正确则返回 -1.
+ */
+int Platform_ProgramManager_Suspend(int pid);
+
+
+/**
+ * @brief 恢复一个已挂起的程序.
+ * @param pid 要恢复的程序的进程ID.
+ * @return 成功时返回 0, 若程序未找到或状态不正确则返回 -1.
+ */
+int Platform_ProgramManager_Resume(int pid);
 
 #endif // PLATFORM_PROGRAM_MANAGER_H

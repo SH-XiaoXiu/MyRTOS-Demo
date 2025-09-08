@@ -47,8 +47,14 @@ struct ShellCommandDef {
 };
 
 // 'ps' 命令使用的任务状态字符串表.
-static const char *const g_task_state_str[] = {"Unused", "Ready", "Delayed", "Blocked"};
+static const char *const g_task_state_str[] = {"Unused", "Ready", "Delayed", "Blocked", "Suspended"};
 #endif
+
+#if (MYRTOS_SERVICE_LOG_ENABLE == 1)
+// 用于 logall 命令的全局日志监听器句柄.
+static LogListenerHandle_t g_logall_listener_h = NULL;
+#endif
+
 
 //
 // 私有函数声明
@@ -67,15 +73,19 @@ static int cmd_log(ShellHandle_t shell_h, int argc, char *argv[]);
 
 static int cmd_loglevel(ShellHandle_t shell_h, int argc, char *argv[]);
 #if PLATFORM_USE_PROGRAM_MANGE == 1
-static bool print_program_visitor(const ProgramInstance_t *instance, void *arg);
+static void manage_foreground_session(ProgramInstance_t *instance);
 
-static int cmd_progs(ShellHandle_t shell_h, int argc, char *argv[]);
+static bool print_job_visitor(const ProgramInstance_t *instance, void *arg);
 
-static int execute_foreground_program(const char *name, int argc, char *argv[]);
+static int cmd_jobs(ShellHandle_t shell_h, int argc, char *argv[]);
 
 static int cmd_run(ShellHandle_t shell_h, int argc, char *argv[]);
 
 static int cmd_kill(ShellHandle_t shell_h, int argc, char *argv[]);
+
+static int cmd_fg(ShellHandle_t shell_h, int argc, char *argv[]);
+
+static int cmd_bg(ShellHandle_t shell_h, int argc, char *argv[]);
 #endif // PLATFORM_USE_PROGRAM_MANGE
 #endif // PLATFORM_USE_DEFAULT_COMMANDS
 
@@ -93,9 +103,12 @@ static const struct ShellCommandDef g_platform_commands[] = {
     {"log", "监听指定Tag日志. 用法: log <tag>", cmd_log},
     {"loglevel", "设置日志级别. 用法: loglevel <0-4>", cmd_loglevel},
 #if PLATFORM_USE_PROGRAM_MANGE == 1
-    {"progs", "列出所有正在运行的程序", cmd_progs},
+    {"jobs", "列出所有作业 (别名: progs)", cmd_jobs},
+    {"progs", "jobs 命令的别名", cmd_jobs},
     {"run", "运行程序. 用法: run <prog> [&]", cmd_run},
-    {"kill", "终止程序. 用法: kill <pid>", cmd_kill},
+    {"kill", "终止一个作业. 用法: kill <pid>", cmd_kill},
+    {"fg", "将作业切换到前台. 用法: fg <pid>", cmd_fg},
+    {"bg", "在后台恢复一个挂起的作业. 用法: bg <pid>", cmd_bg},
 #endif
     {NULL, NULL, NULL}
 };
@@ -201,13 +214,30 @@ static int cmd_logall(ShellHandle_t shell_h, int argc, char *argv[]) {
         MyRTOS_printf("Usage: logall <on|off>\n");
         return -1;
     }
-
     if (strcmp(argv[1], "on") == 0) {
-        VTS_SetLogAllMode(true);
-        MyRTOS_printf("Global log monitoring enabled.\n");
+        if (g_logall_listener_h != NULL) {
+            MyRTOS_printf("Global log monitoring is already enabled.\n");
+            return 0;
+        }
+        // 添加一个监听所有tag(*)的监听器到VTS后台流.
+        g_logall_listener_h = Log_AddListener(VTS_GetBackgroundStream(), LOG_LEVEL_DEBUG, NULL);
+        if (g_logall_listener_h) {
+            MyRTOS_printf("Global log monitoring enabled.\n");
+        } else {
+            MyRTOS_printf("Error: Failed to enable global log monitoring.\n");
+        }
     } else if (strcmp(argv[1], "off") == 0) {
-        VTS_SetLogAllMode(false);
-        MyRTOS_printf("Global log monitoring disabled.\n");
+        if (g_logall_listener_h == NULL) {
+            MyRTOS_printf("Global log monitoring is not active.\n");
+            return 0;
+        }
+        // 移除监听器.
+        if (Log_RemoveListener(g_logall_listener_h) == 0) {
+            g_logall_listener_h = NULL;
+            MyRTOS_printf("Global log monitoring disabled.\n");
+        } else {
+            MyRTOS_printf("Error: Failed to disable global log monitoring.\n");
+        }
     } else {
         MyRTOS_printf("Invalid argument. Use 'on' or 'off'.\n");
         return -1;
@@ -215,41 +245,57 @@ static int cmd_logall(ShellHandle_t shell_h, int argc, char *argv[]) {
     return 0;
 }
 
-// "log" 命令: 监控指定标签的实时日志.
+// "log" 命令: 监控指定标签或任务的实时日志
 static int cmd_log(ShellHandle_t shell_h, int argc, char *argv[]) {
     (void) shell_h;
-    if (argc != 2) {
-        MyRTOS_printf("Usage: log <taskName_or_tag>\n");
+    if (argc < 2 || argc > 3) {
+        MyRTOS_printf("Usage: log <taskName_or_tag> [level]\n");
         return -1;
     }
 
-    // 创建管道用于日志流.
+    const char *tag = argv[1];
+    LogLevel_t level = LOG_LEVEL_DEBUG; // 默认级别
+
+    if (argc == 3) {
+        if (strcasecmp(argv[2], "error") == 0) {
+            level = LOG_LEVEL_ERROR;
+        } else if (strcasecmp(argv[2], "warn") == 0) {
+            level = LOG_LEVEL_WARN;
+        } else if (strcasecmp(argv[2], "info") == 0) {
+            level = LOG_LEVEL_INFO;
+        } else if (strcasecmp(argv[2], "debug") == 0) {
+            level = LOG_LEVEL_DEBUG;
+        } else if (strcasecmp(argv[2], "none") == 0) {
+            level = LOG_LEVEL_NONE;
+        } else {
+            MyRTOS_printf("Error: Invalid log level '%s'. Use error|warn|info|debug|none.\n", argv[2]);
+            return -1;
+        }
+    }
+
     StreamHandle_t pipe = Pipe_Create(1024);
     if (!pipe) {
         MyRTOS_printf("Error: Failed to create pipe for logging.\n");
         return -1;
     }
 
-    // 添加临时监听器, 将指定 tag 的日志重定向到管道.
-    LogListenerHandle_t listener_h = Log_AddListener(pipe, LOG_LEVEL_DEBUG, argv[1]);
+    LogListenerHandle_t listener_h = Log_AddListener(pipe, level, tag);
     if (!listener_h) {
         MyRTOS_printf("Error: Failed to add log listener.\n");
         Pipe_Delete(pipe);
         return -1;
     }
 
-    // 切换 VTS 焦点到日志管道, 并设置为原始模式.
-    VTS_SetFocus(Task_GetStdIn(NULL), pipe);
+    VTS_SetFocus(Stream_GetTaskStdIn(NULL), pipe);
     VTS_SetTerminalMode(VTS_MODE_RAW);
-    Stream_Printf(pipe, "--- Start monitoring LOGs with tag '%s'. Press any key to stop. ---\n", argv[1]);
+    Stream_Printf(pipe, "--- Start monitoring LOGs with tag '%s' at level %d. Press any key to stop. ---\n",
+                  tag, level);
 
-    // 等待任意按键输入以退出监控.
     char ch;
-    Stream_Read(Task_GetStdIn(NULL), &ch, 1, MYRTOS_MAX_DELAY);
-    Stream_Printf(pipe, "\n--- Stopped monitoring tag '%s'. ---\n", argv[1]);
+    Stream_Read(Stream_GetTaskStdIn(NULL), &ch, 1, MYRTOS_MAX_DELAY);
+    Stream_Printf(pipe, "\n--- Stopped monitoring tag '%s'. ---\n", tag);
     Task_Delay(MS_TO_TICKS(10));
 
-    // 恢复 VTS 焦点并清理资源.
     Log_RemoveListener(listener_h);
     VTS_ReturnToRootFocus();
     Pipe_Delete(pipe);
@@ -280,53 +326,53 @@ static int cmd_loglevel(ShellHandle_t shell_h, int argc, char *argv[]) {
 
 #if PLATFORM_USE_PROGRAM_MANGE == 1
 
-// 'progs' 命令的访问者函数, 格式化并打印单个程序实例信息.
-static bool print_program_visitor(const ProgramInstance_t *instance, void *arg) {
-    (void) arg;
-    const char *mode_str = (instance->mode == PROG_MODE_FOREGROUND) ? "FG" : "BG";
-    MyRTOS_printf("%-4d | %-4s | %s\n", instance->pid, mode_str, instance->def->name);
-    return true; // 继续遍历.
-}
-
-// "progs" 命令: 列出所有正在运行的程序.
-static int cmd_progs(ShellHandle_t shell_h, int argc, char *argv[]) {
-    (void) shell_h;
-    (void) argc;
-    (void) argv;
-    MyRTOS_printf("PID  | MODE | NAME\n");
-    MyRTOS_printf("-----|------|----------------\n");
-    Platform_ProgramManager_TraverseInstances(print_program_visitor, NULL);
-    return 0;
-}
-
-// 执行一个前台程序, 包括 VTS 焦点切换和信号等待.
-static int execute_foreground_program(const char *name, int argc, char *argv[]) {
-    // 启动程序.
-    ProgramInstance_t *instance = Platform_ProgramManager_Run(name, argc, argv, PROG_MODE_FOREGROUND);
+// 管理一个前台会话, 包括 VTS 焦点切换和信号处理.
+static void manage_foreground_session(ProgramInstance_t *instance) {
     if (instance == NULL) {
-        MyRTOS_printf("Error: Failed to start program '%s'.\n", name);
-        return -1;
+        return;
     }
 
     // 将虚拟终端焦点切换到新程序.
     VTS_SetFocus(instance->stdin_pipe, instance->stdout_pipe);
 
-    // 等待子程序退出或用户中断信号.
-    uint32_t received_signals = Task_WaitSignal(SIG_CHILD_EXIT | SIG_INTERRUPT, MYRTOS_MAX_DELAY,
+    // 等待子程序退出, 或用户中断/挂起信号.
+    uint32_t received_signals = Task_WaitSignal(SIG_CHILD_EXIT | SIG_INTERRUPT | SIG_SUSPEND, MYRTOS_MAX_DELAY,
                                                 SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
+    // 恢复 Shell 的终端焦点
+    VTS_ReturnToRootFocus();
 
     if (received_signals & SIG_INTERRUPT) {
         MyRTOS_printf("^C\n");
-        // 收到中断信号, 强制终止前台程序.
         Platform_ProgramManager_Kill(instance->pid);
-        // 短暂延时以确保任务清理完成.
-        Task_Delay(MS_TO_TICKS(10));
-    } else if (received_signals & SIG_CHILD_EXIT) {
-        // 收到子程序正常退出信号, 无需额外操作.
+        Task_WaitSignal(SIG_CHILD_EXIT, MS_TO_TICKS(100), SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
+    } else if (received_signals & SIG_SUSPEND) {
+        if (Platform_ProgramManager_Suspend(instance->pid) == 0) {
+            MyRTOS_printf("\nSuspended [%d] %s\n", instance->pid, instance->def->name);
+        }
     }
 
-    // 恢复 Shell 的终端焦点.
-    VTS_ReturnToRootFocus();
+    // 关键: 在返回到 Shell 循环之前, 丢弃输入管道中可能残留的任何字符.
+    // 这可以防止未发送的行缓冲内容被 Shell 误解析为命令.
+    char dummy_char;
+    while (Stream_Read(Stream_GetTaskStdIn(NULL), &dummy_char, 1, 0) > 0);
+}
+
+// 'jobs' 命令的访问者函数, 格式化并打印单个作业信息.
+static bool print_job_visitor(const ProgramInstance_t *instance, void *arg) {
+    (void) arg;
+    const char *state_str = (instance->state == PROG_STATE_RUNNING) ? "Running" : "Suspended";
+    MyRTOS_printf("%-4d | %-12s | %s\n", instance->pid, state_str, instance->def->name);
+    return true; // 继续遍历.
+}
+
+// "jobs" 命令: 列出所有作业.
+static int cmd_jobs(ShellHandle_t shell_h, int argc, char *argv[]) {
+    (void) shell_h;
+    (void) argc;
+    (void) argv;
+    MyRTOS_printf("PID  | STATUS       | NAME\n");
+    MyRTOS_printf("-----|--------------|----------------\n");
+    Platform_ProgramManager_TraverseInstances(print_job_visitor, NULL);
     return 0;
 }
 
@@ -347,18 +393,23 @@ static int cmd_run(ShellHandle_t shell_h, int argc, char *argv[]) {
         ProgramInstance_t *instance =
                 Platform_ProgramManager_Run(prog_name, prog_argc, prog_argv, PROG_MODE_BACKGROUND);
         if (instance) {
-            MyRTOS_printf("Started program '%s' in background with PID %d.\n", prog_name, instance->pid);
+            MyRTOS_printf("[%d] %s\n", instance->pid, prog_name);
         } else {
-            MyRTOS_printf("Failed to start program '%s'.\n", prog_name);
+            MyRTOS_printf("Error: Failed to start program '%s' in background.\n", prog_name);
         }
     } else {
-        execute_foreground_program(prog_name, prog_argc, prog_argv);
+        ProgramInstance_t *instance =
+                Platform_ProgramManager_Run(prog_name, prog_argc, prog_argv, PROG_MODE_FOREGROUND);
+        if (instance) {
+            manage_foreground_session(instance);
+        } else {
+            MyRTOS_printf("Error: Failed to start program '%s' in foreground.\n", prog_name);
+        }
     }
-
     return 0;
 }
 
-// "kill" 命令: 终止一个正在运行的程序.
+// "kill" 命令: 终止一个作业.
 static int cmd_kill(ShellHandle_t shell_h, int argc, char *argv[]) {
     (void) shell_h;
     if (argc != 2) {
@@ -368,14 +419,99 @@ static int cmd_kill(ShellHandle_t shell_h, int argc, char *argv[]) {
 
     int pid = atoi(argv[1]);
     if (pid <= 0) {
-        MyRTOS_printf("Invalid PID.\n");
+        MyRTOS_printf("Error: Invalid PID.\n");
         return -1;
     }
 
     if (Platform_ProgramManager_Kill(pid) == 0) {
         MyRTOS_printf("Kill signal sent to PID %d.\n", pid);
     } else {
-        MyRTOS_printf("Program with PID %d not found.\n", pid);
+        MyRTOS_printf("Error: Job with PID %d not found.\n", pid);
+    }
+
+    return 0;
+}
+
+// "fg" 命令: 将作业切换到前台.
+static int cmd_fg(ShellHandle_t shell_h, int argc, char *argv[]) {
+    (void) shell_h;
+    if (argc != 2) {
+        MyRTOS_printf("Usage: fg <pid>\n");
+        return -1;
+    }
+
+    int pid = atoi(argv[1]);
+    if (pid <= 0) {
+        MyRTOS_printf("Error: Invalid PID.\n");
+        return -1;
+    }
+
+    // 查找实例, 但不直接使用返回的指针, 因为它可能在manage_foreground_session中失效.
+    ProgramInstance_t *instance = Platform_ProgramManager_GetInstance(pid);
+    if (instance == NULL) {
+        MyRTOS_printf("fg: job not found: %d\n", pid);
+        return -1;
+    }
+
+    MyRTOS_printf("%s\n", instance->def->name);
+    if (instance->stdin_pipe == NULL) {
+        instance->stdin_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
+        instance->stdout_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
+        if (!instance->stdin_pipe || !instance->stdout_pipe) {
+            if (instance->stdin_pipe) Pipe_Delete(instance->stdin_pipe);
+            if (instance->stdout_pipe) Pipe_Delete(instance->stdout_pipe);
+            MyRTOS_printf("Error: failed to create pipes for fg.\n");
+            return -1;
+        }
+        //将任务的IO重定向到新创建的管道.
+        Stream_SetTaskStdIn(instance->task_handle, instance->stdin_pipe);
+        Stream_SetTaskStdOut(instance->task_handle, instance->stdout_pipe);
+        Stream_SetTaskStdErr(instance->task_handle, instance->stdout_pipe);
+    }
+
+    MyRTOS_printf("%s\n", instance->def->name);
+
+    if (instance->state == PROG_STATE_SUSPENDED) {
+        Platform_ProgramManager_Resume(pid);
+    }
+
+    instance->mode = PROG_MODE_FOREGROUND;
+
+    manage_foreground_session(instance);
+
+    return 0;
+}
+
+// "bg" 命令: 在后台恢复一个挂起的作业.
+static int cmd_bg(ShellHandle_t shell_h, int argc, char *argv[]) {
+    (void) shell_h;
+    if (argc != 2) {
+        MyRTOS_printf("Usage: bg <pid>\n");
+        return -1;
+    }
+
+    int pid = atoi(argv[1]);
+    if (pid <= 0) {
+        MyRTOS_printf("Error: Invalid PID.\n");
+        return -1;
+    }
+
+    ProgramInstance_t *instance = Platform_ProgramManager_GetInstance(pid);
+    if (instance == NULL) {
+        MyRTOS_printf("bg: job not found: %d\n", pid);
+        return -1;
+    }
+
+    if (instance->state != PROG_STATE_SUSPENDED) {
+        MyRTOS_printf("bg: job %d is already running.\n", pid);
+        return -1;
+    }
+
+    if (Platform_ProgramManager_Resume(pid) == 0) {
+        MyRTOS_printf("[%d] %s &\n", pid, instance->def->name);
+    } else {
+        // This case should ideally not happen if checks above passed.
+        MyRTOS_printf("bg: failed to resume job %d.\n", pid);
     }
 
     return 0;

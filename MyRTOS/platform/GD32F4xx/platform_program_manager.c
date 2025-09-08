@@ -32,6 +32,7 @@ static const ProgramDefinition_t *find_program_definition(const char *name);
 
 static void program_manager_kernel_event_handler(const KernelEventData_t *pEventData);
 
+static ProgramInstance_t *get_instance_locked(int pid);
 
 //公共 API 实现
 
@@ -136,7 +137,6 @@ ProgramInstance_t *Platform_ProgramManager_Run(const char *name, int argc, char 
             return NULL;
         }
     }
-
     //创建程序任务.
     TaskHandle_t task_h = Task_Create(program_launcher_task, def->name, PLATFORM_PROGRAM_LAUNCH_STACK, new_instance, 2);
 
@@ -150,22 +150,23 @@ ProgramInstance_t *Platform_ProgramManager_Run(const char *name, int argc, char 
         return NULL;
     }
 
-    //根据运行模式重定向标准IO.
-    if (mode == PROG_MODE_BACKGROUND) {
-        Task_SetStdOut(task_h, VTS_GetBackgroundStream());
-        Task_SetStdErr(task_h, VTS_GetBackgroundStream());
-    } else {
-        //PROG_MODE_FOREGROUND
-        Task_SetStdIn(task_h, new_instance->stdin_pipe);
-        Task_SetStdOut(task_h, new_instance->stdout_pipe);
-        Task_SetStdErr(task_h, new_instance->stdout_pipe);
-    }
 
+    if (mode == PROG_MODE_BACKGROUND) {
+        Stream_SetTaskStdIn(task_h, Stream_GetNull());
+        Stream_SetTaskStdOut(task_h, Stream_GetNull());
+        Stream_SetTaskStdErr(task_h, Stream_GetNull());
+    } else {
+        // PROG_MODE_FOREGROUND
+        Stream_SetTaskStdIn(task_h, new_instance->stdin_pipe);
+        Stream_SetTaskStdOut(task_h, new_instance->stdout_pipe);
+        Stream_SetTaskStdErr(task_h, new_instance->stdout_pipe);
+    }
     //填充实例结构体并标记为活动.
     new_instance->pid = g_next_pid++;
     new_instance->def = def;
     new_instance->task_handle = task_h;
     new_instance->mode = mode;
+    new_instance->state = PROG_STATE_RUNNING;
     new_instance->is_active = true;
 
     Mutex_Unlock(g_prog_manager_lock);
@@ -209,6 +210,56 @@ int Platform_ProgramManager_Kill(int pid) {
 
     LOG_W("ProgManager", "Kill failed: PID %d not found.", pid);
     return -1;
+}
+
+
+// 根据PID查找程序实例.
+ProgramInstance_t *Platform_ProgramManager_GetInstance(int pid) {
+    ProgramInstance_t *instance = NULL;
+    Mutex_Lock(g_prog_manager_lock);
+    instance = get_instance_locked(pid);
+    Mutex_Unlock(g_prog_manager_lock);
+    return instance;
+}
+
+
+int Platform_ProgramManager_Suspend(int pid) {
+    int result = -1;
+    Mutex_Lock(g_prog_manager_lock);
+
+    ProgramInstance_t *instance = get_instance_locked(pid);
+    if (instance && instance->state == PROG_STATE_RUNNING) {
+        Task_Suspend(instance->task_handle);
+        instance->state = PROG_STATE_SUSPENDED;
+        // 一旦挂起, 即使原来是前台任务, 也应被视为后台作业.
+        instance->mode = PROG_MODE_BACKGROUND;
+        result = 0;
+        LOG_D("ProgManager", "Suspended program '%s' (PID: %d).", instance->def->name, instance->pid);
+    } else {
+        LOG_W("ProgManager", "Suspend failed: PID %d not found or not running.", pid);
+    }
+
+    Mutex_Unlock(g_prog_manager_lock);
+    return result;
+}
+
+
+int Platform_ProgramManager_Resume(int pid) {
+    int result = -1;
+    Mutex_Lock(g_prog_manager_lock);
+
+    ProgramInstance_t *instance = get_instance_locked(pid);
+    if (instance && instance->state == PROG_STATE_SUSPENDED) {
+        Task_Resume(instance->task_handle);
+        instance->state = PROG_STATE_RUNNING;
+        result = 0;
+        LOG_D("ProgManager", "Resumed program '%s' (PID: %d).", instance->def->name, instance->pid);
+    } else {
+        LOG_W("ProgManager", "Resume failed: PID %d not found or not suspended.", pid);
+    }
+
+    Mutex_Unlock(g_prog_manager_lock);
+    return result;
 }
 
 
@@ -300,4 +351,15 @@ static void program_manager_kernel_event_handler(const KernelEventData_t *pEvent
             Task_SendSignal(g_shell_task_h, SIG_CHILD_EXIT);
         }
     }
+}
+
+
+// 在持有锁的情况下, 根据PID查找实例.
+static ProgramInstance_t *get_instance_locked(int pid) {
+    for (int i = 0; i < PLATFORM_MAX_RUNNING_PROGRAMS; ++i) {
+        if (g_program_instances[i].is_active && g_program_instances[i].pid == pid) {
+            return &g_program_instances[i];
+        }
+    }
+    return NULL;
 }
