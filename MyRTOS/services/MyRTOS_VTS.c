@@ -13,13 +13,9 @@ typedef struct {
     MutexHandle_t lock;
     TaskHandle_t vts_task_handle;
     StreamHandle_t background_stream;
-
-    volatile bool log_all_mode;
     volatile VTS_TerminalMode_t terminal_mode;
-
     volatile StreamHandle_t focused_input_stream;
     volatile StreamHandle_t focused_output_stream;
-
     char line_buffer[VTS_LINE_BUFFER_SIZE];
     int buffer_len;
     int cursor_pos;
@@ -79,6 +75,20 @@ static void vts_process_input_char(char ch) {
         vts_write_physical("^C\r\n", 4);
         return;
     }
+
+    if (ch == 0x1A) {
+        // Ctrl+Z
+        if (g_vts->config.signal_receiver_task_handle != NULL) {
+            Task_SendSignal(g_vts->config.signal_receiver_task_handle, SIG_SUSPEND);
+        }
+        memset(g_vts->line_buffer, 0, VTS_LINE_BUFFER_SIZE);
+        g_vts->buffer_len = 0;
+        g_vts->cursor_pos = 0;
+        g_vts->ansi_state = ANSI_STATE_NORMAL;
+        vts_write_physical("^Z\r\n", 4);
+        return;
+    }
+
     if (g_vts->terminal_mode == VTS_MODE_RAW) {
         Stream_Write(g_vts->focused_input_stream, &ch, 1, MYRTOS_MAX_DELAY);
         return;
@@ -114,12 +124,10 @@ static void vts_forward_output(StreamHandle_t stream) {
 
 static void vts_process_background_stream(void) {
     char buffer[VTS_RW_BUFFER_SIZE];
-    // 尝试以非阻塞方式读取后台流的数据
+    // 尝试以非阻塞方式读取后台流的数据.
     size_t bytes_read = Stream_Read(g_vts->background_stream, buffer, VTS_RW_BUFFER_SIZE, 0);
     if (bytes_read > 0) {
-        if (g_vts->log_all_mode) {
-            vts_write_physical(buffer, bytes_read);
-        }
+        vts_write_physical(buffer, bytes_read);
     }
 }
 
@@ -128,18 +136,16 @@ static void VTS_Task(void *param) {
     (void) param;
     char input_char;
     for (;;) {
+        //处理来自物理终端的输入.
         if (Stream_Read(g_vts->config.physical_stream, &input_char, 1, 0) > 0) {
             Mutex_Lock(g_vts->lock);
             vts_process_input_char(input_char);
             Mutex_Unlock(g_vts->lock);
         }
+        //将当前焦点任务的输出转发到物理终端.
         vts_forward_output(g_vts->focused_output_stream);
+        //将后台流的所有输出 (主要是系统日志) 转发到物理终端.
         vts_process_background_stream();
-        if (g_vts->log_all_mode) {
-            // 如果 logall 开启,需要确保Shell的输出也被显示
-            if (g_vts->focused_output_stream != g_vts->config.root_output_stream)
-                vts_forward_output(g_vts->config.root_output_stream);
-        }
         Task_Delay(MS_TO_TICKS(1));
     }
 }
@@ -193,9 +199,7 @@ VTS_TerminalMode_t VTS_GetTerminalMode(void) {
     return g_vts ? g_vts->terminal_mode : VTS_MODE_CANONICAL;
 }
 
-void VTS_SetLogAllMode(bool enable) {
-    if (g_vts) g_vts->log_all_mode = enable;
-}
+
 
 StreamHandle_t VTS_GetBackgroundStream(void) {
     return g_vts ? g_vts->background_stream : NULL;

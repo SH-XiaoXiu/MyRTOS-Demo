@@ -96,6 +96,7 @@
 #define VTS_RW_BUFFER_SIZE 128 // 内部读写缓冲区大小
 #define SIG_INTERRUPT    (1 << 0) // 由VTS发送，用于中断 (Ctrl+C)
 #define SIG_CHILD_EXIT   (1 << 1) // 由子任务在退出前发送
+#define SIG_SUSPEND      (1U << 2) // VTS发送, 用于挂起 (Ctrl+Z)
 #endif
 
 
