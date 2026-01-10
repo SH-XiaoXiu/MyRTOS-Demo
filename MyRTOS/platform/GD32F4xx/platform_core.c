@@ -233,3 +233,7 @@ void Platform_StartScheduler(void) {
     while (1) {
     };
 }
+
+void Platform_Reboot(void) {
+    NVIC_SystemReset();
+}

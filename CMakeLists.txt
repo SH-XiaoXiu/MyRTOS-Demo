@@ -21,6 +21,7 @@ target_include_directories(MyRTOS PRIVATE
         ./Libraries
         ./MyRTOS/kernel/include
         ./MyRTOS/services/include
+        ./MyRTOS/programs/shell/include
         ./MyRTOS/platform/GD32F4xx/include
         ./MyRTOS/include
         ./User
