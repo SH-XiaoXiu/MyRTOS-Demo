@@ -74,5 +74,12 @@ int VTS_SetTerminalMode(VTS_TerminalMode_t mode);
  */
 VTS_TerminalMode_t VTS_GetTerminalMode(void);
 
+/**
+ * @brief 发送信号给注册的信号接收任务
+ * @param signal 要发送的信号（如 SIG_CHILD_EXIT）
+ * @return int 0表示成功，-1表示没有注册的接收器
+ */
+int VTS_SendSignal(uint32_t signal);
+
 #endif // MYRTOS_SERVICE_VTS_ENABLE
 #endif // MYRTOS_VTS_H

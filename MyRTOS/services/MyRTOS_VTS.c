@@ -218,4 +218,12 @@ StreamHandle_t VTS_GetBackgroundStream(void) {
     return g_vts ? g_vts->background_stream : NULL;
 }
 
+int VTS_SendSignal(uint32_t signal) {
+    if (!g_vts || !g_vts->config.signal_receiver_task_handle) {
+        return -1;
+    }
+    Task_SendSignal(g_vts->config.signal_receiver_task_handle, signal);
+    return 0;
+}
+
 #endif // MYRTOS_SERVICE_VTS_ENABLE

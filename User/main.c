@@ -133,15 +133,13 @@ void Platform_BSP_Init_Hook(void) {
 }
 
 // 注册应用程序服务
-void Platform_AppSetup_Hook(ShellHandle_t shell_h) {
-    if (shell_h) {
-        // 注册可执行程序
+void Platform_AppSetup_Hook(void) {
+    // 注册可执行程序
 #if MYRTOS_SERVICE_PROCESS_ENABLE == 1
-        Process_RegisterProgram(&g_program_looper);
-        Process_RegisterProgram(&g_program_echo);
-        Process_RegisterProgram(&g_program_hello);
+    Process_RegisterProgram(&g_program_looper);
+    Process_RegisterProgram(&g_program_echo);
+    Process_RegisterProgram(&g_program_hello);
 #endif
-    }
 }
 
 // 创建所有应用程序任务和内核对象

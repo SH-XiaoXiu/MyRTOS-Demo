@@ -18,7 +18,6 @@ typedef enum {
 
 // 引入 MyRTOS 核心类型，以便钩子函数可以使用
 #include "MyRTOS.h"
-#include "MyRTOS_Shell.h"
 
 // =========================================================================
 //                         核心平台初始化流程
@@ -70,24 +69,6 @@ uint32_t Platform_Timer_GetHiresValue(void);
 void Platform_Reboot(void);
 
 
-#if MYRTOS_SERVICE_SHELL_ENABLE == 1
-struct ShellCommand_t;
-// =========================================================================
-//                            Shell 命令注册
-// =========================================================================
-/**
- * @brief 向平台注册一个或多个用户自定义的Shell命令。
- * @details 用户应该在 main 函数的 Platform_AppSetup_Hook 钩子中调用此函数。
- *          平台层会收集所有注册的命令，并在最后统一初始化Shell服务。
- *          当调用 help 命令时，所有注册的命令都会被显示出来。
- * @param commands      [in] 指向 ShellCommand_t 命令数组的指针。
- * @param command_count [in] 数组中命令的数量。
- * @return int 0 表示成功, -1 表示失败 (例如，命令列表已满)。
- */
-int Platform_RegisterShellCommands(const struct ShellCommand_t *commands, size_t command_count);
-#endif
-
-
 // =========================================================================
 //                      用户自定义钩子函数 (Weak Hooks)
 //               用户可以在自己的代码中重新实现这些函数
@@ -112,15 +93,10 @@ void Platform_BSP_After_Hook();
 
 
 /**
- * @brief 在RTOS服务（如Log, Shell）初始化之后，但在创建任何应用任务之前调用。
- *        【推荐】这是用户注册自定义Shell命令的地方。
- * @param shell_h Shell服务的句柄（如果Shell服务被使能）。
+ * @brief 在RTOS服务初始化之后，但在创建任何应用任务之前调用。
+ *        【推荐】这是用户进行应用层设置的地方（如注册程序、配置服务等）。
  */
-#if MYRTOS_SERVICE_SHELL_ENABLE == 1
-void Platform_AppSetup_Hook(ShellHandle_t shell_h);
-#else
-void Platform_AppSetup_Hook();
-#endif
+void Platform_AppSetup_Hook(void);
 
 /**
  * @brief 在调度器启动之前，用于创建所有应用程序任务。

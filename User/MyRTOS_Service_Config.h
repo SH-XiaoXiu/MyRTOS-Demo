@@ -20,9 +20,6 @@
 /** @brief 启用日志服务模块 (依赖 IO 流) */
 #define MYRTOS_SERVICE_LOG_ENABLE 1
 
-/** @brief 启用 Shell 服务模块 (依赖 IO 流) */
-#define MYRTOS_SERVICE_SHELL_ENABLE 1
-
 /** @brief 启用系统监控服务模块 */
 #define MYRTOS_SERVICE_MONITOR_ENABLE 1
 
@@ -83,13 +80,6 @@
 #define MYRTOS_TIMER_COMMAND_QUEUE_SIZE 10
 #endif
 
-#if MYRTOS_SERVICE_SHELL_ENABLE == 1
-/** @brief Shell 命令支持的最大参数数量 (包括命令本身) */
-#define SHELL_MAX_ARGS 10
-/** @brief Shell 命令行输入缓冲区的最大长度 (字节) */
-#define SHELL_CMD_BUFFER_SIZE 64
-#endif
-
 #if MYRTOS_SERVICE_VTS_ENABLE == 1
 #define VTS_TASK_PRIORITY 5
 #define VTS_TASK_STACK_SIZE 256
@@ -124,10 +114,6 @@
 
 #if defined(MYRTOS_SERVICE_LOG_ENABLE) && !defined(MYRTOS_SERVICE_IO_ENABLE)
 #error "配置错误: 日志模块 (MYRTOS_LOG_ENABLE) 依赖于 IO流模块 (MYRTOS_IO_ENABLE)!"
-#endif
-
-#if defined(MYRTOS_SERVICE_SHELL_ENABLE) && !defined(MYRTOS_SERVICE_IO_ENABLE)
-#error "配置错误: Shell模块 (MYRTOS_SHELL_ENABLE) 依赖于 IO流模块 (MYRTOS_IO_ENABLE)!"
 #endif
 
 #if defined(MYRTOS_SERVICE_VTS_ENABLE) && !defined(MYRTOS_SERVICE_IO_ENABLE)
@@ -168,13 +154,6 @@
 #define Timer_Delete(timer, ticks) (-1)
 #define Timer_ChangePeriod(timer, period, ticks) (-1)
 #define Timer_GetArg(timer) ((void *) 0)
-#endif
-
-// --- Shell 模块 ---
-#if MYRTOS_SERVICE_SHELL_ENABLE == 0
-#define Shell_Init(config, commands, count) ((void *) 0)
-#define Shell_Start(shell_h, name, prio, stack) (-1)
-#define Shell_GetStream(shell_h) ((void *) 0)
 #endif
 
 // --- 监控模块 ---

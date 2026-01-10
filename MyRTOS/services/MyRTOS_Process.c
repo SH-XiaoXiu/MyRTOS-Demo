@@ -11,6 +11,10 @@
 #include "MyRTOS_IO.h"
 #include "MyRTOS_Extension.h"
 
+#if MYRTOS_SERVICE_VTS_ENABLE == 1
+#include "MyRTOS_VTS.h"
+#endif
+
 #if MYRTOS_SERVICE_LOG_ENABLE == 1
 #include "MyRTOS_Log.h"
 #else
@@ -43,8 +47,9 @@ static pid_t g_next_pid = 1;
 static MutexHandle_t g_process_lock = NULL;
 
 // Shell任务句柄（用于发送SIGCHLD信号）
-#if MYRTOS_SERVICE_VTS_ENABLE == 1 && MYRTOS_SERVICE_SHELL_ENABLE == 1
-extern TaskHandle_t g_shell_task_h;
+// 由Shell程序通过VTS_RegisterSignalReceiver()设置
+#if MYRTOS_SERVICE_VTS_ENABLE == 1
+// VTS会管理signal receiver，不需要在这里直接引用
 #endif
 
 // 私有函数声明
@@ -725,10 +730,10 @@ static void process_kernel_event_handler(const KernelEventData_t *event) {
 
     Mutex_Unlock(g_process_lock);
 
-    // 通知Shell前台进程退出
-#if MYRTOS_SERVICE_VTS_ENABLE == 1 && MYRTOS_SERVICE_SHELL_ENABLE == 1
-    if (was_foreground && g_shell_task_h != NULL) {
-        Task_SendSignal(g_shell_task_h, SIG_CHILD_EXIT);
+    // 通知前台会话管理器进程退出
+#if MYRTOS_SERVICE_VTS_ENABLE == 1
+    if (was_foreground) {
+        VTS_SendSignal(SIG_CHILD_EXIT);
     }
 #endif
 }
