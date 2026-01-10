@@ -89,6 +89,19 @@ static void vts_process_input_char(char ch) {
         return;
     }
 
+    if (ch == 0x02) {
+        // Ctrl+B
+        if (g_vts->config.signal_receiver_task_handle != NULL) {
+            Task_SendSignal(g_vts->config.signal_receiver_task_handle, SIG_BACKGROUND);
+        }
+        memset(g_vts->line_buffer, 0, VTS_LINE_BUFFER_SIZE);
+        g_vts->buffer_len = 0;
+        g_vts->cursor_pos = 0;
+        g_vts->ansi_state = ANSI_STATE_NORMAL;
+        vts_write_physical("^B\r\n", 4);
+        return;
+    }
+
     if (g_vts->terminal_mode == VTS_MODE_RAW) {
         Stream_Write(g_vts->focused_input_stream, &ch, 1, MYRTOS_MAX_DELAY);
         return;

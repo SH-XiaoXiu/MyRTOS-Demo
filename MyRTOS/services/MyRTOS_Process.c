@@ -306,6 +306,28 @@ int Process_Resume(pid_t pid) {
     return result;
 }
 
+/**
+ * @brief 设置进程模式
+ */
+int Process_SetMode(pid_t pid, ProcessMode_t mode) {
+    int result = -1;
+
+    Mutex_Lock(g_process_lock);
+    Process_t *proc = find_process_by_pid_locked(pid);
+    if (proc != NULL) {
+        proc->mode = mode;
+        result = 0;
+        LOG_D("Process", "Set process '%s' (PID %d) mode to %s.",
+              proc->name, proc->pid,
+              mode == PROCESS_MODE_FOREGROUND ? "foreground" : "background");
+    } else {
+        LOG_W("Process", "SetMode failed: PID %d not found.", pid);
+    }
+    Mutex_Unlock(g_process_lock);
+
+    return result;
+}
+
 // ============================================
 // 进程信息查询实现
 // ============================================

@@ -347,8 +347,8 @@ static void manage_foreground_session(pid_t pid) {
     VTS_SetFocus(stdin_pipe, stdout_pipe);
 
     // 等待子进程退出或信号
-    uint32_t received_signals = Task_WaitSignal(SIG_CHILD_EXIT | SIG_INTERRUPT | SIG_SUSPEND, MYRTOS_MAX_DELAY,
-                                                SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
+    uint32_t received_signals = Task_WaitSignal(SIG_CHILD_EXIT | SIG_INTERRUPT | SIG_SUSPEND | SIG_BACKGROUND,
+                                                MYRTOS_MAX_DELAY, SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
 
     // 恢复Shell焦点
     VTS_ReturnToRootFocus();
@@ -361,6 +361,11 @@ static void manage_foreground_session(pid_t pid) {
         if (Process_Suspend(pid) == 0) {
             const char *name = Process_GetName(pid);
             MyRTOS_printf("\nSuspended [%d] %s\n", pid, name ? name : "unknown");
+        }
+    } else if (received_signals & SIG_BACKGROUND) {
+        if (Process_SetMode(pid, PROCESS_MODE_BACKGROUND) == 0) {
+            const char *name = Process_GetName(pid);
+            MyRTOS_printf("\n[%d] %s &\n", pid, name ? name : "unknown");
         }
     }
 

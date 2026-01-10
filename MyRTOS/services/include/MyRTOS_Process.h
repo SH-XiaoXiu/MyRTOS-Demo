@@ -148,6 +148,14 @@ int Process_Suspend(pid_t pid);
  */
 int Process_Resume(pid_t pid);
 
+/**
+ * @brief 设置进程模式（前台/后台）
+ * @param pid 进程ID
+ * @param mode 进程模式
+ * @return 成功返回0，失败返回-1
+ */
+int Process_SetMode(pid_t pid, ProcessMode_t mode);
+
 /*===========================================================================*
  *                          进程信息查询                                      *
  *===========================================================================*/

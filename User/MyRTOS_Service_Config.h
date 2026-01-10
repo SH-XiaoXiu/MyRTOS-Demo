@@ -100,6 +100,7 @@
 #define SIG_INTERRUPT    (1 << 0) // 由VTS发送，用于中断 (Ctrl+C)
 #define SIG_CHILD_EXIT   (1 << 1) // 由子任务在退出前发送
 #define SIG_SUSPEND      (1U << 2) // VTS发送, 用于挂起 (Ctrl+Z)
+#define SIG_BACKGROUND   (1U << 3) // VTS发送, 用于转到后台 (Ctrl+B)
 #endif
 
 #if MYRTOS_SERVICE_PROCESS_ENABLE == 1
