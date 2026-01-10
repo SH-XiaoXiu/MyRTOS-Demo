@@ -3,9 +3,9 @@
  * @brief Shell 命令解析引擎实现
  */
 #include "shell.h"
+#include "MyRTOS.h"
 #include <string.h>
 #include <ctype.h>
-#include <stdlib.h>
 
 #define SHELL_MAX_ARGS 10
 #define SHELL_CMD_BUFFER_SIZE 128
@@ -39,7 +39,7 @@ static char *str_duplicate(const char *str);
 // ============================================
 
 shell_handle_t shell_create(const char *prompt) {
-    shell_handle_t shell = (shell_handle_t)malloc(sizeof(struct shell_core_t));
+    shell_handle_t shell = (shell_handle_t)MyRTOS_Malloc(sizeof(struct shell_core_t));
     if (!shell) {
         return NULL;
     }
@@ -58,14 +58,14 @@ void shell_destroy(shell_handle_t shell) {
     shell_command_node_t *node = shell->commands_head;
     while (node) {
         shell_command_node_t *next = node->next;
-        free(node->name);
-        free(node->help);
-        free(node);
+        MyRTOS_Free(node->name);
+        MyRTOS_Free(node->help);
+        MyRTOS_Free(node);
         node = next;
     }
 
-    free(shell->prompt);
-    free(shell);
+    MyRTOS_Free(shell->prompt);
+    MyRTOS_Free(shell);
 }
 
 int shell_register_command(shell_handle_t shell,
@@ -86,7 +86,7 @@ int shell_register_command(shell_handle_t shell,
     }
 
     // 创建新节点
-    shell_command_node_t *new_node = (shell_command_node_t*)malloc(sizeof(shell_command_node_t));
+    shell_command_node_t *new_node = (shell_command_node_t*)MyRTOS_Malloc(sizeof(shell_command_node_t));
     if (!new_node) {
         return -1;
     }
@@ -110,9 +110,9 @@ int shell_unregister_command(shell_handle_t shell, const char *name) {
         if (strcmp((*pp)->name, name) == 0) {
             shell_command_node_t *to_remove = *pp;
             *pp = to_remove->next;
-            free(to_remove->name);
-            free(to_remove->help);
-            free(to_remove);
+            MyRTOS_Free(to_remove->name);
+            MyRTOS_Free(to_remove->help);
+            MyRTOS_Free(to_remove);
             return 0;
         }
         pp = &(*pp)->next;
@@ -203,7 +203,7 @@ static char *str_duplicate(const char *str) {
     if (!str) return NULL;
 
     size_t len = strlen(str);
-    char *dup = (char*)malloc(len + 1);
+    char *dup = (char*)MyRTOS_Malloc(len + 1);
     if (dup) {
         strcpy(dup, str);
     }

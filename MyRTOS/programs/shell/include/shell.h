@@ -5,8 +5,9 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-#include <stddef.h>
 #include <stdbool.h>
+#include "MyRTOS.h"
+#include "MyRTOS_Service_Config.h"
 
 // Shell Core 句柄（不透明类型）
 typedef struct shell_core_t *shell_handle_t;
@@ -102,5 +103,16 @@ void shell_register_process_commands(shell_handle_t shell);
  * @brief 注册平台命令（reboot）
  */
 void shell_register_platform_commands(shell_handle_t shell);
+
+// ============================================
+// Shell 程序启动接口（Demo模式）
+// ============================================
+
+/**
+ * @brief 创建Shell Task（Demo模式）
+ * @details 创建Shell任务并注册所有命令
+ * @return TaskHandle_t Shell任务句柄，失败返回NULL
+ */
+TaskHandle_t shell_create_task(void);
 
 #endif // SHELL_H

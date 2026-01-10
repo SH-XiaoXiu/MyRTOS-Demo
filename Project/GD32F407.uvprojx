@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,GD32F407,DEBUG_PRINT=0</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Firmware\CMSIS\GD\GD32F4xx\Include;..\Firmware\GD32F4xx_standard_peripheral\Include;..\Firmware\CMSIS;..\Libraries;..\User;..\MyRTOS\kernel\include;..\MyRTOS\platform\GD32F4xx\include;..\MyRTOS\services\include</IncludePath>
+              <IncludePath>..\Firmware\CMSIS\GD\GD32F4xx\Include;..\Firmware\GD32F4xx_standard_peripheral\Include;..\Firmware\CMSIS;..\Libraries;..\User;..\MyRTOS\kernel\include;..\MyRTOS\platform\GD32F4xx\include;..\MyRTOS\services\include;..\MyRTOS\programs\shell\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -510,11 +510,6 @@
               <FilePath>..\MyRTOS\services\MyRTOS_Monitor.c</FilePath>
             </File>
             <File>
-              <FileName>MyRTOS_Shell.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MyRTOS\services\MyRTOS_Shell.c</FilePath>
-            </File>
-            <File>
               <FileName>MyRTOS_Timer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\MyRTOS\services\MyRTOS_Timer.c</FilePath>
@@ -569,10 +564,45 @@
               <FileType>1</FileType>
               <FilePath>..\MyRTOS\platform\GD32F4xx\platform_hooks.c</FilePath>
             </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>MyRTOS\shell</GroupName>
+          <Files>
             <File>
-              <FileName>platform_shell_commands.c</FileName>
+              <FileName>shell_core.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\platform\GD32F4xx\platform_shell_commands.c</FilePath>
+              <FilePath>..\MyRTOS\programs\shell\shell_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>shell_main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\programs\shell\shell_main.c</FilePath>
+            </File>
+            <File>
+              <FileName>shell_builtin.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\programs\shell\shell_builtin.c</FilePath>
+            </File>
+            <File>
+              <FileName>shell_monitor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\programs\shell\shell_monitor.c</FilePath>
+            </File>
+            <File>
+              <FileName>shell_log.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\programs\shell\shell_log.c</FilePath>
+            </File>
+            <File>
+              <FileName>shell_process.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\programs\shell\shell_process.c</FilePath>
+            </File>
+            <File>
+              <FileName>shell_platform.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\programs\shell\shell_platform.c</FilePath>
             </File>
           </Files>
         </Group>

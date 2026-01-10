@@ -62,6 +62,18 @@ void VTS_SetLogAllMode(bool enable);
 StreamHandle_t VTS_GetBackgroundStream(void);
 
 /**
+ * @brief 获取VTS root输入流句柄
+ * @return StreamHandle_t root输入流句柄
+ */
+StreamHandle_t VTS_GetRootInputStream(void);
+
+/**
+ * @brief 获取VTS root输出流句柄
+ * @return StreamHandle_t root输出流句柄
+ */
+StreamHandle_t VTS_GetRootOutputStream(void);
+
+/**
  * @brief 控制终端模式 (行缓冲/原始)。
  * @param mode 新的终端模式。
  * @return int 0 表示成功。
@@ -80,6 +92,14 @@ VTS_TerminalMode_t VTS_GetTerminalMode(void);
  * @return int 0表示成功，-1表示没有注册的接收器
  */
 int VTS_SendSignal(uint32_t signal);
+
+/**
+ * @brief 设置信号接收任务句柄
+ * @details 允许在VTS初始化后动态设置信号接收器（通常是Shell任务）
+ * @param task_handle 要接收信号的任务句柄
+ * @return int 0表示成功，-1表示失败
+ */
+int VTS_SetSignalReceiver(TaskHandle_t task_handle);
 
 #endif // MYRTOS_SERVICE_VTS_ENABLE
 #endif // MYRTOS_VTS_H

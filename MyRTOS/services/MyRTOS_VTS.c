@@ -164,8 +164,8 @@ static void VTS_Task(void *param) {
 }
 
 int VTS_Init(const VTS_Config_t *config) {
-    if (g_vts || !config || !config->physical_stream || !config->root_input_stream || !config->root_output_stream || !
-        config->signal_receiver_task_handle) {
+    // signal_receiver_task_handle 可以为NULL，稍后通过VTS_SetSignalReceiver设置
+    if (g_vts || !config || !config->physical_stream || !config->root_input_stream || !config->root_output_stream) {
         return -1;
     }
     g_vts = (VTS_Instance_t *) MyRTOS_Malloc(sizeof(VTS_Instance_t));
@@ -218,11 +218,27 @@ StreamHandle_t VTS_GetBackgroundStream(void) {
     return g_vts ? g_vts->background_stream : NULL;
 }
 
+StreamHandle_t VTS_GetRootInputStream(void) {
+    return g_vts ? g_vts->config.root_input_stream : NULL;
+}
+
+StreamHandle_t VTS_GetRootOutputStream(void) {
+    return g_vts ? g_vts->config.root_output_stream : NULL;
+}
+
 int VTS_SendSignal(uint32_t signal) {
     if (!g_vts || !g_vts->config.signal_receiver_task_handle) {
         return -1;
     }
     Task_SendSignal(g_vts->config.signal_receiver_task_handle, signal);
+    return 0;
+}
+
+int VTS_SetSignalReceiver(TaskHandle_t task_handle) {
+    if (!g_vts) {
+        return -1;
+    }
+    g_vts->config.signal_receiver_task_handle = task_handle;
     return 0;
 }
 

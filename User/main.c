@@ -23,6 +23,9 @@
 #include "MyRTOS_Process.h"
 #endif
 
+// Shell程序（Demo模式）
+#include "shell.h"
+
 // 任务优先级定义
 #define BACKGROUND_TASK_PRIO 1
 #define CONSUMER_PRIO 2
@@ -144,6 +147,11 @@ void Platform_AppSetup_Hook(void) {
 
 // 创建所有应用程序任务和内核对象
 void Platform_CreateTasks_Hook(void) {
+    // 创建Shell Task（Demo模式 - Ring 0直接创建Task）
+    // 注意：Production模式应该通过init Process启动Shell Process
+    TaskHandle_t shell_task = shell_create_task();
+    (void)shell_task;
+
     // 创建软件定时器.
     g_single_timer_h = Timer_Create("单次定时器", MS_TO_TICKS(5000), 0, single_timer_cb, NULL);
     g_perio_timer_h = Timer_Create("周期定时器", MS_TO_TICKS(10000), 1, perio_timer_cb, NULL);

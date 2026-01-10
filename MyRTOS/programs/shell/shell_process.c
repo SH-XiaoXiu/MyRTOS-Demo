@@ -234,7 +234,7 @@ void shell_register_process_commands(shell_handle_t shell) {
     shell_register_command(shell, "run", "运行程序. 用法: run <prog> [&]", cmd_run);
     shell_register_command(shell, "kill", "终止一个作业. 用法: kill <pid>", cmd_kill);
     shell_register_command(shell, "fg", "将作业切换到前台. 用法: fg <pid>", cmd_fg);
-    shell_register_command(shell, "bg", "在后台恢复一个挂起的作业. 用法: bg <pid>", cmd_bg);
+    shell_register_command(shell, "bg", "在后台恢复挂起的作业. 用法: bg <pid>", cmd_bg);
     shell_register_command(shell, "ls", "列出所有可执行程序", cmd_ls);
 }
 
