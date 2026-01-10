@@ -57,12 +57,8 @@
 // =========================================================================
 #if MYRTOS_SERVICE_SHELL_ENABLE == 1
 #define PLATFORM_USE_DEFAULT_COMMANDS 1
-#define PLATFORM_USE_PROGRAM_MANGE 1
-#define MAX_REGISTERED_PROGRAMS 16
-#define PLATFORM_MAX_RUNNING_PROGRAMS 8 // 最大同时运行的程序实例数
 #else
 #define PLATFORM_USE_DEFAULT_COMMANDS 0
-#define PLATFORM_USE_PROGRAM_MANGE 0
 #endif
 
 

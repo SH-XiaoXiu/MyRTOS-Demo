@@ -46,31 +46,31 @@ MyRTOS
 🏗️ 抽象架构
 --------
 
-![架构图](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/framework.svg)
+![架构图](assets/framework.svg)
 
 ⚙️ 调度机制
 -------
 
-![调度流程图](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/flow.svg)
+![调度流程图](assets/flow.svg)
 
 📊 效果示例
 -------
 
 系统监视器 (通过Shell的`ps`命令) 的输出:
 
-![monitor](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/monitor.png)
+![monitor](assets/monitor.png)
 
 调度流程
 
-![scheduling](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/scheduling.png) ![scheduling2](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/scheduling2.png)
+![scheduling](assets/scheduling.png) ![scheduling2](assets/scheduling2.png)
 
 程序管理
 
-![run](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/run.png) ![jobs](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/jobs.png)
+![run](assets/run.png) ![jobs](assets/jobs.png)
 
 VTS&日志
 
-![log](https://gitee.com/sh-xiaoxiu/my-rtos-demo/raw/main/assets/log.png)
+![log](assets/log.png)
 
 ✨ 功能详解
 ------

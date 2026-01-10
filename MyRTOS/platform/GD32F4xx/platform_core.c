@@ -42,9 +42,9 @@
 #endif
 
 
-#if PLATFORM_USE_PROGRAM_MANGE == 1
+#if MYRTOS_SERVICE_PROCESS_ENABLE == 1
+#include "MyRTOS_Process.h"
 #include "platform_shell_commands.h"
-#include "platform_program_manager.h"
 #endif
 
 //==============================================================================
@@ -134,8 +134,8 @@ void Platform_Init(void) {
 #if MYRTOS_SERVICE_LOG_ENABLE == 1
     Log_Init();
 #endif
-#if PLATFORM_USE_PROGRAM_MANGE == 1
-    Platform_ProgramManager_Init();
+#if MYRTOS_SERVICE_PROCESS_ENABLE == 1
+    Process_Init();
 #endif
 
 #if MYRTOS_SERVICE_IO_ENABLE == 1
@@ -208,10 +208,6 @@ void Platform_Init(void) {
 #endif
 #endif
 
-    // 初始化其他服务
-#if MYRTOS_SERVICE_LOG_ENABLE == 1
-    Log_Init();
-#endif
 #if MYRTOS_SERVICE_MONITOR_ENABLE == 1
     MonitorConfig_t m_config = {.get_hires_timer_value = Platform_Timer_GetHiresValue};
     Monitor_Init(&m_config);
@@ -222,7 +218,7 @@ void Platform_Init(void) {
 
     // 注册 Shell 命令并调用应用设置钩子
 #if (MYRTOS_SERVICE_SHELL_ENABLE == 1)
-#if PLATFORM_USE_PROGRAM_MANGE == 1
+#if MYRTOS_SERVICE_PROCESS_ENABLE == 1
     Platform_RegisterDefaultCommands(g_platform_shell_handle);
 #endif
     Platform_AppSetup_Hook(g_platform_shell_handle);

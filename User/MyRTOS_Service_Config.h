@@ -29,6 +29,9 @@
 /** @brief 启用虚拟终端服务模块 */
 #define MYRTOS_SERVICE_VTS_ENABLE 1
 
+/** @brief 启用进程管理服务模块 */
+#define MYRTOS_SERVICE_PROCESS_ENABLE 1
+
 
 /*==================================================================================================
  *                                    模块参数配置
@@ -99,6 +102,19 @@
 #define SIG_SUSPEND      (1U << 2) // VTS发送, 用于挂起 (Ctrl+Z)
 #endif
 
+#if MYRTOS_SERVICE_PROCESS_ENABLE == 1
+/** @brief 最大同时运行的进程数量 */
+#define MYRTOS_PROCESS_MAX_INSTANCES 8
+/** @brief 每个进程最大文件描述符数量 (包括stdin/stdout/stderr) */
+#define MYRTOS_PROCESS_MAX_FD 16
+/** @brief 最大可注册程序数量 (静态程序表大小) */
+#define MYRTOS_PROCESS_MAX_PROGRAMS 16
+/** @brief 程序启动器任务的默认栈大小 (字节) */
+#define MYRTOS_PROCESS_LAUNCHER_STACK 512
+/** @brief 程序启动器任务的默认优先级 */
+#define MYRTOS_PROCESS_LAUNCHER_PRIORITY 2
+#endif
+
 
 /*==================================================================================================
  *                                      依赖关系检查
@@ -115,6 +131,12 @@
 
 #if defined(MYRTOS_SERVICE_VTS_ENABLE) && !defined(MYRTOS_SERVICE_IO_ENABLE)
 #error "配置错误: 虚拟终端模块 (MYRTOS_VTS_ENABLE) 依赖于 IO流模块 (MYRTOS_IO_ENABLE)!"
+#endif
+
+#if defined(MYRTOS_SERVICE_PROCESS_ENABLE) && MYRTOS_SERVICE_PROCESS_ENABLE == 1
+  #if !defined(MYRTOS_SERVICE_IO_ENABLE) || MYRTOS_SERVICE_IO_ENABLE == 0
+    #error "配置错误: 进程管理模块 (MYRTOS_PROCESS_ENABLE) 依赖于 IO流模块 (MYRTOS_IO_ENABLE)!"
+  #endif
 #endif
 
 /*==================================================================================================

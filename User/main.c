@@ -16,9 +16,14 @@
 #include "gd32f4xx_misc.h"
 #include "gd32f4xx_rcu.h"
 #include "gd32f4xx_syscfg.h"
-#include "platform_program_manager.h"
+#include "platform.h"
+#include "platform_gd32_console.h"
 
-// 任务优先级定义.
+#if MYRTOS_SERVICE_PROCESS_ENABLE == 1
+#include "MyRTOS_Process.h"
+#endif
+
+// 任务优先级定义
 #define BACKGROUND_TASK_PRIO 1
 #define CONSUMER_PRIO 2
 #define PRINTER_TASK_PRIO 2
@@ -55,11 +60,11 @@ static TaskHandle_t g_target_task_h;
 
 
 //可执行程序主函数
-static void looper_main(int argc, char *argv[]);
+static int looper_main(int argc, char *argv[]);
 
-static void hello_main(int argc, char *argv[]);
+static int hello_main(int argc, char *argv[]);
 
-static void echo_main(int argc, char *argv[]);
+static int echo_main(int argc, char *argv[]);
 
 // 可执行程序定义
 const ProgramDefinition_t g_program_looper = {
@@ -130,10 +135,12 @@ void Platform_BSP_Init_Hook(void) {
 // 注册应用程序服务
 void Platform_AppSetup_Hook(ShellHandle_t shell_h) {
     if (shell_h) {
-        // 注册可执行程序.
-        Platform_ProgramManager_Register(&g_program_looper);
-        Platform_ProgramManager_Register(&g_program_echo);
-        Platform_ProgramManager_Register(&g_program_hello);
+        // 注册可执行程序
+#if MYRTOS_SERVICE_PROCESS_ENABLE == 1
+        Process_RegisterProgram(&g_program_looper);
+        Process_RegisterProgram(&g_program_echo);
+        Process_RegisterProgram(&g_program_hello);
+#endif
     }
 }
 
@@ -468,31 +475,33 @@ static void suspend_resume_test_task(void *param) {
 
 
 
-// "looper" 程序: 在后台周期性打印消息.
-static void looper_main(int argc, char *argv[]) {
+// looper程序，在后台周期性打印消息
+static int looper_main(int argc, char *argv[]) {
     (void) argc;
     (void) argv;
     int count = 0;
     const char *task_name = Task_GetName(NULL);
     for (;;) {
-        // 这个 printf 的输出, 在后台模式下应该被丢弃.
+        // 这个printf的输出在后台模式下应该被丢弃
         MyRTOS_printf("[looper BG via printf] This message should be SILENT in background. Count: %d\n", count);
-        // 这个 LOG_I 的输出, 应该总是可见的 (通过VTS后台流).
+        // 这个LOG_I的输出应该总是可见的，通过VTS后台流
         LOG_I(task_name, "Hello from background via LOG! Count: %d", ++count);
         Task_Delay(MS_TO_TICKS(2000));
     }
+    return 0;  // 实际永远不会到达
 }
 
-// "hello" 程序: 打印一条消息后退出.
-static void hello_main(int argc, char *argv[]) {
+// hello程序，打印一条消息后退出
+static int hello_main(int argc, char *argv[]) {
     (void) argc;
     (void) argv;
     MyRTOS_printf("你好世界 喵喵喵\n");
     Task_Delay(MS_TO_TICKS(1000));
+    return 0;  // 正常退出
 }
 
-// "echo" 程序: 回显用户输入, 直到输入 'q'.
-static void echo_main(int argc, char *argv[]) {
+// echo程序，回显用户输入，直到输入q
+static int echo_main(int argc, char *argv[]) {
     (void) argc;
     (void) argv;
     char ch;
@@ -509,4 +518,5 @@ static void echo_main(int argc, char *argv[]) {
             MyRTOS_putchar(ch);
         }
     }
+    return 0;  // 用户按q退出
 }
