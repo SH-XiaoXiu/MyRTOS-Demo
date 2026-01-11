@@ -47,8 +47,10 @@ static void manage_foreground_session(pid_t pid) {
     // 切换VTS焦点到前台进程
     VTS_SetFocus(stdin_pipe, stdout_pipe);
 
+    // 清除之前子进程遗留的 SIG_CHILD_EXIT 信号，避免误判
+    Task_ClearSignal(NULL, SIG_CHILD_EXIT);
+
     // 等待子进程退出或信号
-    // shell的Task等待信号，信号接收器保持为shell自己
     uint32_t received_signals = Task_WaitSignal(SIG_CHILD_EXIT | SIG_INTERRUPT | SIG_SUSPEND | SIG_BACKGROUND,
                                                 MYRTOS_MAX_DELAY, SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
 
@@ -56,8 +58,24 @@ static void manage_foreground_session(pid_t pid) {
     VTS_SetFocus(shell_stdin, shell_stdout);
 
     if (received_signals & SIG_INTERRUPT) {
-        Process_Kill(pid);
-        Task_WaitSignal(SIG_CHILD_EXIT, MS_TO_TICKS(100), SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
+        // 先通知子进程退出（发送 SIG_INTERRUPT）
+        TaskHandle_t child_task = Process_GetTaskHandle(pid);
+        if (child_task != NULL) {
+            Task_SendSignal(child_task, SIG_INTERRUPT);
+            // 等待子进程自己退出（500ms 超时）
+            uint32_t child_signals = Task_WaitSignal(SIG_CHILD_EXIT, MS_TO_TICKS(500),
+                                                     SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
+
+            // 如果子进程没有自己退出，强制杀死它
+            if (!(child_signals & SIG_CHILD_EXIT)) {
+                Process_Kill(pid);
+                Task_WaitSignal(SIG_CHILD_EXIT, MS_TO_TICKS(100), SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
+            }
+        } else {
+            // 找不到任务句柄，直接强制杀死
+            Process_Kill(pid);
+            Task_WaitSignal(SIG_CHILD_EXIT, MS_TO_TICKS(100), SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
+        }
     } else if (received_signals & SIG_SUSPEND) {
         if (Process_Suspend(pid) == 0) {
             const char *name = Process_GetName(pid);
@@ -167,9 +185,10 @@ static int cmd_kill(shell_handle_t shell, int argc, char *argv[]) {
     if (argc < 2) {
         MyRTOS_printf("Usage: kill [-SIGNAL] <pid>\n");
         MyRTOS_printf("Signals:\n");
-        MyRTOS_printf("  (none) or -9    - Terminate process (default)\n");
-        MyRTOS_printf("  -STOP or -SIGSTOP - Suspend process\n");
-        MyRTOS_printf("  -CONT or -SIGCONT - Resume process\n");
+        MyRTOS_printf("  (none) or -TERM - Graceful termination (default, allows cleanup)\n");
+        MyRTOS_printf("  -9 or -KILL     - Force kill (immediate, no cleanup)\n");
+        MyRTOS_printf("  -STOP           - Suspend process\n");
+        MyRTOS_printf("  -CONT           - Resume process\n");
         return -1;
     }
 
@@ -201,14 +220,35 @@ static int cmd_kill(shell_handle_t shell, int argc, char *argv[]) {
     }
 
     // 执行对应的操作
-    if (strcmp(signal, "9") == 0 || strcmp(signal, "TERM") == 0 ||
-        strcmp(signal, "SIGTERM") == 0 || strcmp(signal, "KILL") == 0 ||
-        strcmp(signal, "SIGKILL") == 0) {
-        // 终止进程
+    if (strcmp(signal, "9") == 0 || strcmp(signal, "KILL") == 0 || strcmp(signal, "SIGKILL") == 0) {
+        // SIGKILL (-9): 强制终止，不给进程清理的机会
         if (Process_Kill(pid) == 0) {
-            MyRTOS_printf("Process %d terminated.\n", pid);
+            MyRTOS_printf("Process %d killed (forced).\n", pid);
         } else {
             MyRTOS_printf("Error: Failed to kill process %d.\n", pid);
+            return -1;
+        }
+    } else if (strcmp(signal, "TERM") == 0 || strcmp(signal, "SIGTERM") == 0) {
+        // SIGTERM: 优雅终止，先发送 SIG_INTERRUPT 让进程清理
+        TaskHandle_t task = Process_GetTaskHandle(pid);
+        if (task != NULL) {
+            // 发送中断信号
+            Task_SendSignal(task, SIG_INTERRUPT);
+            MyRTOS_printf("Sent SIGTERM to process %d...\n", pid);
+
+            // 等待进程退出（1秒超时）
+            Task_Delay(MS_TO_TICKS(1000));
+
+            // 检查进程是否已退出
+            if (Process_GetState(pid) == PROCESS_STATE_ZOMBIE || Process_GetState(pid) == -1) {
+                MyRTOS_printf("Process %d terminated gracefully.\n", pid);
+            } else {
+                // 超时，强制杀死
+                MyRTOS_printf("Process %d did not exit, force killing...\n", pid);
+                Process_Kill(pid);
+            }
+        } else {
+            MyRTOS_printf("Error: Process %d not found.\n", pid);
             return -1;
         }
     } else if (strcmp(signal, "STOP") == 0 || strcmp(signal, "SIGSTOP") == 0) {

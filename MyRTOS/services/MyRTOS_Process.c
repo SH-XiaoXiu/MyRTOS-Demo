@@ -666,6 +666,8 @@ static void process_cleanup(Process_t *proc) {
         return;
     }
 
+    LOG_D("Process", "Cleaning up process '%s' (PID %d)", proc->name, proc->pid);
+
 #if MYRTOS_SERVICE_VTS_ENABLE == 1
     // 删除管道（所有进程都有管道）
     if (proc->fd_table[STDIN_FILENO].handle != NULL &&
@@ -703,7 +705,7 @@ static void process_kernel_event_handler(const KernelEventData_t *event) {
     Process_t *proc = find_process_by_task_locked(deleted_task);
     if (proc != NULL) {
         deleted_pid = proc->pid;
-        LOG_D("Process", "Process '%s' (PID %d) is being deleted.", proc->name, proc->pid);
+        LOG_D("Process", "Process '%s' (PID %d) task deleted", proc->name, proc->pid);
 
         // 保存父任务句柄，稍后发送信号
         parent_task = proc->parent_task;
