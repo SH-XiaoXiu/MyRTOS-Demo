@@ -21,14 +21,14 @@
 /** @brief 启用日志服务模块 (依赖 IO 流) */
 #define MYRTOS_SERVICE_LOG_ENABLE 1
 
-/** @brief 启用 Shell 服务模块 (依赖 IO 流) */
-#define MYRTOS_SERVICE_SHELL_ENABLE 1
-
 /** @brief 启用系统监控服务模块 */
 #define MYRTOS_SERVICE_MONITOR_ENABLE 1
 
 /** @brief 启用虚拟终端服务模块 */
 #define MYRTOS_SERVICE_VTS_ENABLE 1
+
+/** @brief 启用进程管理服务模块 */
+#define MYRTOS_SERVICE_PROCESS_ENABLE 1
 
 
 /*==================================================================================================
@@ -81,13 +81,6 @@
 #define MYRTOS_TIMER_COMMAND_QUEUE_SIZE 10
 #endif
 
-#if MYRTOS_SERVICE_SHELL_ENABLE == 1
-/** @brief Shell 命令支持的最大参数数量 (包括命令本身) */
-#define SHELL_MAX_ARGS 10
-/** @brief Shell 命令行输入缓冲区的最大长度 (字节) */
-#define SHELL_CMD_BUFFER_SIZE 64
-#endif
-
 #if MYRTOS_SERVICE_VTS_ENABLE == 1
 #define VTS_TASK_PRIORITY 5
 #define VTS_TASK_STACK_SIZE 256
@@ -98,7 +91,30 @@
 #define SIG_INTERRUPT    (1 << 0) // 由VTS发送，用于中断 (Ctrl+C)
 #define SIG_CHILD_EXIT   (1 << 1) // 由子任务在退出前发送
 #define SIG_SUSPEND      (1U << 2) // VTS发送, 用于挂起 (Ctrl+Z)
+#define SIG_BACKGROUND   (1U << 3) // VTS发送, 用于转到后台 (Ctrl+B)
 #endif
+
+#if MYRTOS_SERVICE_PROCESS_ENABLE == 1
+/** @brief 最大同时运行的进程数量 */
+#define MYRTOS_PROCESS_MAX_INSTANCES 8
+/** @brief 每个进程最大文件描述符数量 (包括stdin/stdout/stderr) */
+#define MYRTOS_PROCESS_MAX_FD 16
+/** @brief 最大可注册程序数量 (静态程序表大小) */
+#define MYRTOS_PROCESS_MAX_PROGRAMS 16
+/** @brief 程序启动器任务的默认栈大小 (字节) */
+#define MYRTOS_PROCESS_LAUNCHER_STACK 4096
+/** @brief 程序启动器任务的默认优先级 */
+#define MYRTOS_PROCESS_LAUNCHER_PRIORITY 2
+#endif
+
+/*==================================================================================================
+ *                                    Shell 配置参数
+ *================================================================================================*/
+
+/** @brief Shell历史记录条数 (0表示禁用历史功能) */
+#define SHELL_HISTORY_SIZE 10
+/** @brief Shell单行命令最大长度 */
+#define SHELL_MAX_LINE_LENGTH 128
 
 
 /*==================================================================================================
@@ -110,12 +126,14 @@
 #error "配置错误: 日志模块 (MYRTOS_LOG_ENABLE) 依赖于 IO流模块 (MYRTOS_IO_ENABLE)!"
 #endif
 
-#if defined(MYRTOS_SERVICE_SHELL_ENABLE) && !defined(MYRTOS_SERVICE_IO_ENABLE)
-#error "配置错误: Shell模块 (MYRTOS_SHELL_ENABLE) 依赖于 IO流模块 (MYRTOS_IO_ENABLE)!"
-#endif
-
 #if defined(MYRTOS_SERVICE_VTS_ENABLE) && !defined(MYRTOS_SERVICE_IO_ENABLE)
 #error "配置错误: 虚拟终端模块 (MYRTOS_VTS_ENABLE) 依赖于 IO流模块 (MYRTOS_IO_ENABLE)!"
+#endif
+
+#if defined(MYRTOS_SERVICE_PROCESS_ENABLE) && MYRTOS_SERVICE_PROCESS_ENABLE == 1
+  #if !defined(MYRTOS_SERVICE_IO_ENABLE) || MYRTOS_SERVICE_IO_ENABLE == 0
+    #error "配置错误: 进程管理模块 (MYRTOS_PROCESS_ENABLE) 依赖于 IO流模块 (MYRTOS_IO_ENABLE)!"
+  #endif
 #endif
 
 /*==================================================================================================
@@ -146,13 +164,6 @@
 #define Timer_Delete(timer, ticks) (-1)
 #define Timer_ChangePeriod(timer, period, ticks) (-1)
 #define Timer_GetArg(timer) ((void *) 0)
-#endif
-
-// --- Shell 模块 ---
-#if MYRTOS_SERVICE_SHELL_ENABLE == 0
-#define Shell_Init(config, commands, count) ((void *) 0)
-#define Shell_Start(shell_h, name, prio, stack) (-1)
-#define Shell_GetStream(shell_h) ((void *) 0)
 #endif
 
 // --- 监控模块 ---
