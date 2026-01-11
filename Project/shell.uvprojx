@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,GD32F407,DEBUG_PRINT=0</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Firmware\CMSIS\GD\GD32F4xx\Include;..\Firmware\GD32F4xx_standard_peripheral\Include;..\Firmware\CMSIS;..\Libraries;..\User\vts_terminal;..\User\common;..\MyRTOS\kernel\include;..\MyRTOS\platform\GD32F4xx\include;..\MyRTOS\services\include;..\MyRTOS\programs\shell\include</IncludePath>
+              <IncludePath>..\Firmware\CMSIS\GD\GD32F4xx\Include;..\Firmware\GD32F4xx_standard_peripheral\Include;..\Firmware\CMSIS;..\Libraries;..\User\shell;..\User\common;..\MyRTOS\kernel\include;..\MyRTOS\platform\GD32F4xx\include;..\MyRTOS\services\include;..\MyRTOS\programs\shell\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -387,12 +387,12 @@
             <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\vts_terminal\main.c</FilePath>
+              <FilePath>..\User\shell\main.c</FilePath>
             </File>
             <File>
               <FileName>MyRTOS_Config.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\User\vts_terminal\MyRTOS_Config.h</FilePath>
+              <FilePath>..\User\shell\MyRTOS_Config.h</FilePath>
             </File>
             <File>
               <FileName>gd32f4xx_it.c</FileName>
@@ -575,9 +575,9 @@
               <FilePath>..\MyRTOS\programs\shell\shell_core.c</FilePath>
             </File>
             <File>
-              <FileName>shell_main.c</FileName>
+              <FileName>shell_process_main.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\programs\shell\shell_main.c</FilePath>
+              <FilePath>..\MyRTOS\programs\shell\shell_process_main.c</FilePath>
             </File>
             <File>
               <FileName>shell_builtin.c</FileName>

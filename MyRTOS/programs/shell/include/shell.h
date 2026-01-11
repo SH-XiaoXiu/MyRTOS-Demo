@@ -105,14 +105,22 @@ void shell_register_process_commands(shell_handle_t shell);
 void shell_register_platform_commands(shell_handle_t shell);
 
 // ============================================
-// Shell 程序启动接口（Demo模式）
+// Shell 程序启动接口
 // ============================================
 
 /**
- * @brief 创建Shell Task（Demo模式）
+ * @brief 创建Shell Task（Demo模式 - 测试用）
  * @details 创建Shell任务并注册所有命令
  * @return TaskHandle_t Shell任务句柄，失败返回NULL
  */
 TaskHandle_t shell_create_task(void);
+
+#if MYRTOS_SERVICE_PROCESS_ENABLE == 1
+/**
+ * @brief Shell程序定义（Process模式 - 标准方式）
+ * @details 供Process系统注册，通过init进程或run命令启动
+ */
+extern const ProgramDefinition_t g_program_shell;
+#endif
 
 #endif // SHELL_H
