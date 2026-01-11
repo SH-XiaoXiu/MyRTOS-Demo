@@ -5,6 +5,7 @@
  */
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 #include "MyRTOS.h"
 #include "MyRTOS_IO.h"
 #include "MyRTOS_Log.h"
@@ -29,25 +30,33 @@
 
 // 任务优先级定义
 #define BACKGROUND_TASK_PRIO 1
+#define BOOTSTRAP_TASK_PRIO 10
 
 // RTOS 内核对象句柄
-static TaskHandle_t g_background_task_h;
 static TaskHandle_t g_bootstrap_task_h;
 
 //==============================================================================
 // 任务函数声明
 //==============================================================================
-static void background_blinky_task(void *param);
 static void bootstrap_task(void *param);
 
 //==============================================================================
 // 测试用可执行程序定义
 //==============================================================================
 
+static int blinky_main(int argc, char *argv[]);
 static int init_process_main(int argc, char *argv[]);
 static int looper_main(int argc, char *argv[]);
 static int hello_main(int argc, char *argv[]);
 static int echo_main(int argc, char *argv[]);
+static int spawner_main(int argc, char *argv[]);
+
+// blinky进程定义 - LED闪烁
+const ProgramDefinition_t g_program_blinky = {
+    .name = "blinky",
+    .help = "LED闪烁进程 - 系统监控指示器",
+    .main_func = blinky_main,
+};
 
 // init进程定义
 const ProgramDefinition_t g_program_init = {
@@ -64,6 +73,9 @@ const ProgramDefinition_t g_program_echo = {
 };
 const ProgramDefinition_t g_program_hello = {
     .name = "hello", .help = "打印 Hello World.", .main_func = hello_main,
+};
+const ProgramDefinition_t g_program_spawner = {
+    .name = "spawner", .help = "测试进程创建工具. 用法: spawner <bound|detached> <prog>", .main_func = spawner_main,
 };
 
 // Shell程序定义（将在init进程中启动）
@@ -88,11 +100,13 @@ void Platform_BSP_Init_Hook(void) {
 void Platform_AppSetup_Hook(void) {
     // 注册可执行程序
 #if MYRTOS_SERVICE_PROCESS_ENABLE == 1
-    Process_RegisterProgram(&g_program_init);    // init进程（必须第一个注册）
+    Process_RegisterProgram(&g_program_blinky);  // LED闪烁进程
+    Process_RegisterProgram(&g_program_init);    // init进程
     Process_RegisterProgram(&g_program_shell);   // Shell程序
     Process_RegisterProgram(&g_program_looper);
     Process_RegisterProgram(&g_program_echo);
     Process_RegisterProgram(&g_program_hello);
+    Process_RegisterProgram(&g_program_spawner); // 进程生成器测试工具
 #endif
 }
 
@@ -101,13 +115,23 @@ static int init_process_main(int argc, char *argv[]) {
     (void)argc;
     (void)argv;
 
-    MyRTOS_printf("\n");
-    MyRTOS_printf("=== init process started ===\n");
-    MyRTOS_printf("Starting Shell in foreground...\n");
+    StreamHandle_t bg_stream = VTS_GetBackgroundStream();
+    char debug_buf[128];
 
-    // 启动Shell进程（前台模式）
+    snprintf(debug_buf, sizeof(debug_buf), "[DEBUG init] init_process_main started\r\n");
+    Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
+
+    // 等待父任务切换VTS焦点（避免stdout管道阻塞）
+    Task_Delay(MS_TO_TICKS(50));
+
+    snprintf(debug_buf, sizeof(debug_buf), "[DEBUG init] After delay, ready to print\r\n");
+    Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
+
+    MyRTOS_printf("\n");
+    MyRTOS_printf("=== init process started (PID 1) ===\n");
+    MyRTOS_printf("Starting Shell in foreground...\n");
     char *shell_argv[] = {"shell"};
-    pid_t shell_pid = Process_RunProgram("shell", 1, shell_argv, PROCESS_MODE_FOREGROUND);
+    pid_t shell_pid = Process_RunProgram("shell", 1, shell_argv, PROCESS_MODE_BOUND);
 
     if (shell_pid <= 0) {
         MyRTOS_printf("Failed to start Shell!\n");
@@ -157,24 +181,47 @@ static void bootstrap_task(void *param) {
     MyRTOS_printf("\n");
     MyRTOS_printf("=== Bootstrap: Starting init process ===\n");
 
+    StreamHandle_t bg_stream = VTS_GetBackgroundStream();
+    char debug_buf[128];
+
 #if MYRTOS_SERVICE_PROCESS_ENABLE == 1
-    // 启动init进程（前台模式）
+    // 启动init进程（PID 1，绑定Bootstrap生命周期）
     char *init_argv[] = {"init"};
-    pid_t init_pid = Process_RunProgram("init", 1, init_argv, PROCESS_MODE_FOREGROUND);
+    pid_t init_pid = Process_RunProgram("init", 1, init_argv, PROCESS_MODE_BOUND);
+
+    snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] After Process_RunProgram, init_pid=%d\r\n", init_pid);
+    Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
 
     if (init_pid <= 0) {
+        snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] FATAL: Failed to start init, pid=%d\r\n", init_pid);
+        Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
         MyRTOS_printf("FATAL: Failed to start init process!\n");
         while (1) Task_Delay(MS_TO_TICKS(1000));
     }
+
+    snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] init started successfully, pid=%d\r\n", init_pid);
+    Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
 
     // 获取init进程的stdin/stdout管道
     StreamHandle_t stdin_pipe = Process_GetFdHandleByPid(init_pid, STDIN_FILENO);
     StreamHandle_t stdout_pipe = Process_GetFdHandleByPid(init_pid, STDOUT_FILENO);
 
+    snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] stdin=%p, stdout=%p\r\n", stdin_pipe, stdout_pipe);
+    Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
+
 #if MYRTOS_SERVICE_VTS_ENABLE == 1
     // 切换VTS焦点到init进程
     if (stdin_pipe && stdout_pipe) {
+        snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] Switching VTS focus to init\r\n");
+        Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
+
         VTS_SetFocus(stdin_pipe, stdout_pipe);
+
+        snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] VTS focus switched\r\n");
+        Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
+    } else {
+        snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] ERROR: NULL pipes!\r\n");
+        Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
     }
 
     // 等待init进程退出
@@ -198,11 +245,8 @@ static void bootstrap_task(void *param) {
 }
 
 void Platform_CreateTasks_Hook(void) {
-    // 创建后台LED闪烁任务（监控调度器是否正常）
-    g_background_task_h = Task_Create(background_blinky_task, "BG_Blinky", 64, NULL, BACKGROUND_TASK_PRIO);
-
-    // 创建Bootstrap任务，它会在调度器启动后启动init进程
-    g_bootstrap_task_h = Task_Create(bootstrap_task, "Bootstrap", 512, NULL, 10);
+    // 创建Bootstrap任务，它会在调度器启动后启动blinky和init进程
+    g_bootstrap_task_h = Task_Create(bootstrap_task, "Bootstrap", 512, NULL, BOOTSTRAP_TASK_PRIO);
 }
 
 void EXTI0_IRQHandler(void) {
@@ -239,13 +283,17 @@ int main(void) {
 // 任务函数实现
 //==============================================================================
 
-// 背景任务: LED闪烁 用来监控调度是否死掉
-static void background_blinky_task(void *param) {
-    (void) param;
+// blinky进程主函数 - LED闪烁，用来监控系统是否正常运行
+static int blinky_main(int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
+
     while (1) {
         gpio_bit_toggle(GPIOB, GPIO_PIN_2);
         Task_Delay(MS_TO_TICKS(1000));
     }
+
+    return 0;  // 永远不会到达
 }
 
 //==============================================================================
@@ -296,4 +344,64 @@ static int echo_main(int argc, char *argv[]) {
         }
     }
     return 0;  // 用户按q退出
+}
+
+// spawner程序，测试进程生命周期绑定
+static int spawner_main(int argc, char *argv[]) {
+    if (argc < 3) {
+        MyRTOS_printf("Usage: spawner <bound|detached> <program_name> [args...]\n");
+        MyRTOS_printf("Example:\n");
+        MyRTOS_printf("  spawner bound looper      - 创建绑定子进程\n");
+        MyRTOS_printf("  spawner detached blinky   - 创建独立守护子进程\n");
+        return -1;
+    }
+
+    const char *mode_str = argv[1];
+    const char *prog_name = argv[2];
+    ProcessMode_t mode;
+
+    // 解析模式参数
+    if (strcmp(mode_str, "bound") == 0) {
+        mode = PROCESS_MODE_BOUND;
+    } else if (strcmp(mode_str, "detached") == 0) {
+        mode = PROCESS_MODE_DETACHED;
+    } else {
+        MyRTOS_printf("Error: Invalid mode '%s'. Use 'bound' or 'detached'.\n", mode_str);
+        return -1;
+    }
+
+    // 准备子进程参数
+    int child_argc = argc - 2;
+    char **child_argv = &argv[2];
+
+    // 创建子进程
+    pid_t child_pid = Process_RunProgram(prog_name, child_argc, child_argv, mode);
+
+    if (child_pid > 0) {
+        MyRTOS_printf("Spawner [PID %d] created %s child '%s' [PID %d]\n",
+                      getpid(), mode_str, prog_name, child_pid);
+
+        // spawner进入等待循环，等待被杀死或收到信号
+        MyRTOS_printf("Spawner waiting... (kill %d to test cascade termination)\n", getpid());
+
+        while (1) {
+            // 等待子进程退出信号或被杀死
+            uint32_t signals = Task_WaitSignal(SIG_CHILD_EXIT, MS_TO_TICKS(5000),
+                                               SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
+
+            if (signals & SIG_CHILD_EXIT) {
+                MyRTOS_printf("Spawner: child process exited.\n");
+                break;
+            }
+
+            // 每5秒打印一次心跳
+            MyRTOS_printf("Spawner [PID %d] alive, child=%d (%s)\n",
+                          getpid(), child_pid, mode_str);
+        }
+    } else {
+        MyRTOS_printf("Error: Failed to spawn '%s'.\n", prog_name);
+        return -1;
+    }
+
+    return 0;
 }

@@ -64,10 +64,9 @@ static void manage_foreground_session(pid_t pid) {
             MyRTOS_printf("\nSuspended [%d] %s\n", pid, name ? name : "unknown");
         }
     } else if (received_signals & SIG_BACKGROUND) {
-        if (Process_SetMode(pid, PROCESS_MODE_BACKGROUND) == 0) {
-            const char *name = Process_GetName(pid);
-            MyRTOS_printf("\n[%d] %s &\n", pid, name ? name : "unknown");
-        }
+        // Ctrl+B：shell 放弃前台等待，进程继续在后台运行
+        const char *name = Process_GetName(pid);
+        MyRTOS_printf("\n[%d] %s &\n", pid, name ? name : "unknown");
     }
 
     // 丢弃残留字符
@@ -80,7 +79,7 @@ static bool print_job_visitor(const Process_t *proc, void *arg) {
     (void)arg;
     const char *state_str = (proc->state == PROCESS_STATE_RUNNING) ? "Running" :
                             (proc->state == PROCESS_STATE_SUSPENDED) ? "Suspended" : "Zombie";
-    MyRTOS_printf("%-4d | %-12s | %s\n", proc->pid, state_str, proc->name);
+    MyRTOS_printf("%-4d | %-5d | %-12s | %s\n", proc->pid, proc->parent_pid, state_str, proc->name);
     return true;
 }
 
@@ -89,8 +88,8 @@ static int cmd_jobs(shell_handle_t shell, int argc, char *argv[]) {
     (void)shell;
     (void)argc;
     (void)argv;
-    MyRTOS_printf("PID  | STATUS       | NAME\n");
-    MyRTOS_printf("-----|--------------|----------------\n");
+    MyRTOS_printf("PID  | PPID  | STATUS       | NAME\n");
+    MyRTOS_printf("-----|-------|--------------|----------------\n");
     Process_ForEach(print_job_visitor, NULL);
     return 0;
 }
@@ -112,26 +111,46 @@ static int cmd_ls(shell_handle_t shell, int argc, char *argv[]) {
     return 0;
 }
 
-// run命令，运行程序，支持前台/后台模式
+// run命令，运行程序，支持前台/后台执行和守护进程
 static int cmd_run(shell_handle_t shell, int argc, char *argv[]) {
     (void)shell;
     if (argc < 2) {
-        MyRTOS_printf("Usage: run <program_name> [args...] [&]\n");
+        MyRTOS_printf("Usage: run [--detach] <program_name> [args...] [&]\n");
+        MyRTOS_printf("  --detach: 创建守护进程（独立于shell生命周期）\n");
+        MyRTOS_printf("  &:        后台运行（不占用终端焦点）\n");
         return -1;
     }
 
-    bool is_background = (strcmp(argv[argc - 1], "&") == 0);
-    int prog_argc = (is_background ? argc - 2 : argc - 1);
-    char **prog_argv = &argv[1];
-    const char *prog_name = argv[1];
+    // 检查 --detach 参数
+    int arg_idx = 1;
+    ProcessMode_t mode = PROCESS_MODE_BOUND;
+    if (strcmp(argv[arg_idx], "--detach") == 0) {
+        mode = PROCESS_MODE_DETACHED;
+        arg_idx++;
+        if (arg_idx >= argc) {
+            MyRTOS_printf("Error: Missing program name after --detach.\n");
+            return -1;
+        }
+    }
 
-    ProcessMode_t mode = is_background ? PROCESS_MODE_BACKGROUND : PROCESS_MODE_FOREGROUND;
+    // 检查是否后台运行（&参数只影响shell行为，不影响进程生命周期）
+    bool run_in_background = (strcmp(argv[argc - 1], "&") == 0);
+    int prog_argc = (run_in_background ? argc - arg_idx - 1 : argc - arg_idx);
+    char **prog_argv = &argv[arg_idx];
+    const char *prog_name = argv[arg_idx];
+
     pid_t pid = Process_RunProgram(prog_name, prog_argc, prog_argv, mode);
 
     if (pid > 0) {
-        if (is_background) {
-            MyRTOS_printf("[%d] %s\n", pid, prog_name);
+        if (run_in_background) {
+            // 后台：不切换焦点，不等待
+            if (mode == PROCESS_MODE_DETACHED) {
+                MyRTOS_printf("[%d] %s (daemon) &\n", pid, prog_name);
+            } else {
+                MyRTOS_printf("[%d] %s &\n", pid, prog_name);
+            }
         } else {
+            // 前台：切换焦点，等待进程结束
             manage_foreground_session(pid);
         }
     } else {
@@ -155,9 +174,9 @@ static int cmd_kill(shell_handle_t shell, int argc, char *argv[]) {
     }
 
     if (Process_Kill(pid) == 0) {
-        MyRTOS_printf("Kill signal sent to PID %d.\n", pid);
+        MyRTOS_printf("Process %d terminated.\n", pid);
     } else {
-        MyRTOS_printf("Error: Process with PID %d not found.\n", pid);
+        MyRTOS_printf("Error: Failed to kill process %d.\n", pid);
     }
     return 0;
 }

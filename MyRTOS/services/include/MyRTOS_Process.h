@@ -35,11 +35,12 @@ typedef int16_t pid_t;
 typedef int (*ProcessMainFunc)(int argc, char *argv[]);
 
 /**
- * @brief 进程运行模式
+ * @brief 进程模式（生命周期管理）
+ * @note 前台/后台是shell对流的控制，与此无关
  */
 typedef enum {
-    PROCESS_MODE_FOREGROUND = 0, // 前台运行（占用终端）
-    PROCESS_MODE_BACKGROUND = 1  // 后台运行（守护进程风格）
+    PROCESS_MODE_BOUND = 0,    // 绑定父进程（父进程退出时，子进程自动终止）
+    PROCESS_MODE_DETACHED = 1  // 独立运行（守护进程，父进程退出不影响）
 } ProcessMode_t;
 
 /**
@@ -147,14 +148,6 @@ int Process_Suspend(pid_t pid);
  * @return 成功返回0，失败返回-1
  */
 int Process_Resume(pid_t pid);
-
-/**
- * @brief 设置进程模式（前台/后台）
- * @param pid 进程ID
- * @param mode 进程模式
- * @return 成功返回0，失败返回-1
- */
-int Process_SetMode(pid_t pid, ProcessMode_t mode);
 
 /*===========================================================================*
  *                          进程信息查询                                      *
@@ -309,6 +302,8 @@ pid_t Process_RunProgram(const char *name, int argc, char *argv[], ProcessMode_t
  */
 struct Process_t {
     pid_t pid;                  // 进程ID
+    pid_t parent_pid;           // 父进程ID（仅用于显示）
+    TaskHandle_t parent_task;   // 父任务句柄（用于信号发送）
     TaskHandle_t task;          // 底层任务句柄
     const char *name;           // 进程名称
     ProcessMainFunc main_func;  // 进程主函数

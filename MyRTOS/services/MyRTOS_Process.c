@@ -116,6 +116,13 @@ pid_t Process_Create(const char *name, ProcessMainFunc main_func,
     // 初始化进程结构
     memset(proc, 0, sizeof(Process_t));
     proc->pid = g_next_pid++;
+
+    // 记录父任务和父进程ID（已持锁，直接查找）
+    TaskHandle_t current_task = Task_GetCurrentTaskHandle();
+    Process_t *parent_proc = find_process_by_task_locked(current_task);
+    proc->parent_pid = (parent_proc != NULL) ? parent_proc->pid : 0;
+    proc->parent_task = current_task;  // 直接记录父Task句柄（不管是不是进程）
+
     proc->name = name;
     proc->main_func = main_func;
     proc->argc = argc;
@@ -132,47 +139,31 @@ pid_t Process_Create(const char *name, ProcessMainFunc main_func,
         proc->fd_table[i].flags = 0;
     }
 
-    // 为前台进程创建管道
+    // 为所有进程创建stdio管道（前台/后台由shell通过VTS焦点控制）
 #if MYRTOS_SERVICE_VTS_ENABLE == 1
-    if (mode == PROCESS_MODE_FOREGROUND) {
-        StreamHandle_t stdin_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
-        StreamHandle_t stdout_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
+    StreamHandle_t stdin_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
+    StreamHandle_t stdout_pipe = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
 
-        if (stdin_pipe == NULL || stdout_pipe == NULL) {
-            if (stdin_pipe) Pipe_Delete(stdin_pipe);
-            if (stdout_pipe) Pipe_Delete(stdout_pipe);
-            Mutex_Unlock(g_process_lock);
-            LOG_E("Process", "Failed to create pipes for process '%s'.", name);
-            return -1;
-        }
-
-        // 设置标准文件描述符
-        proc->fd_table[STDIN_FILENO].handle = stdin_pipe;
-        proc->fd_table[STDIN_FILENO].type = FD_TYPE_STREAM;
-        proc->fd_table[STDIN_FILENO].flags = O_RDONLY;
-
-        proc->fd_table[STDOUT_FILENO].handle = stdout_pipe;
-        proc->fd_table[STDOUT_FILENO].type = FD_TYPE_STREAM;
-        proc->fd_table[STDOUT_FILENO].flags = O_WRONLY;
-
-        proc->fd_table[STDERR_FILENO].handle = stdout_pipe;
-        proc->fd_table[STDERR_FILENO].type = FD_TYPE_STREAM;
-        proc->fd_table[STDERR_FILENO].flags = O_WRONLY;
-    } else {
-        // 后台进程使用空流
-        StreamHandle_t null_stream = Stream_GetNull();
-        proc->fd_table[STDIN_FILENO].handle = null_stream;
-        proc->fd_table[STDIN_FILENO].type = FD_TYPE_STREAM;
-        proc->fd_table[STDIN_FILENO].flags = O_RDONLY;
-
-        proc->fd_table[STDOUT_FILENO].handle = null_stream;
-        proc->fd_table[STDOUT_FILENO].type = FD_TYPE_STREAM;
-        proc->fd_table[STDOUT_FILENO].flags = O_WRONLY;
-
-        proc->fd_table[STDERR_FILENO].handle = null_stream;
-        proc->fd_table[STDERR_FILENO].type = FD_TYPE_STREAM;
-        proc->fd_table[STDERR_FILENO].flags = O_WRONLY;
+    if (stdin_pipe == NULL || stdout_pipe == NULL) {
+        if (stdin_pipe) Pipe_Delete(stdin_pipe);
+        if (stdout_pipe) Pipe_Delete(stdout_pipe);
+        Mutex_Unlock(g_process_lock);
+        LOG_E("Process", "Failed to create pipes for process '%s'.", name);
+        return -1;
     }
+
+    // 设置标准文件描述符
+    proc->fd_table[STDIN_FILENO].handle = stdin_pipe;
+    proc->fd_table[STDIN_FILENO].type = FD_TYPE_STREAM;
+    proc->fd_table[STDIN_FILENO].flags = O_RDONLY;
+
+    proc->fd_table[STDOUT_FILENO].handle = stdout_pipe;
+    proc->fd_table[STDOUT_FILENO].type = FD_TYPE_STREAM;
+    proc->fd_table[STDOUT_FILENO].flags = O_WRONLY;
+
+    proc->fd_table[STDERR_FILENO].handle = stdout_pipe;
+    proc->fd_table[STDERR_FILENO].type = FD_TYPE_STREAM;
+    proc->fd_table[STDERR_FILENO].flags = O_WRONLY;
 #else
     // 如果没有VTS，使用空流
     StreamHandle_t null_stream = Stream_GetNull();
@@ -248,17 +239,26 @@ void Process_Exit(int status) {
  * @brief 终止进程
  */
 int Process_Kill(pid_t pid) {
+    // 检测自杀：如果杀自己，改用 exit() 而不是 Task_Delete()
+    if (pid == getpid()) {
+        LOG_D("Process", "Process %d killing itself, calling exit(0).", pid);
+        Process_Exit(0);  // 不会返回
+    }
+
     TaskHandle_t task_to_kill = NULL;
 
     Mutex_Lock(g_process_lock);
     Process_t *proc = find_process_by_pid_locked(pid);
     if (proc != NULL) {
+        // 标记进程为已退出（被杀死，退出码-1）
+        proc->exit_code = -1;
+        proc->has_exited = true;
         task_to_kill = proc->task;
+        LOG_D("Process", "Killing process '%s' (PID %d).", proc->name, pid);
     }
     Mutex_Unlock(g_process_lock);
 
     if (task_to_kill != NULL) {
-        LOG_D("Process", "Killing process PID %d.", pid);
         Task_Delete(task_to_kill);
         return 0;
     }
@@ -278,8 +278,6 @@ int Process_Suspend(pid_t pid) {
     if (proc != NULL && proc->state == PROCESS_STATE_RUNNING) {
         Task_Suspend(proc->task);
         proc->state = PROCESS_STATE_SUSPENDED;
-        // 挂起后转为后台
-        proc->mode = PROCESS_MODE_BACKGROUND;
         result = 0;
         LOG_D("Process", "Suspended process '%s' (PID %d).", proc->name, proc->pid);
     } else {
@@ -305,28 +303,6 @@ int Process_Resume(pid_t pid) {
         LOG_D("Process", "Resumed process '%s' (PID %d).", proc->name, proc->pid);
     } else {
         LOG_W("Process", "Resume failed: PID %d not found or not suspended.", pid);
-    }
-    Mutex_Unlock(g_process_lock);
-
-    return result;
-}
-
-/**
- * @brief 设置进程模式
- */
-int Process_SetMode(pid_t pid, ProcessMode_t mode) {
-    int result = -1;
-
-    Mutex_Lock(g_process_lock);
-    Process_t *proc = find_process_by_pid_locked(pid);
-    if (proc != NULL) {
-        proc->mode = mode;
-        result = 0;
-        LOG_D("Process", "Set process '%s' (PID %d) mode to %s.",
-              proc->name, proc->pid,
-              mode == PROCESS_MODE_FOREGROUND ? "foreground" : "background");
-    } else {
-        LOG_W("Process", "SetMode failed: PID %d not found.", pid);
     }
     Mutex_Unlock(g_process_lock);
 
@@ -691,16 +667,16 @@ static void process_cleanup(Process_t *proc) {
     }
 
 #if MYRTOS_SERVICE_VTS_ENABLE == 1
-    // 删除管道
-    if (proc->mode == PROCESS_MODE_FOREGROUND) {
-        if (proc->fd_table[STDIN_FILENO].handle != NULL) {
-            Pipe_Delete(proc->fd_table[STDIN_FILENO].handle);
-        }
-        if (proc->fd_table[STDOUT_FILENO].handle != NULL) {
-            Pipe_Delete(proc->fd_table[STDOUT_FILENO].handle);
-        }
-        // STDERR与STDOUT共享，不需要单独删除
+    // 删除管道（所有进程都有管道）
+    if (proc->fd_table[STDIN_FILENO].handle != NULL &&
+        proc->fd_table[STDIN_FILENO].type == FD_TYPE_STREAM) {
+        Pipe_Delete(proc->fd_table[STDIN_FILENO].handle);
     }
+    if (proc->fd_table[STDOUT_FILENO].handle != NULL &&
+        proc->fd_table[STDOUT_FILENO].type == FD_TYPE_STREAM) {
+        Pipe_Delete(proc->fd_table[STDOUT_FILENO].handle);
+    }
+    // STDERR与STDOUT共享，不需要单独删除
 #endif
 
     // 清零（保持池结构）
@@ -716,16 +692,34 @@ static void process_kernel_event_handler(const KernelEventData_t *event) {
     }
 
     TaskHandle_t deleted_task = event->task;
-    bool was_foreground = false;
+    TaskHandle_t parent_task = NULL;
+    pid_t deleted_pid = 0;
+    pid_t children_to_kill[MYRTOS_PROCESS_MAX_INSTANCES];
+    int num_children = 0;
 
     Mutex_Lock(g_process_lock);
 
     // 查找进程
     Process_t *proc = find_process_by_task_locked(deleted_task);
     if (proc != NULL) {
+        deleted_pid = proc->pid;
         LOG_D("Process", "Process '%s' (PID %d) is being deleted.", proc->name, proc->pid);
 
-        was_foreground = (proc->mode == PROCESS_MODE_FOREGROUND);
+        // 保存父任务句柄，稍后发送信号
+        parent_task = proc->parent_task;
+
+        // 级联终止：查找所有绑定该进程的子进程
+        Process_t *child = g_process_list_head;
+        while (child != NULL) {
+            if (child->parent_pid == deleted_pid && child->mode == PROCESS_MODE_BOUND) {
+                if (num_children < MYRTOS_PROCESS_MAX_INSTANCES) {
+                    children_to_kill[num_children++] = child->pid;
+                    LOG_D("Process", "Will cascade-kill child PID %d (bound to parent %d).",
+                          child->pid, deleted_pid);
+                }
+            }
+            child = child->next;
+        }
 
         // 从链表移除
         if (g_process_list_head == proc) {
@@ -746,12 +740,17 @@ static void process_kernel_event_handler(const KernelEventData_t *event) {
 
     Mutex_Unlock(g_process_lock);
 
-    // 通知前台会话管理器进程退出
-#if MYRTOS_SERVICE_VTS_ENABLE == 1
-    if (was_foreground) {
-        VTS_SendSignal(SIG_CHILD_EXIT);
+    // 向父任务发送SIG_CHILD_EXIT信号（不依赖VTS）
+    if (parent_task != NULL) {
+        LOG_D("Process", "Sending SIG_CHILD_EXIT to parent task %p.", parent_task);
+        Task_SendSignal(parent_task, SIG_CHILD_EXIT);
     }
-#endif
+
+    // 级联终止所有绑定的子进程（在解锁后进行，避免死锁）
+    for (int i = 0; i < num_children; i++) {
+        LOG_D("Process", "Cascade-killing child PID %d.", children_to_kill[i]);
+        Process_Kill(children_to_kill[i]);
+    }
 }
 
 /**
