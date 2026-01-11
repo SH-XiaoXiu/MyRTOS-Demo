@@ -23,24 +23,38 @@
 #include "MyRTOS_Process.h"
 #endif
 
+#if MYRTOS_SERVICE_VTS_ENABLE == 1
+#include "MyRTOS_VTS.h"
+#endif
+
 // 任务优先级定义
 #define BACKGROUND_TASK_PRIO 1
 
 // RTOS 内核对象句柄
 static TaskHandle_t g_background_task_h;
+static TaskHandle_t g_bootstrap_task_h;
 
 //==============================================================================
 // 任务函数声明
 //==============================================================================
 static void background_blinky_task(void *param);
+static void bootstrap_task(void *param);
 
 //==============================================================================
 // 测试用可执行程序定义
 //==============================================================================
 
+static int init_process_main(int argc, char *argv[]);
 static int looper_main(int argc, char *argv[]);
 static int hello_main(int argc, char *argv[]);
 static int echo_main(int argc, char *argv[]);
+
+// init进程定义
+const ProgramDefinition_t g_program_init = {
+    .name = "init",
+    .help = "Init process - 系统启动进程",
+    .main_func = init_process_main,
+};
 
 const ProgramDefinition_t g_program_looper = {
     .name = "looper", .help = "一个简单的后台循环程序.", .main_func = looper_main,
@@ -89,39 +103,62 @@ static int init_process_main(int argc, char *argv[]) {
 
     MyRTOS_printf("\n");
     MyRTOS_printf("=== init process started ===\n");
-    MyRTOS_printf("Starting Shell...\n");
+    MyRTOS_printf("Starting Shell in foreground...\n");
 
     // 启动Shell进程（前台模式）
     char *shell_argv[] = {"shell"};
     pid_t shell_pid = Process_RunProgram("shell", 1, shell_argv, PROCESS_MODE_FOREGROUND);
 
-    if (shell_pid > 0) {
-        MyRTOS_printf("Shell started with PID %d\n", shell_pid);
-    } else {
+    if (shell_pid <= 0) {
         MyRTOS_printf("Failed to start Shell!\n");
+        return -1;
     }
 
-    // init进程通常不会退出，在这里等待Shell退出
-    for (;;) {
-        Task_Delay(MS_TO_TICKS(1000));
+    // 获取shell进程的stdin/stdout管道
+    StreamHandle_t stdin_pipe = Process_GetFdHandleByPid(shell_pid, STDIN_FILENO);
+    StreamHandle_t stdout_pipe = Process_GetFdHandleByPid(shell_pid, STDOUT_FILENO);
+
+#if MYRTOS_SERVICE_VTS_ENABLE == 1
+    // 切换VTS焦点到shell进程
+    if (stdin_pipe && stdout_pipe) {
+        VTS_SetFocus(stdin_pipe, stdout_pipe);
     }
 
+    // 等待shell进程退出或信号
+    uint32_t received_signals = Task_WaitSignal(
+        SIG_CHILD_EXIT | SIG_INTERRUPT | SIG_SUSPEND | SIG_BACKGROUND,
+        MYRTOS_MAX_DELAY, SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
+
+    // 恢复VTS焦点
+    VTS_ReturnToRootFocus();
+
+    if (received_signals & SIG_CHILD_EXIT) {
+        MyRTOS_printf("\nShell process (PID %d) exited normally.\n", shell_pid);
+    }
+#else
+    // 没有VTS，简单等待shell退出
+    while (Process_GetState(shell_pid) == PROCESS_STATE_RUNNING) {
+        Task_Delay(MS_TO_TICKS(100));
+    }
+    MyRTOS_printf("Shell process (PID %d) exited.\n", shell_pid);
+#endif
+
+    MyRTOS_printf("init process exiting.\n");
     return 0;
 }
 
-// init进程定义
-const ProgramDefinition_t g_program_init = {
-    .name = "init",
-    .help = "Init process - 系统启动进程",
-    .main_func = init_process_main,
-};
+// Bootstrap任务：在调度器启动后启动init进程
+static void bootstrap_task(void *param) {
+    (void)param;
 
-void Platform_CreateTasks_Hook(void) {
-    // 创建后台LED闪烁任务（监控调度器是否正常）
-    g_background_task_h = Task_Create(background_blinky_task, "BG_Blinky", 64, NULL, BACKGROUND_TASK_PRIO);
+    // 等待VTS服务就绪
+    Task_Delay(MS_TO_TICKS(100));
+
+    MyRTOS_printf("\n");
+    MyRTOS_printf("=== Bootstrap: Starting init process ===\n");
 
 #if MYRTOS_SERVICE_PROCESS_ENABLE == 1
-    // 启动init进程（系统的第一个用户进程）
+    // 启动init进程（前台模式）
     char *init_argv[] = {"init"};
     pid_t init_pid = Process_RunProgram("init", 1, init_argv, PROCESS_MODE_FOREGROUND);
 
@@ -129,7 +166,43 @@ void Platform_CreateTasks_Hook(void) {
         MyRTOS_printf("FATAL: Failed to start init process!\n");
         while (1) Task_Delay(MS_TO_TICKS(1000));
     }
+
+    // 获取init进程的stdin/stdout管道
+    StreamHandle_t stdin_pipe = Process_GetFdHandleByPid(init_pid, STDIN_FILENO);
+    StreamHandle_t stdout_pipe = Process_GetFdHandleByPid(init_pid, STDOUT_FILENO);
+
+#if MYRTOS_SERVICE_VTS_ENABLE == 1
+    // 切换VTS焦点到init进程
+    if (stdin_pipe && stdout_pipe) {
+        VTS_SetFocus(stdin_pipe, stdout_pipe);
+    }
+
+    // 等待init进程退出
+    Task_WaitSignal(SIG_CHILD_EXIT | SIG_INTERRUPT | SIG_SUSPEND | SIG_BACKGROUND,
+                    MYRTOS_MAX_DELAY, SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
+
+    // 恢复VTS焦点
+    VTS_ReturnToRootFocus();
+#else
+    // 没有VTS，简单等待
+    while (Process_GetState(init_pid) == PROCESS_STATE_RUNNING) {
+        Task_Delay(MS_TO_TICKS(100));
+    }
 #endif
+
+    MyRTOS_printf("init process (PID %d) exited.\n", init_pid);
+#endif
+
+    // Bootstrap任务完成使命，删除自己
+    Task_Delete(NULL);
+}
+
+void Platform_CreateTasks_Hook(void) {
+    // 创建后台LED闪烁任务（监控调度器是否正常）
+    g_background_task_h = Task_Create(background_blinky_task, "BG_Blinky", 64, NULL, BACKGROUND_TASK_PRIO);
+
+    // 创建Bootstrap任务，它会在调度器启动后启动init进程
+    g_bootstrap_task_h = Task_Create(bootstrap_task, "Bootstrap", 512, NULL, 10);
 }
 
 void EXTI0_IRQHandler(void) {

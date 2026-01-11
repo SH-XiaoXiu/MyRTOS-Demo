@@ -116,6 +116,8 @@ void shell_register_platform_commands(shell_handle_t shell);
 TaskHandle_t shell_create_task(void);
 
 #if MYRTOS_SERVICE_PROCESS_ENABLE == 1
+#include "MyRTOS_Process.h"
+
 /**
  * @brief Shell程序定义（Process模式 - 标准方式）
  * @details 供Process系统注册，通过init进程或run命令启动
