@@ -77,10 +77,14 @@ add_subdirectory(User/shell)
 # VTS Terminal示例 - 虚拟终端测试
 add_subdirectory(User/vts_terminal)
 
-# 可以继续添加其他示例
-# add_subdirectory(User/kernel_basic)
-# add_subdirectory(User/kernel_advanced)
-# add_subdirectory(User/io_logging)
+# Kernel Basic示例 - 基础内核功能演示
+add_subdirectory(User/kernel_basic)
+
+# Kernel Advanced示例 - 高级内核功能演示
+add_subdirectory(User/kernel_advanced)
+
+# IO & Logging示例 - IO流与日志框架演示
+add_subdirectory(User/io_logging)
 
 # ==============================================================================
 # 使用说明
@@ -98,9 +102,11 @@ add_subdirectory(User/vts_terminal)
 # - 两者互不影响，CLion会根据选择的target使用对应的配置
 #
 # 编译目标命名
-# - MyRTOS_Shell_Example
-# - MyRTOS_VTS_Terminal_Example
-# - ...（每个示例一个目标）
+# - MyRTOS_Shell_Example              (Shell与Process管理)
+# - MyRTOS_VTS_Terminal_Example       (虚拟终端服务)
+# - MyRTOS_Kernel_Basic_Example       (基础内核功能)
+# - MyRTOS_Kernel_Advanced_Example    (高级内核功能)
+# - MyRTOS_IO_Logging_Example         (IO流与日志框架)
 #
 # 与 Keil 工程配合
 # - 每个示例目录下可以放置对应的.uvprojx工程文件
