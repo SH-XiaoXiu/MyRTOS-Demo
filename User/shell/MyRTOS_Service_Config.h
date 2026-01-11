@@ -101,7 +101,7 @@
 /** @brief 最大可注册程序数量 (静态程序表大小) */
 #define MYRTOS_PROCESS_MAX_PROGRAMS 16
 /** @brief 程序启动器任务的默认栈大小 (字节) */
-#define MYRTOS_PROCESS_LAUNCHER_STACK 512
+#define MYRTOS_PROCESS_LAUNCHER_STACK 4096
 /** @brief 程序启动器任务的默认优先级 */
 #define MYRTOS_PROCESS_LAUNCHER_PRIORITY 2
 #endif
