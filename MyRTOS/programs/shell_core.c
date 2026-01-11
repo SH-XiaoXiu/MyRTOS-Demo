@@ -2,7 +2,7 @@
  * @file  shell_core.c
  * @brief Shell 命令解析引擎实现
  */
-#include "shell.h"
+#include "include/shell.h"
 #include "MyRTOS.h"
 #include <string.h>
 #include <ctype.h>

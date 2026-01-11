@@ -2,7 +2,7 @@
  * @file  shell_process.c
  * @brief 进程管理命令（run, jobs, kill, fg, bg, ls）
  */
-#include "shell.h"
+#include "include/shell.h"
 
 #if MYRTOS_SERVICE_PROCESS_ENABLE == 1
 
