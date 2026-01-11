@@ -51,6 +51,7 @@ set(COMMON_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/MyRTOS/kernel/include
     ${CMAKE_CURRENT_SOURCE_DIR}/MyRTOS/services/include
     ${CMAKE_CURRENT_SOURCE_DIR}/MyRTOS/programs/shell/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/MyRTOS/programs/init/include
     ${CMAKE_CURRENT_SOURCE_DIR}/MyRTOS/platform/GD32F4xx/include
     ${CMAKE_CURRENT_SOURCE_DIR}/MyRTOS/include
 
