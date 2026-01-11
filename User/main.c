@@ -574,10 +574,20 @@ static int blinky_main(int argc, char *argv[]) {
 
     while (1) {
         gpio_bit_toggle(GPIOB, GPIO_PIN_2);
-        Task_Delay(MS_TO_TICKS(1000));
+
+        // 等待1秒或收到中断信号
+        uint32_t signals = Task_WaitSignal(SIG_INTERRUPT, MS_TO_TICKS(1000),
+                                          SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
+
+        // 如果收到中断信号，关闭LED并退出
+        if (signals & SIG_INTERRUPT) {
+            gpio_bit_reset(GPIOB, GPIO_PIN_2);  // 关闭LED
+            MyRTOS_printf("[blinky] LED OFF, exiting...\n");
+            return 0;
+        }
     }
 
-    return 0;  // 永远不会到达
+    return 0;
 }
 
 // looper程序，在后台周期性打印消息
@@ -610,19 +620,32 @@ static int echo_main(int argc, char *argv[]) {
     (void) argc;
     (void) argv;
     char ch;
-    MyRTOS_printf("Echo program started. Type characters to echo.\n");
-    MyRTOS_printf("Press 'q' to quit.\n");
+
+    MyRTOS_printf("\n========================================\n");
+    MyRTOS_printf("  Echo Program - Character Echo Test\n");
+    MyRTOS_printf("========================================\n");
+    MyRTOS_printf("Type any character to see it echoed back.\n");
+    MyRTOS_printf("Press 'q' to quit.\n\n");
+
     for (;;) {
         ch = MyRTOS_getchar();
-        if (ch == 'q') {
+
+        if (ch == 'q' || ch == 'Q') {
             MyRTOS_printf("\nExiting echo program.\n");
             break;
         } else if (ch == '\r' || ch == '\n') {
-            MyRTOS_printf("\n");
+            MyRTOS_printf("\n[Echo] Received <ENTER>\n");
+        } else if (ch == '\t') {
+            MyRTOS_printf("\n[Echo] Received <TAB>\n");
+        } else if (ch == 0x1B) {  // ESC
+            MyRTOS_printf("\n[Echo] Received <ESC>\n");
+        } else if (ch >= 32 && ch <= 126) {  // 可打印字符
+            MyRTOS_printf("\n[Echo] You typed: '%c' (ASCII: %d)\n", ch, (int)ch);
         } else {
-            MyRTOS_putchar(ch);
+            MyRTOS_printf("\n[Echo] Received non-printable char (ASCII: %d)\n", (int)ch);
         }
     }
+
     return 0;  // 用户按q退出
 }
 
