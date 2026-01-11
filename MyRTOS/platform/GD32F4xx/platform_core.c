@@ -95,30 +95,73 @@ static void system_clock_config(void) {
 void Platform_Init(void) {
     nvic_priority_group_set(NVIC_PRIGROUP_PRE4_SUB0);
     Platform_EarlyInit_Hook();
+
+    // 初始化控制台硬件，从此可以输出日志
     Platform_Console_HwInit();
+    StreamHandle_t console = Platform_Console_GetStream();
+
+    // 打印系统横幅
+    if (console) {
+        Stream_Printf(console, "\r\n\r\nMyRTOS (built %s %s)\r\n", __DATE__, __TIME__);
+        Stream_Printf(console, "Copyright (C) 2025 XiaoXiu\r\n\r\n");
+    }
+
+    // 平台硬件初始化
     Platform_HiresTimer_Init();
     Platform_BSP_Init_Hook();
     Platform_BSP_After_Hook();
+
+    // 内核初始化
+    if (console) {
+        Stream_Printf(console, "[Kernel]\r\n");
+    }
+
     MyRTOS_Init();
+
+    if (console) {
+        Stream_Printf(console, "  Heap: %lu KB available\r\n",
+                     MYRTOS_MEMORY_POOL_SIZE / 1024);
+        Stream_Printf(console, "  Scheduler: %d priorities, %d task slots, %lu Hz tick\r\n",
+                     MYRTOS_MAX_PRIORITIES,
+                     MYRTOS_MAX_CONCURRENT_TASKS,
+                     MYRTOS_TICK_RATE_HZ);
+    }
+
     Platform_error_handler_init();
     Platform_Console_OSInit();
 
+    // 服务层初始化
+    if (console) {
+        Stream_Printf(console, "\r\n[Services]\r\n");
+    }
+
 #if MYRTOS_SERVICE_IO_ENABLE == 1
     StdIOService_Init();
+    if (console) Stream_Printf(console, "  [OK] I/O streams\r\n");
 #endif
 
 #if MYRTOS_SERVICE_ASYNC_IO_ENABLE == 1
     if (AsyncIOService_Init() != 0) {
+        if (console) Stream_Printf(console, "  [FAIL] Async I/O\r\n");
         while (1);
     }
+    if (console) Stream_Printf(console, "  [OK] Async I/O (queue: %d, prio: %d)\r\n",
+                              MYRTOS_ASYNCIO_QUEUE_LENGTH,
+                              MYRTOS_ASYNCIO_TASK_PRIORITY);
 #endif
 
 #if MYRTOS_SERVICE_LOG_ENABLE == 1
     Log_Init();
+    if (console) {
+        const char *log_mode = MYRTOS_LOG_USE_ASYNC_OUTPUT ? "async" : "sync";
+        Stream_Printf(console, "  [OK] Logger (%s mode)\r\n", log_mode);
+    }
 #endif
 
 #if MYRTOS_SERVICE_PROCESS_ENABLE == 1
     Process_Init();
+    if (console) Stream_Printf(console, "  [OK] Process manager (max: %d)\r\n",
+                              MYRTOS_PROCESS_MAX_INSTANCES);
 #endif
 
     // 默认将系统标准IO指向物理控制台
@@ -133,41 +176,73 @@ void Platform_Init(void) {
     StreamHandle_t vts_pipe_in = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
     StreamHandle_t vts_pipe_out = Pipe_Create(VTS_PIPE_BUFFER_SIZE);
     if (!vts_pipe_in || !vts_pipe_out) {
-        while (1); // 致命错误
+        if (console) Stream_Printf(console, "  [FAIL] VTS (pipe allocation)\r\n");
+        while (1);
     }
 
     VTS_Config_t v_config = {
         .physical_stream = Platform_Console_GetStream(),
         .root_input_stream = vts_pipe_in,
         .root_output_stream = vts_pipe_out,
-        .signal_receiver_task_handle = NULL  // 由用户程序设置
+        .signal_receiver_task_handle = NULL
     };
 
     if (VTS_Init(&v_config) != 0) {
+        if (console) Stream_Printf(console, "  [FAIL] Virtual terminal\r\n");
         while (1);
     }
 
     // VTS 启动后接管后台日志输出流
     g_system_stdout = VTS_GetBackgroundStream();
     g_system_stderr = VTS_GetBackgroundStream();
+    if (console) Stream_Printf(console, "  [OK] Virtual terminal\r\n");
 #endif
 
 #if MYRTOS_SERVICE_MONITOR_ENABLE == 1
     MonitorConfig_t m_config = {.get_hires_timer_value = Platform_Timer_GetHiresValue};
     Monitor_Init(&m_config);
+    if (console) Stream_Printf(console, "  [OK] System monitor\r\n");
 #endif
 
 #if MYRTOS_SERVICE_TIMER_ENABLE == 1
     TimerService_Init(MYRTOS_MAX_PRIORITIES - 2, 2048);
+    if (console) Stream_Printf(console, "  [OK] Software timers\r\n");
 #endif
 
-    // 调用应用设置钩子
+    // 应用层初始化
+    if (console) {
+        Stream_Printf(console, "\r\n[Application]\r\n");
+    }
+
     Platform_AppSetup_Hook();
+
+    if (console) {
+        Stream_Printf(console, "  Setup complete\r\n");
+    }
 }
 
 void Platform_StartScheduler(void) {
+    StreamHandle_t console = Platform_Console_GetStream();
+
+    if (console) {
+        Stream_Printf(console, "\r\nCreating system tasks...\r\n");
+    }
+
     Platform_CreateTasks_Hook();
+
+    if (console) {
+        Stream_Printf(console, "System tasks created\r\n");
+        Stream_Printf(console, "\r\n");
+        Stream_Printf(console, "========================================\r\n");
+        Stream_Printf(console, "Starting scheduler...\r\n");
+        Stream_Printf(console, "Entering multitasking mode\r\n");
+        Stream_Printf(console, "========================================\r\n");
+        Stream_Printf(console, "\r\n");
+    }
+
     Task_StartScheduler(Platform_IdleTask_Hook);
+
+    // 永远不会执行到这里
     while (1) {
     };
 }
