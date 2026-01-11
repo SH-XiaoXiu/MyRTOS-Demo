@@ -115,21 +115,12 @@ static int init_process_main(int argc, char *argv[]) {
     (void)argc;
     (void)argv;
 
-    StreamHandle_t bg_stream = VTS_GetBackgroundStream();
-    char debug_buf[128];
-
-    snprintf(debug_buf, sizeof(debug_buf), "[DEBUG init] init_process_main started\r\n");
-    Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
-
     // 等待父任务切换VTS焦点（避免stdout管道阻塞）
     Task_Delay(MS_TO_TICKS(50));
 
-    snprintf(debug_buf, sizeof(debug_buf), "[DEBUG init] After delay, ready to print\r\n");
-    Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
-
     MyRTOS_printf("\n");
-    MyRTOS_printf("=== init process started (PID 1) ===\n");
-    MyRTOS_printf("Starting Shell in foreground...\n");
+    MyRTOS_printf("=== MyRTOS Shell Environment ===\n");
+    MyRTOS_printf("Starting Shell...\n");
     char *shell_argv[] = {"shell"};
     pid_t shell_pid = Process_RunProgram("shell", 1, shell_argv, PROCESS_MODE_BOUND);
 
@@ -178,50 +169,24 @@ static void bootstrap_task(void *param) {
     // 等待VTS服务就绪
     Task_Delay(MS_TO_TICKS(100));
 
-    MyRTOS_printf("\n");
-    MyRTOS_printf("=== Bootstrap: Starting init process ===\n");
-
-    StreamHandle_t bg_stream = VTS_GetBackgroundStream();
-    char debug_buf[128];
-
 #if MYRTOS_SERVICE_PROCESS_ENABLE == 1
     // 启动init进程（PID 1，绑定Bootstrap生命周期）
     char *init_argv[] = {"init"};
     pid_t init_pid = Process_RunProgram("init", 1, init_argv, PROCESS_MODE_BOUND);
 
-    snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] After Process_RunProgram, init_pid=%d\r\n", init_pid);
-    Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
-
     if (init_pid <= 0) {
-        snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] FATAL: Failed to start init, pid=%d\r\n", init_pid);
-        Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
         MyRTOS_printf("FATAL: Failed to start init process!\n");
         while (1) Task_Delay(MS_TO_TICKS(1000));
     }
-
-    snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] init started successfully, pid=%d\r\n", init_pid);
-    Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
 
     // 获取init进程的stdin/stdout管道
     StreamHandle_t stdin_pipe = Process_GetFdHandleByPid(init_pid, STDIN_FILENO);
     StreamHandle_t stdout_pipe = Process_GetFdHandleByPid(init_pid, STDOUT_FILENO);
 
-    snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] stdin=%p, stdout=%p\r\n", stdin_pipe, stdout_pipe);
-    Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
-
 #if MYRTOS_SERVICE_VTS_ENABLE == 1
     // 切换VTS焦点到init进程
     if (stdin_pipe && stdout_pipe) {
-        snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] Switching VTS focus to init\r\n");
-        Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
-
         VTS_SetFocus(stdin_pipe, stdout_pipe);
-
-        snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] VTS focus switched\r\n");
-        Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
-    } else {
-        snprintf(debug_buf, sizeof(debug_buf), "[DEBUG Bootstrap] ERROR: NULL pipes!\r\n");
-        Stream_Write(bg_stream, debug_buf, strlen(debug_buf), 100);
     }
 
     // 等待init进程退出
