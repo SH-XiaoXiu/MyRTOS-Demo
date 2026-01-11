@@ -62,6 +62,7 @@ static int shell_process_main(int argc, char *argv[]) {
     shell_register_log_commands(shell);
     shell_register_process_commands(shell);
     shell_register_platform_commands(shell);
+    shell_register_sysinfo_commands(shell);
 
     // 主循环：读取命令并执行
     char line_buffer[SHELL_MAX_LINE_LENGTH];

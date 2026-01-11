@@ -138,6 +138,11 @@ void shell_register_process_commands(shell_handle_t shell);
  */
 void shell_register_platform_commands(shell_handle_t shell);
 
+/**
+ * @brief 注册系统信息命令（top, cat）
+ */
+void shell_register_sysinfo_commands(shell_handle_t shell);
+
 // ============================================
 // Shell 程序启动接口
 // ============================================

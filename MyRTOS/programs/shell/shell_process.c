@@ -159,25 +159,80 @@ static int cmd_run(shell_handle_t shell, int argc, char *argv[]) {
     return 0;
 }
 
-// kill命令，终止进程
+// kill命令，终止或控制进程
 static int cmd_kill(shell_handle_t shell, int argc, char *argv[]) {
     (void)shell;
-    if (argc != 2) {
-        MyRTOS_printf("Usage: kill <pid>\n");
+
+    // 支持：kill <pid>, kill -9 <pid>, kill -STOP <pid>, kill -CONT <pid>
+    if (argc < 2) {
+        MyRTOS_printf("Usage: kill [-SIGNAL] <pid>\n");
+        MyRTOS_printf("Signals:\n");
+        MyRTOS_printf("  (none) or -9    - Terminate process (default)\n");
+        MyRTOS_printf("  -STOP or -SIGSTOP - Suspend process\n");
+        MyRTOS_printf("  -CONT or -SIGCONT - Resume process\n");
         return -1;
     }
 
-    int pid = atoi(argv[1]);
+    int pid;
+    const char *signal = NULL;
+
+    // 解析参数
+    if (argc == 2) {
+        // kill <pid>
+        pid = atoi(argv[1]);
+        signal = "TERM";  // 默认信号
+    } else if (argc == 3) {
+        // kill -SIGNAL <pid>
+        signal = argv[1];
+        if (signal[0] != '-') {
+            MyRTOS_printf("Error: Invalid signal format. Use -SIGNAL.\n");
+            return -1;
+        }
+        signal++;  // 跳过 '-'
+        pid = atoi(argv[2]);
+    } else {
+        MyRTOS_printf("Error: Too many arguments.\n");
+        return -1;
+    }
+
     if (pid <= 0) {
         MyRTOS_printf("Error: Invalid PID.\n");
         return -1;
     }
 
-    if (Process_Kill(pid) == 0) {
-        MyRTOS_printf("Process %d terminated.\n", pid);
+    // 执行对应的操作
+    if (strcmp(signal, "9") == 0 || strcmp(signal, "TERM") == 0 ||
+        strcmp(signal, "SIGTERM") == 0 || strcmp(signal, "KILL") == 0 ||
+        strcmp(signal, "SIGKILL") == 0) {
+        // 终止进程
+        if (Process_Kill(pid) == 0) {
+            MyRTOS_printf("Process %d terminated.\n", pid);
+        } else {
+            MyRTOS_printf("Error: Failed to kill process %d.\n", pid);
+            return -1;
+        }
+    } else if (strcmp(signal, "STOP") == 0 || strcmp(signal, "SIGSTOP") == 0) {
+        // 挂起进程
+        if (Process_Suspend(pid) == 0) {
+            MyRTOS_printf("Process %d suspended.\n", pid);
+        } else {
+            MyRTOS_printf("Error: Failed to suspend process %d.\n", pid);
+            return -1;
+        }
+    } else if (strcmp(signal, "CONT") == 0 || strcmp(signal, "SIGCONT") == 0) {
+        // 恢复进程
+        if (Process_Resume(pid) == 0) {
+            MyRTOS_printf("Process %d resumed.\n", pid);
+        } else {
+            MyRTOS_printf("Error: Failed to resume process %d.\n", pid);
+            return -1;
+        }
     } else {
-        MyRTOS_printf("Error: Failed to kill process %d.\n", pid);
+        MyRTOS_printf("Error: Unknown signal '%s'.\n", signal);
+        MyRTOS_printf("Supported signals: 9, TERM, STOP, CONT\n");
+        return -1;
     }
+
     return 0;
 }
 
