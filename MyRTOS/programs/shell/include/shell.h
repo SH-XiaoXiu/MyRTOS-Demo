@@ -75,6 +75,40 @@ const char *shell_get_prompt(shell_handle_t shell);
  */
 void shell_foreach_command(shell_handle_t shell, shell_command_visitor_t visitor, void *arg);
 
+/**
+ * @brief 添加命令到历史记录
+ * @param shell Shell句柄
+ * @param line 命令行字符串
+ */
+void shell_add_history(shell_handle_t shell, const char *line);
+
+/**
+ * @brief 重置历史浏览位置
+ * @param shell Shell句柄
+ */
+void shell_history_reset_browse(shell_handle_t shell);
+
+/**
+ * @brief 临时保存当前正在编辑的命令
+ * @param shell Shell句柄
+ * @param line 当前命令行字符串
+ */
+void shell_history_save_temp(shell_handle_t shell, const char *line);
+
+/**
+ * @brief 获取上一条历史记录
+ * @param shell Shell句柄
+ * @return 历史命令字符串，如果没有则返回NULL
+ */
+const char *shell_get_prev_history(shell_handle_t shell);
+
+/**
+ * @brief 获取下一条历史记录
+ * @param shell Shell句柄
+ * @return 历史命令字符串，如果没有则返回NULL
+ */
+const char *shell_get_next_history(shell_handle_t shell);
+
 // ============================================
 // 命令注册函数（各模块提供）
 // ============================================

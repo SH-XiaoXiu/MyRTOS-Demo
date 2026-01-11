@@ -27,6 +27,15 @@ struct shell_core_t {
     char cmd_buffer[SHELL_CMD_BUFFER_SIZE];
     int argc;
     char *argv[SHELL_MAX_ARGS];
+
+#if SHELL_HISTORY_SIZE > 0
+    // 历史记录（环形缓冲区）
+    char history[SHELL_HISTORY_SIZE][SHELL_MAX_LINE_LENGTH];
+    int history_write_idx;  // 下一条历史写入位置
+    int history_count;      // 当前历史条数
+    int history_browse_idx; // 当前浏览位置（-1表示未浏览）
+    char history_temp[SHELL_MAX_LINE_LENGTH]; // 临时保存当前正在编辑的命令
+#endif
 };
 
 // 内部函数
@@ -47,6 +56,12 @@ shell_handle_t shell_create(const char *prompt) {
     memset(shell, 0, sizeof(struct shell_core_t));
     shell->prompt = prompt ? str_duplicate(prompt) : str_duplicate("> ");
     shell->commands_head = NULL;
+
+#if SHELL_HISTORY_SIZE > 0
+    shell->history_write_idx = 0;
+    shell->history_count = 0;
+    shell->history_browse_idx = -1;
+#endif
 
     return shell;
 }
@@ -209,3 +224,91 @@ static char *str_duplicate(const char *str) {
     }
     return dup;
 }
+
+// ============================================
+// 历史记录 API
+// ============================================
+
+#if SHELL_HISTORY_SIZE > 0
+void shell_add_history(shell_handle_t shell, const char *line) {
+    if (!shell || !line || line[0] == '\0') {
+        return;
+    }
+
+    // 不记录重复的命令（与最近一条相同）
+    if (shell->history_count > 0) {
+        int last_idx = (shell->history_write_idx + SHELL_HISTORY_SIZE - 1) % SHELL_HISTORY_SIZE;
+        if (strcmp(shell->history[last_idx], line) == 0) {
+            return;
+        }
+    }
+
+    // 写入历史记录
+    strncpy(shell->history[shell->history_write_idx], line, SHELL_MAX_LINE_LENGTH - 1);
+    shell->history[shell->history_write_idx][SHELL_MAX_LINE_LENGTH - 1] = '\0';
+
+    // 更新写入位置
+    shell->history_write_idx = (shell->history_write_idx + 1) % SHELL_HISTORY_SIZE;
+    if (shell->history_count < SHELL_HISTORY_SIZE) {
+        shell->history_count++;
+    }
+
+    // 重置浏览位置
+    shell->history_browse_idx = -1;
+}
+
+void shell_history_reset_browse(shell_handle_t shell) {
+    if (!shell) return;
+    shell->history_browse_idx = -1;
+}
+
+void shell_history_save_temp(shell_handle_t shell, const char *line) {
+    if (!shell || !line) return;
+    strncpy(shell->history_temp, line, SHELL_MAX_LINE_LENGTH - 1);
+    shell->history_temp[SHELL_MAX_LINE_LENGTH - 1] = '\0';
+}
+
+const char *shell_get_prev_history(shell_handle_t shell) {
+    if (!shell || shell->history_count == 0) {
+        return NULL;
+    }
+
+    if (shell->history_browse_idx == -1) {
+        // 第一次按上箭头，从最新的历史开始
+        shell->history_browse_idx = (shell->history_write_idx + SHELL_HISTORY_SIZE - 1) % SHELL_HISTORY_SIZE;
+    } else {
+        // 继续向上浏览
+        int next_idx = (shell->history_browse_idx + SHELL_HISTORY_SIZE - 1) % SHELL_HISTORY_SIZE;
+
+        // 检查是否到达最早的历史记录
+        int oldest_idx = (shell->history_write_idx + SHELL_HISTORY_SIZE - shell->history_count) % SHELL_HISTORY_SIZE;
+        if (shell->history_browse_idx == oldest_idx) {
+            // 已经是最早的了，不再向上
+            return shell->history[shell->history_browse_idx];
+        }
+
+        shell->history_browse_idx = next_idx;
+    }
+
+    return shell->history[shell->history_browse_idx];
+}
+
+const char *shell_get_next_history(shell_handle_t shell) {
+    if (!shell || shell->history_browse_idx == -1) {
+        return NULL;  // 没有在浏览历史
+    }
+
+    // 向下浏览
+    int next_idx = (shell->history_browse_idx + 1) % SHELL_HISTORY_SIZE;
+
+    // 检查是否回到当前输入
+    if (next_idx == shell->history_write_idx) {
+        // 回到当前输入
+        shell->history_browse_idx = -1;
+        return shell->history_temp;  // 返回临时保存的命令
+    }
+
+    shell->history_browse_idx = next_idx;
+    return shell->history[shell->history_browse_idx];
+}
+#endif
