@@ -28,6 +28,9 @@
 #include "MyRTOS_VTS.h"
 #endif
 
+// 系统程序
+#include "init.h"
+
 // 任务优先级定义
 #define BACKGROUND_TASK_PRIO 1
 #define BOOTSTRAP_TASK_PRIO 10
@@ -41,11 +44,10 @@ static TaskHandle_t g_bootstrap_task_h;
 static void bootstrap_task(void *param);
 
 //==============================================================================
-// 测试用可执行程序定义
+// 用户示例程序定义
 //==============================================================================
 
 static int blinky_main(int argc, char *argv[]);
-static int init_process_main(int argc, char *argv[]);
 static int looper_main(int argc, char *argv[]);
 static int hello_main(int argc, char *argv[]);
 static int echo_main(int argc, char *argv[]);
@@ -58,13 +60,7 @@ const ProgramDefinition_t g_program_blinky = {
     .main_func = blinky_main,
 };
 
-// init进程定义
-const ProgramDefinition_t g_program_init = {
-    .name = "init",
-    .help = "Init process - 系统启动进程",
-    .main_func = init_process_main,
-};
-
+// 用户示例程序
 const ProgramDefinition_t g_program_looper = {
     .name = "looper", .help = "一个简单的后台循环程序.", .main_func = looper_main,
 };
@@ -78,8 +74,9 @@ const ProgramDefinition_t g_program_spawner = {
     .name = "spawner", .help = "测试进程创建工具. 用法: spawner <bound|detached> <prog>", .main_func = spawner_main,
 };
 
-// Shell程序定义（将在init进程中启动）
-extern const ProgramDefinition_t g_program_shell;
+// 系统程序（外部定义）
+extern const ProgramDefinition_t g_program_init;  // Init进程
+extern const ProgramDefinition_t g_program_shell; // Shell程序
 
 //==============================================================================
 // 平台钩子函数
@@ -110,57 +107,9 @@ void Platform_AppSetup_Hook(void) {
 #endif
 }
 
-// init进程主函数 - 系统启动后的第一个用户进程
-static int init_process_main(int argc, char *argv[]) {
-    (void)argc;
-    (void)argv;
-
-    // 等待父任务切换VTS焦点（避免stdout管道阻塞）
-    Task_Delay(MS_TO_TICKS(50));
-
-    MyRTOS_printf("\n");
-    MyRTOS_printf("=== MyRTOS Shell Environment ===\n");
-    MyRTOS_printf("Starting Shell...\n");
-    char *shell_argv[] = {"shell"};
-    pid_t shell_pid = Process_RunProgram("shell", 1, shell_argv, PROCESS_MODE_BOUND);
-
-    if (shell_pid <= 0) {
-        MyRTOS_printf("Failed to start Shell!\n");
-        return -1;
-    }
-
-    // 获取shell进程的stdin/stdout管道
-    StreamHandle_t stdin_pipe = Process_GetFdHandleByPid(shell_pid, STDIN_FILENO);
-    StreamHandle_t stdout_pipe = Process_GetFdHandleByPid(shell_pid, STDOUT_FILENO);
-
-#if MYRTOS_SERVICE_VTS_ENABLE == 1
-    // 切换VTS焦点到shell进程
-    if (stdin_pipe && stdout_pipe) {
-        VTS_SetFocus(stdin_pipe, stdout_pipe);
-    }
-
-    // 等待shell进程退出或信号
-    uint32_t received_signals = Task_WaitSignal(
-        SIG_CHILD_EXIT | SIG_INTERRUPT | SIG_SUSPEND | SIG_BACKGROUND,
-        MYRTOS_MAX_DELAY, SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
-
-    // 恢复VTS焦点
-    VTS_ReturnToRootFocus();
-
-    if (received_signals & SIG_CHILD_EXIT) {
-        MyRTOS_printf("\nShell process (PID %d) exited normally.\n", shell_pid);
-    }
-#else
-    // 没有VTS，简单等待shell退出
-    while (Process_GetState(shell_pid) == PROCESS_STATE_RUNNING) {
-        Task_Delay(MS_TO_TICKS(100));
-    }
-    MyRTOS_printf("Shell process (PID %d) exited.\n", shell_pid);
-#endif
-
-    MyRTOS_printf("init process exiting.\n");
-    return 0;
-}
+//==============================================================================
+// Bootstrap任务
+//==============================================================================
 
 // Bootstrap任务：在调度器启动后启动init进程
 static void bootstrap_task(void *param) {
@@ -245,7 +194,7 @@ int main(void) {
 }
 
 //==============================================================================
-// 任务函数实现
+// 用户示例程序实现
 //==============================================================================
 
 // blinky进程主函数 - LED闪烁，用来监控系统是否正常运行
@@ -260,10 +209,6 @@ static int blinky_main(int argc, char *argv[]) {
 
     return 0;  // 永远不会到达
 }
-
-//==============================================================================
-// 测试程序实现
-//==============================================================================
 
 // looper程序，在后台周期性打印消息
 static int looper_main(int argc, char *argv[]) {
