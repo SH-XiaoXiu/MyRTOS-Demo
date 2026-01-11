@@ -13,6 +13,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#if MYRTOS_SERVICE_PROCESS_ENABLE == 1
+#include "MyRTOS_Process.h"
+#endif
+
 #if MYRTOS_SERVICE_VTS_ENABLE == 1
 #include "MyRTOS_VTS.h"
 #else
@@ -25,7 +29,8 @@ static inline int VTS_SetFocus(StreamHandle_t input_stream, StreamHandle_t outpu
     return 0;
 }
 static inline void VTS_SetTerminalMode(int mode) { (void)mode; }
-#define VTS_MODE_RAW 0
+#define VTS_MODE_CANONICAL 0
+#define VTS_MODE_RAW 1
 #endif
 
 // 用于 logall 命令的全局日志监听器句柄
@@ -69,62 +74,63 @@ static int cmd_logall(shell_handle_t shell, int argc, char *argv[]) {
     return 0;
 }
 
-// log 命令：监控指定标签或任务的实时日志
+// log 命令：监控指定标签或任务的实时日志（Shell built-in版本，启动独立进程）
 static int cmd_log(shell_handle_t shell, int argc, char *argv[]) {
     (void)shell;
-    if (argc < 2 || argc > 3) {
-        MyRTOS_printf("Usage: log <taskName_or_tag> [level]\n");
+
+#if MYRTOS_SERVICE_PROCESS_ENABLE == 1
+    // 使用进程模式执行 log 程序
+    // 将参数传递给进程：log <tag> [level]
+    if (argc < 2) {
+        MyRTOS_printf("Usage: log <tag> [level]\n");
+        MyRTOS_printf("Levels: error, warn, info, debug (default: debug)\n");
         return -1;
     }
 
-    const char *tag = argv[1];
-    LogLevel_t level = LOG_LEVEL_DEBUG; // 默认级别
-
-    if (argc == 3) {
-        if (strcasecmp(argv[2], "error") == 0) {
-            level = LOG_LEVEL_ERROR;
-        } else if (strcasecmp(argv[2], "warn") == 0) {
-            level = LOG_LEVEL_WARN;
-        } else if (strcasecmp(argv[2], "info") == 0) {
-            level = LOG_LEVEL_INFO;
-        } else if (strcasecmp(argv[2], "debug") == 0) {
-            level = LOG_LEVEL_DEBUG;
-        } else if (strcasecmp(argv[2], "none") == 0) {
-            level = LOG_LEVEL_NONE;
-        } else {
-            MyRTOS_printf("Error: Invalid log level '%s'. Use error|warn|info|debug|none.\n", argv[2]);
-            return -1;
-        }
+    // 构造程序名称和参数
+    char *prog_argv[4];
+    prog_argv[0] = "log";
+    for (int i = 1; i < argc && i < 4; i++) {
+        prog_argv[i] = argv[i];
     }
 
-    StreamHandle_t pipe = Pipe_Create(1024);
-    if (!pipe) {
-        MyRTOS_printf("Error: Failed to create pipe for logging.\n");
+    // 启动 log 进程（前台模式，BOUND 绑定到当前进程）
+    pid_t pid = Process_RunProgram("log", argc, prog_argv, PROCESS_MODE_BOUND);
+
+    if (pid <= 0) {
+        MyRTOS_printf("Error: Failed to start log program.\n");
         return -1;
     }
 
-    LogListenerHandle_t listener_h = Log_AddListener(pipe, level, tag);
-    if (!listener_h) {
-        MyRTOS_printf("Error: Failed to add log listener.\n");
-        Pipe_Delete(pipe);
-        return -1;
+    // 获取 shell 和 log 进程的 I/O 流
+    pid_t shell_pid = getpid();
+    StreamHandle_t shell_stdin = Process_GetFdHandleByPid(shell_pid, STDIN_FILENO);
+    StreamHandle_t shell_stdout = Process_GetFdHandleByPid(shell_pid, STDOUT_FILENO);
+    StreamHandle_t stdin_pipe = Process_GetFdHandleByPid(pid, STDIN_FILENO);
+    StreamHandle_t stdout_pipe = Process_GetFdHandleByPid(pid, STDOUT_FILENO);
+
+    // 切换 VTS 焦点到 log 进程
+    if (stdin_pipe && stdout_pipe) {
+        VTS_SetFocus(stdin_pipe, stdout_pipe);
     }
 
-    VTS_SetFocus(Stream_GetTaskStdIn(NULL), pipe);
-    VTS_SetTerminalMode(VTS_MODE_RAW);
-    Stream_Printf(pipe, "--- Start monitoring LOGs with tag '%s' at level %d. Press any key to stop. ---\n",
-                  tag, level);
+    // 等待子进程退出信号
+    Task_WaitSignal(SIG_CHILD_EXIT, MYRTOS_MAX_DELAY, SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
 
-    char ch;
-    Stream_Read(Stream_GetTaskStdIn(NULL), &ch, 1, MYRTOS_MAX_DELAY);
-    Stream_Printf(pipe, "\n--- Stopped monitoring tag '%s'. ---\n", tag);
-    Task_Delay(MS_TO_TICKS(10));
+    // 恢复 Shell 焦点
+    VTS_SetFocus(shell_stdin, shell_stdout);
 
-    Log_RemoveListener(listener_h);
-    VTS_ReturnToRootFocus();
-    Pipe_Delete(pipe);
+    // 获取退出码
+    int exit_code = 0;
+    Process_GetExitCode(pid, &exit_code);
 
-    return 0;
+    return exit_code;
+#else
+    (void)argc;
+    (void)argv;
+    MyRTOS_printf("Process service is not enabled.\n");
+    return -1;
+#endif
 }
 
 // loglevel 命令：设置或显示全局日志级别

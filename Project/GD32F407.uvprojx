@@ -619,6 +619,11 @@
               <FileType>1</FileType>
               <FilePath>..\MyRTOS\programs\init_main.c</FilePath>
             </File>
+            <File>
+              <FileName>log_main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\programs\log_main.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

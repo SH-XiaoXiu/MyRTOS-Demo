@@ -101,6 +101,7 @@ const ProgramDefinition_t g_program_spawner = {
 // 外部程序定义（来自其他模块）
 extern const ProgramDefinition_t g_program_init;
 extern const ProgramDefinition_t g_program_shell;
+extern const ProgramDefinition_t g_program_log;
 
 //
 // 私有函数声明
@@ -169,6 +170,7 @@ void Platform_AppSetup_Hook(void) {
     Process_RegisterProgram(&g_program_echo);
     Process_RegisterProgram(&g_program_hello);
     Process_RegisterProgram(&g_program_spawner); // 进程生成器测试工具
+    Process_RegisterProgram(&g_program_log);     // Log监控程序
 #endif
 }
 
@@ -243,13 +245,20 @@ void Platform_BSP_After_Hook(void) {
     if (console == NULL) {
         return;
     }
-    Stream_Printf(console, "\r\n\r\n");
-    Stream_Printf(console, "==================================================\r\n");
-    Stream_Printf(console, "*                       MyRTOS                    *\r\n");
-    Stream_Printf(console, "*------------------------------------------------*\r\n");
-    Stream_Printf(console, "* 作者: XiaoXiu                                  *\r\n");
-    Stream_Printf(console, "* 构建于: %s %s                *\r\n", __DATE__, __TIME__);
-    Stream_Printf(console, "==================================================\r\n");
+
+    // 打印平台硬件详细信息
+    Stream_Printf(console, "[Platform]\r\n");
+    Stream_Printf(console, "  CPU: GD32F407VGT6 (ARM Cortex-M4F, FPU enabled)\r\n");
+    Stream_Printf(console, "  Clock: HXTAL 8MHz -> PLL %lu MHz\r\n", MYRTOS_CPU_CLOCK_HZ / 1000000);
+    Stream_Printf(console, "    AHB=%lu MHz, APB1=%lu MHz, APB2=%lu MHz\r\n",
+                 MYRTOS_CPU_CLOCK_HZ / 1000000,
+                 MYRTOS_CPU_CLOCK_HZ / 4 / 1000000,
+                 MYRTOS_CPU_CLOCK_HZ / 2 / 1000000);
+    Stream_Printf(console, "  Console: USART%d @ %lu baud, 8N1\r\n",
+                 PLATFORM_CONSOLE_USART_NUM,
+                 PLATFORM_CONSOLE_BAUDRATE);
+    Stream_Printf(console, "  Timer: TIM%d (high-resolution counter)\r\n", PLATFORM_HIRES_TIMER_NUM);
+    Stream_Printf(console, "\r\n");
 }
 
 // 应用程序主入口.
@@ -280,11 +289,11 @@ static void a_task(void *param) {
     (void) param;
     while (1) {
         Task_Wait();
-        LOG_D("Task A", "被唤醒, 开始工作...");
+        LOG_D("TaskA", "被唤醒, 开始工作...");
         for (int i = 1; i <= 5; ++i) {
             Task_Delay(MS_TO_TICKS(1000));
         }
-        LOG_D("Task A", "工作完成, 唤醒 Task B 并重新等待");
+        LOG_D("TaskA", "工作完成, 唤醒 Task B 并重新等待");
         Task_Notify(g_b_task_h);
     }
 }
@@ -294,11 +303,11 @@ static void b_task(void *param) {
     (void) param;
     while (1) {
         Task_Wait();
-        LOG_D("Task B", "被唤醒, 开始工作...");
+        LOG_D("TaskB", "被唤醒, 开始工作...");
         for (int i = 1; i <= 3; ++i) {
             Task_Delay(MS_TO_TICKS(1000));
         }
-        LOG_D("Task B", "工作完成, 唤醒 Task A 并重新等待");
+        LOG_D("TaskB", "工作完成, 唤醒 Task A 并重新等待");
         Task_Notify(g_a_task_h);
     }
 }
@@ -509,18 +518,20 @@ static void bootstrap_task(void *param) {
     // 等待VTS服务就绪
     Task_Delay(MS_TO_TICKS(100));
 
-    MyRTOS_printf("\n");
-    MyRTOS_printf("Booting...\n");
+    MyRTOS_printf("[Bootstrap] System is now in userspace\n");
 
 #if MYRTOS_SERVICE_PROCESS_ENABLE == 1
     // 启动init进程（PID 1，绑定Bootstrap生命周期）
+    MyRTOS_printf("[Bootstrap] Launching init process...\n");
     char *init_argv[] = {"init"};
     pid_t init_pid = Process_RunProgram("init", 1, init_argv, PROCESS_MODE_BOUND);
 
     if (init_pid <= 0) {
-        MyRTOS_printf("FATAL: Failed to start init process!\n");
+        MyRTOS_printf("[Bootstrap] FATAL: Failed to start init (PID 1)\n");
         while (1) Task_Delay(MS_TO_TICKS(1000));
     }
+
+    MyRTOS_printf("[Bootstrap] init started (PID %d)\n", init_pid);
 
     // 获取init进程的stdin/stdout管道
     StreamHandle_t stdin_pipe = Process_GetFdHandleByPid(init_pid, STDIN_FILENO);
@@ -545,7 +556,7 @@ static void bootstrap_task(void *param) {
     }
 #endif
 
-    MyRTOS_printf("init process (PID %d) exited.\n", init_pid);
+    MyRTOS_printf("[Bootstrap] init process exited (PID %d)\n", init_pid);
 #endif
 
     // Bootstrap任务完成使命，删除自己

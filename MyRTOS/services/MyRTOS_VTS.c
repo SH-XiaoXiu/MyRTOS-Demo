@@ -63,6 +63,13 @@ static void handle_canonical_input(char ch) {
 }
 
 static void vts_process_input_char(char ch) {
+    // RAW 模式下，所有字符（包括控制字符）都直接转发给应用程序
+    if (g_vts->terminal_mode == VTS_MODE_RAW) {
+        Stream_Write(g_vts->focused_input_stream, &ch, 1, MYRTOS_MAX_DELAY);
+        return;
+    }
+
+    // CANONICAL 模式下才处理特殊控制字符
     if (ch == 0x03) {
         // Ctrl+C
         if (g_vts->config.signal_receiver_task_handle != NULL) {
@@ -99,11 +106,6 @@ static void vts_process_input_char(char ch) {
         g_vts->cursor_pos = 0;
         g_vts->ansi_state = ANSI_STATE_NORMAL;
         vts_write_physical("^B\r\n", 4);
-        return;
-    }
-
-    if (g_vts->terminal_mode == VTS_MODE_RAW) {
-        Stream_Write(g_vts->focused_input_stream, &ch, 1, MYRTOS_MAX_DELAY);
         return;
     }
     if (g_vts->ansi_state == ANSI_STATE_NORMAL) {
@@ -199,17 +201,28 @@ void VTS_ReturnToRootFocus(void) {
     g_vts->focused_input_stream = g_vts->config.root_input_stream;
     g_vts->focused_output_stream = g_vts->config.root_output_stream;
     g_vts->terminal_mode = VTS_MODE_CANONICAL;
+    // 清空行编辑缓冲区状态，防止从RAW模式切换回来时状态不一致
+    memset(g_vts->line_buffer, 0, VTS_LINE_BUFFER_SIZE);
+    g_vts->buffer_len = 0;
+    g_vts->cursor_pos = 0;
+    g_vts->ansi_state = ANSI_STATE_NORMAL;
     Mutex_Unlock(g_vts->lock);
 }
 
 int VTS_SetTerminalMode(VTS_TerminalMode_t mode) {
     if (!g_vts) return -1;
+    Mutex_Lock(g_vts->lock);
     g_vts->terminal_mode = mode;
+    Mutex_Unlock(g_vts->lock);
     return 0;
 }
 
 VTS_TerminalMode_t VTS_GetTerminalMode(void) {
-    return g_vts ? g_vts->terminal_mode : VTS_MODE_CANONICAL;
+    if (!g_vts) return VTS_MODE_CANONICAL;
+    Mutex_Lock(g_vts->lock);
+    VTS_TerminalMode_t mode = g_vts->terminal_mode;
+    Mutex_Unlock(g_vts->lock);
+    return mode;
 }
 
 
