@@ -44,9 +44,10 @@ static int shell_process_main(int argc, char *argv[]) {
     (void)argc;
     (void)argv;
 
-    // 设置当前Task为VTS信号接收者
+    // 设置当前Task为VTS信号接收者，并切换到RAW模式
 #if MYRTOS_SERVICE_VTS_ENABLE == 1
     VTS_SetSignalReceiver(Task_GetCurrentTaskHandle());
+    VTS_SetTerminalMode(VTS_MODE_RAW);
 #endif
 
     // 创建Shell实例
@@ -115,6 +116,14 @@ static int shell_process_main(int argc, char *argv[]) {
             }
 
             escape_state = 0;  // 重置转义状态
+
+            // 处理控制字符 (RAW模式下需要自己处理)
+            if (ch == 0x03) {  // Ctrl+C
+                MyRTOS_printf("^C\n");
+                idx = 0;
+                line_buffer[0] = '\0';
+                break;  // 回到提示符
+            }
 
             if (ch == '\r' || ch == '\n') {
                 MyRTOS_printf("\n");
