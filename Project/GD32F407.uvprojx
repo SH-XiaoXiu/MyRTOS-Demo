@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,GD32F407,DEBUG_PRINT=0</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Firmware\CMSIS\GD\GD32F4xx\Include;..\Firmware\GD32F4xx_standard_peripheral\Include;..\Firmware\CMSIS;..\Libraries;..\User\vts_terminal;..\User\common;..\MyRTOS\kernel\include;..\MyRTOS\platform\GD32F4xx\include;..\MyRTOS\services\include;..\MyRTOS\programs\shell\include</IncludePath>
+              <IncludePath>..\Firmware\CMSIS\GD\GD32F4xx\Include;..\Firmware\GD32F4xx_standard_peripheral\Include;..\Firmware\CMSIS;..\Libraries;..\User;..\MyRTOS\kernel\include;..\MyRTOS\platform\GD32F4xx\include;..\MyRTOS\services\include;..\MyRTOS\programs\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -387,17 +387,22 @@
             <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\vts_terminal\main.c</FilePath>
+              <FilePath>..\User\main.c</FilePath>
             </File>
             <File>
               <FileName>MyRTOS_Config.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\User\vts_terminal\MyRTOS_Config.h</FilePath>
+              <FilePath>..\User\MyRTOS_Config.h</FilePath>
             </File>
             <File>
               <FileName>gd32f4xx_it.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\common\gd32f4xx_it.c</FilePath>
+              <FilePath>..\User\gd32f4xx_it.c</FilePath>
+            </File>
+            <File>
+              <FileName>gd32f4xx_libopt.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\gd32f4xx_libopt.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -567,42 +572,52 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>MyRTOS\shell</GroupName>
+          <GroupName>MyRTOS\program</GroupName>
           <Files>
             <File>
               <FileName>shell_core.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\programs\shell\shell_core.c</FilePath>
+              <FilePath>..\MyRTOS\programs\shell_core.c</FilePath>
             </File>
             <File>
-              <FileName>shell_main.c</FileName>
+              <FileName>shell_process_main.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\programs\shell\shell_main.c</FilePath>
+              <FilePath>..\MyRTOS\programs\shell_process_main.c</FilePath>
             </File>
             <File>
               <FileName>shell_builtin.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\programs\shell\shell_builtin.c</FilePath>
+              <FilePath>..\MyRTOS\programs\shell_builtin.c</FilePath>
             </File>
             <File>
               <FileName>shell_monitor.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\programs\shell\shell_monitor.c</FilePath>
+              <FilePath>..\MyRTOS\programs\shell_monitor.c</FilePath>
             </File>
             <File>
               <FileName>shell_log.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\programs\shell\shell_log.c</FilePath>
+              <FilePath>..\MyRTOS\programs\shell_log.c</FilePath>
             </File>
             <File>
               <FileName>shell_process.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\programs\shell\shell_process.c</FilePath>
+              <FilePath>..\MyRTOS\programs\shell_process.c</FilePath>
             </File>
             <File>
               <FileName>shell_platform.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\MyRTOS\programs\shell\shell_platform.c</FilePath>
+              <FilePath>..\MyRTOS\programs\shell_platform.c</FilePath>
+            </File>
+            <File>
+              <FileName>shell_sysinfo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\programs\shell_sysinfo.c</FilePath>
+            </File>
+            <File>
+              <FileName>init_main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\MyRTOS\programs\init_main.c</FilePath>
             </File>
           </Files>
         </Group>

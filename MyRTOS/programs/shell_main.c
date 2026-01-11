@@ -2,7 +2,7 @@
  * @file  shell_main.c
  * @brief Shell 主程序 - Demo模式作为Task运行
  */
-#include "shell.h"
+#include "include/shell.h"
 #include "MyRTOS.h"
 #include "MyRTOS_IO.h"
 #include "platform.h"

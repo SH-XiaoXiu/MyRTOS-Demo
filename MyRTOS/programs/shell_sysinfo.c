@@ -2,7 +2,7 @@
  * @file  shell_sysinfo.c
  * @brief 系统信息命令（top, cat）
  */
-#include "shell.h"
+#include "include/shell.h"
 
 #if MYRTOS_SERVICE_MONITOR_ENABLE == 1
 

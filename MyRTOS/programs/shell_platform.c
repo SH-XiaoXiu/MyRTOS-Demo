@@ -2,7 +2,7 @@
  * @file  shell_platform.c
  * @brief 平台命令（reboot）
  */
-#include "shell.h"
+#include "include/shell.h"
 #include "MyRTOS_IO.h"
 #include "MyRTOS.h"
 #include "platform.h"

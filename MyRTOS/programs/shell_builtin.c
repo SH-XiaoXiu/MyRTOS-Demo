@@ -2,7 +2,7 @@
  * @file  shell_builtin.c
  * @brief Shell 内置命令（help）
  */
-#include "shell.h"
+#include "include/shell.h"
 #include "MyRTOS_IO.h"
 #include <stdio.h>
 

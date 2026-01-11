@@ -2,7 +2,7 @@
  * @file  shell_log.c
  * @brief 日志命令（logall, log, loglevel）
  */
-#include "shell.h"
+#include "include/shell.h"
 
 #if MYRTOS_SERVICE_LOG_ENABLE == 1
 

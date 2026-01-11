@@ -2,7 +2,7 @@
  * @file  shell_process_main.c
  * @brief Shell Process模式 - 作为用户进程运行
  */
-#include "shell.h"
+#include "include/shell.h"
 #include "MyRTOS.h"
 #include "MyRTOS_IO.h"
 #include "platform.h"

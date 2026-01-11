@@ -2,7 +2,7 @@
  * @file  shell_monitor.c
  * @brief 系统监控命令（ps）
  */
-#include "shell.h"
+#include "include/shell.h"
 
 #if MYRTOS_SERVICE_MONITOR_ENABLE == 1
 
