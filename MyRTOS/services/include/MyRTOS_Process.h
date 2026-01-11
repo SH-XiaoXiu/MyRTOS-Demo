@@ -174,6 +174,13 @@ pid_t getpid(void);
 const char *Process_GetName(pid_t pid);
 
 /**
+ * @brief 获取进程的Task句柄
+ * @param pid 进程ID
+ * @return Task句柄，失败返回NULL
+ */
+TaskHandle_t Process_GetTaskHandle(pid_t pid);
+
+/**
  * @brief 获取进程状态
  * @param pid 进程ID
  * @return 进程状态，失败返回-1

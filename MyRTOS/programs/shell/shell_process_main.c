@@ -22,6 +22,11 @@ static int shell_process_main(int argc, char *argv[]) {
     (void)argc;
     (void)argv;
 
+    // 设置当前Task为VTS信号接收者
+#if MYRTOS_SERVICE_VTS_ENABLE == 1
+    VTS_SetSignalReceiver(Task_GetCurrentTaskHandle());
+#endif
+
     // 创建Shell实例
     shell_handle_t shell = shell_create("MyRTOS> ");
     if (!shell) {

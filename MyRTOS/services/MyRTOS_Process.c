@@ -371,6 +371,22 @@ const char *Process_GetName(pid_t pid) {
 }
 
 /**
+ * @brief 获取进程的Task句柄
+ */
+TaskHandle_t Process_GetTaskHandle(pid_t pid) {
+    TaskHandle_t task = NULL;
+
+    Mutex_Lock(g_process_lock);
+    Process_t *proc = find_process_by_pid_locked(pid);
+    if (proc != NULL) {
+        task = proc->task;
+    }
+    Mutex_Unlock(g_process_lock);
+
+    return task;
+}
+
+/**
  * @brief 获取进程状态
  */
 int Process_GetState(pid_t pid) {

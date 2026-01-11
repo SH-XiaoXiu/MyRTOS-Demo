@@ -31,6 +31,11 @@ static void manage_foreground_session(pid_t pid) {
         return;
     }
 
+    // 保存shell自己的stdin/stdout，以便稍后恢复焦点
+    pid_t shell_pid = getpid();
+    StreamHandle_t shell_stdin = Process_GetFdHandleByPid(shell_pid, STDIN_FILENO);
+    StreamHandle_t shell_stdout = Process_GetFdHandleByPid(shell_pid, STDOUT_FILENO);
+
     // 获取进程的stdin/stdout流
     StreamHandle_t stdin_pipe = Process_GetFdHandleByPid(pid, STDIN_FILENO);
     StreamHandle_t stdout_pipe = Process_GetFdHandleByPid(pid, STDOUT_FILENO);
@@ -39,18 +44,18 @@ static void manage_foreground_session(pid_t pid) {
         return;
     }
 
-    // 切换VTS焦点
+    // 切换VTS焦点到前台进程
     VTS_SetFocus(stdin_pipe, stdout_pipe);
 
     // 等待子进程退出或信号
+    // shell的Task等待信号，信号接收器保持为shell自己
     uint32_t received_signals = Task_WaitSignal(SIG_CHILD_EXIT | SIG_INTERRUPT | SIG_SUSPEND | SIG_BACKGROUND,
                                                 MYRTOS_MAX_DELAY, SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
 
-    // 恢复Shell焦点
-    VTS_ReturnToRootFocus();
+    // 恢复Shell焦点（恢复到shell自己的stdio，而不是root）
+    VTS_SetFocus(shell_stdin, shell_stdout);
 
     if (received_signals & SIG_INTERRUPT) {
-        MyRTOS_printf("^C\n");
         Process_Kill(pid);
         Task_WaitSignal(SIG_CHILD_EXIT, MS_TO_TICKS(100), SIGNAL_WAIT_ANY | SIGNAL_CLEAR_ON_EXIT);
     } else if (received_signals & SIG_SUSPEND) {
