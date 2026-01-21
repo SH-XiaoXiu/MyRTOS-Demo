@@ -4,5 +4,5 @@
 # 添加 GD32F407 Demo
 add_subdirectory(gd32f407_demo)
 
-# 后续可以添加其他 Demo
-# add_subdirectory(qemu_arm_demo)
+# 添加 QEMU MPS2-AN385 Demo
+add_subdirectory(qemu_mps2_an385_demo)

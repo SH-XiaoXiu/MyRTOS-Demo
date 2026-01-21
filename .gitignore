@@ -1,6 +1,7 @@
 .idea
 resources
 *.o
+build/
 # Keil Project files
 
 
@@ -20,4 +21,3 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
-
