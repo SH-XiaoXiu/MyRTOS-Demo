@@ -1,30 +1,13 @@
-cmake_minimum_required(VERSION 3.20)
-project(MyRTOS C ASM)
+# MyRTOS 项目 - 根 CMakeLists.txt
+# 此 CMake 配置主要用于 CLion IDE 代码提示和索引，不用于实际编译
+# 实际编译请使用 Keil 工程 (demos/gd32f407_demo/Keil/GD32F407.uvprojx)
+
+cmake_minimum_required(VERSION 3.16)
+project(MyRTOS_Project C ASM)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_SYSTEM_NAME Generic)
 
-# 收集所有源文件
-file(GLOB_RECURSE SOURCE_FILES
-        "${CMAKE_CURRENT_SOURCE_DIR}/User/**.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Firmware/**.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/**.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/MyRTOS/**.c"
-)
-
-# 创建可执行文件目标
-add_executable(MyRTOS ${SOURCE_FILES})
-
-# 设置头文件包含路径
-target_include_directories(MyRTOS PRIVATE
-        ./Firmware/CMSIS
-        ./Firmware/CMSIS/GD/GD32F4xx/Include
-        ./Firmware/GD32F4xx_standard_peripheral/Include
-        ./Libraries
-        ./MyRTOS/kernel/include
-        ./MyRTOS/services/include
-        ./MyRTOS/programs/include
-        ./MyRTOS/platform/GD32F4xx/include
-        ./MyRTOS/include
-        ./User
-)
+# 添加子目录
+add_subdirectory(MyRTOS)
+add_subdirectory(demos)
