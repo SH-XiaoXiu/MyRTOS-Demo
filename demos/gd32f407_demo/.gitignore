@@ -1,0 +1,7 @@
+# Keil build outputs
+Keil/Listings/
+Keil/Objects/
+
+# Keil user-specific files
+Keil/*.uvguix.*
+Keil/*.uvoptx

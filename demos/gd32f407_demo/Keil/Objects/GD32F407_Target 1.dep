@@ -1,1974 +1,0 @@
-Dependencies for Project 'GD32F407', Target 'Target 1': (DO NOT MODIFY !)
-CompilerVersion: 6240000::V6.24::ARMCLANG
-F (..\src\main.c)(0x6970CC81)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/main.o -MMD)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\boot\include\MyRTOS_Boot.h)(0x6970CFBC)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Log.h)(0x6970A60F)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Timer.h)(0x6970A60F)
-I (..\platform\include\platform.h)(0x6970CB80)
-I (..\config\platform_config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-I (..\..\..\MyRTOS\services\include\MyRTOS_VTS.h)(0x6970C058)
-I (..\..\..\MyRTOS\programs\include\init.h)(0x6970C058)
-F (..\src\gd32f4xx_it.c)(0x6970C37C)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/gd32f4xx_it.o -MMD)
-I (..\src\gd32f4xx_it.h)(0x6970C37C)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-F (..\config\MyRTOS_Config.h)(0x6970CE65)()
-F (..\config\gd32f4xx_libopt.h)(0x6970C37A)()
-F (..\Firmware\CMSIS\GD\GD32F4xx\Source\ARM\startup_gd32f407_427.s)(0x6970A60E)(--target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -masm=auto  -Wa,armasm,--diag_suppress=A1950W -c-gdwarf-4 -Wa,armasm,--pd,"__MICROLIB SETA 1"-IDevice/F4XX/Include-Wa,armasm,--pd,"__UVISION_VERSION SETA 543"-o ./objects/startup_gd32f407_427.o)
-F (..\Firmware\CMSIS\GD\GD32F4xx\Source\system_gd32f4xx.c)(0x6970A60E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/system_gd32f4xx.o -MMD)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-F (..\Firmware\GD32F4xx_standard_peripheral\Source\gd32f4xx_gpio.c)(0x6970A60E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/gd32f4xx_gpio.o -MMD)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-F (..\Firmware\GD32F4xx_standard_peripheral\Source\gd32f4xx_rcu.c)(0x6970A60E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/gd32f4xx_rcu.o -MMD)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-F (..\Firmware\GD32F4xx_standard_peripheral\Source\gd32f4xx_misc.c)(0x6970A60E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/gd32f4xx_misc.o -MMD)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-F (..\Firmware\GD32F4xx_standard_peripheral\Source\gd32f4xx_dma.c)(0x6970A60E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/gd32f4xx_dma.o -MMD)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-F (..\Firmware\GD32F4xx_standard_peripheral\Source\gd32f4xx_usart.c)(0x6970A60E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/gd32f4xx_usart.o -MMD)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-F (..\Firmware\GD32F4xx_standard_peripheral\Source\gd32f4xx_adc.c)(0x6970A60E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/gd32f4xx_adc.o -MMD)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-F (..\Firmware\GD32F4xx_standard_peripheral\Source\gd32f4xx_timer.c)(0x6970A60E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/gd32f4xx_timer.o -MMD)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-F (..\Firmware\GD32F4xx_standard_peripheral\Source\gd32f4xx_exti.c)(0x6970A60E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/gd32f4xx_exti.o -MMD)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-F (..\Firmware\GD32F4xx_standard_peripheral\Source\gd32f4xx_syscfg.c)(0x6970A60E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/gd32f4xx_syscfg.o -MMD)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-F (..\Libraries\lib_usart0.c)(0x6970A60E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/lib_usart0.o -MMD)
-I (..\Libraries\lib_usart0.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-F (..\..\..\MyRTOS\kernel\myrtos_init.c)(0x6970C25F)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_init.o -MMD)
-I (..\..\..\MyRTOS\private\myrtos_kernel.h)(0x6970C274)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Kernel_Private.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-F (..\..\..\MyRTOS\kernel\myrtos_memory.c)(0x6970C173)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_memory.o -MMD)
-I (..\..\..\MyRTOS\private\myrtos_kernel.h)(0x6970C274)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Kernel_Private.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-F (..\..\..\MyRTOS\kernel\myrtos_scheduler.c)(0x6970C174)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_scheduler.o -MMD)
-I (..\..\..\MyRTOS\private\myrtos_kernel.h)(0x6970C274)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Kernel_Private.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-F (..\..\..\MyRTOS\kernel\myrtos_task.c)(0x6970C1D4)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_task.o -MMD)
-I (..\..\..\MyRTOS\private\myrtos_kernel.h)(0x6970C274)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Kernel_Private.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-F (..\..\..\MyRTOS\kernel\myrtos_signal.c)(0x6970C1D6)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_signal.o -MMD)
-I (..\..\..\MyRTOS\private\myrtos_kernel.h)(0x6970C274)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Kernel_Private.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-F (..\..\..\MyRTOS\kernel\myrtos_queue.c)(0x6970C21E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_queue.o -MMD)
-I (..\..\..\MyRTOS\private\myrtos_kernel.h)(0x6970C274)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Kernel_Private.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-F (..\..\..\MyRTOS\kernel\myrtos_mutex.c)(0x6970C21F)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_mutex.o -MMD)
-I (..\..\..\MyRTOS\private\myrtos_kernel.h)(0x6970C274)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Kernel_Private.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-F (..\..\..\MyRTOS\kernel\myrtos_semaphore.c)(0x6970C25D)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_semaphore.o -MMD)
-I (..\..\..\MyRTOS\private\myrtos_kernel.h)(0x6970C274)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Kernel_Private.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-F (..\..\..\MyRTOS\kernel\myrtos_tick.c)(0x6970C25E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_tick.o -MMD)
-I (..\..\..\MyRTOS\private\myrtos_kernel.h)(0x6970C274)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Kernel_Private.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-F (..\..\..\MyRTOS\kernel\myrtos_extension.c)(0x6970C261)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_extension.o -MMD)
-I (..\..\..\MyRTOS\private\myrtos_kernel.h)(0x6970C274)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Kernel_Private.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-F (..\..\..\MyRTOS\services\MyRTOS_AsyncIO.c)(0x6970A60F)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_asyncio.o -MMD)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Utils.h)(0x6970A60F)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_AsyncIO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-F (..\..\..\MyRTOS\services\MyRTOS_IO.c)(0x6970A60E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_io.o -MMD)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-F (..\..\..\MyRTOS\services\MyRTOS_Log.c)(0x6970A60F)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_log.o -MMD)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Log.h)(0x6970A60F)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Utils.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_AsyncIO.h)(0x6970A60F)
-F (..\..\..\MyRTOS\services\MyRTOS_Monitor.c)(0x6970A60F)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_monitor.o -MMD)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Monitor.h)(0x6970A60F)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Monitor_Standards.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Kernel_Private.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS.h)(0x6970A60E)
-F (..\..\..\MyRTOS\services\MyRTOS_Timer.c)(0x6970A60F)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_timer.o -MMD)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Timer.h)(0x6970A60F)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-F (..\..\..\MyRTOS\services\MyRTOS_Utils.c)(0x6970A60F)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_utils.o -MMD)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Utils.h)(0x6970A60F)
-F (..\..\..\MyRTOS\services\MyRTOS_VTS.c)(0x6970C058)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_vts.o -MMD)
-I (..\..\..\MyRTOS\services\include\MyRTOS_VTS.h)(0x6970C058)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-F (..\..\..\MyRTOS\services\MyRTOS_Process.c)(0x6970C058)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_process.o -MMD)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_VTS.h)(0x6970C058)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Log.h)(0x6970A60F)
-F (..\..\..\MyRTOS\arch\ARM_CM4\ARM_CM4F.c)(0x6970CE51)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/arm_cm4f.o -MMD)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Kernel_Private.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS.h)(0x6970A60E)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-F (..\..\..\MyRTOS\boot\MyRTOS_Boot.c)(0x6970CFE0)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/myrtos_boot.o -MMD)
-I (..\..\..\MyRTOS\boot\include\MyRTOS_Boot.h)(0x6970CFBC)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_AsyncIO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Log.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Monitor.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Monitor_Standards.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Timer.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_VTS.h)(0x6970C058)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-F (..\platform\platform_hw.c)(0x6970CB91)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/platform_hw.o -MMD)
-I (..\platform\include\platform.h)(0x6970CB80)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\platform_config.h)(0x6970C37A)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-F (..\platform\platform_console.c)(0x6970CBB8)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/platform_console.o -MMD)
-I (..\platform\include\platform.h)(0x6970CB80)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\platform_config.h)(0x6970C37A)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-F (..\platform\platform_timer.c)(0x6970CBB9)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/platform_timer.o -MMD)
-I (..\platform\include\platform.h)(0x6970CB80)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\platform_config.h)(0x6970C37A)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-F (..\platform\platform_hooks.c)(0x6970CBD6)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/platform_hooks.o -MMD)
-I (..\platform\include\platform.h)(0x6970CB80)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\platform_config.h)(0x6970C37A)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-F (..\platform\platform_error_handler.c)(0x6970CBD7)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/platform_error_handler.o -MMD)
-I (..\platform\include\platform.h)(0x6970CB80)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\platform_config.h)(0x6970C37A)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Extension.h)(0x6970A60F)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-F (..\..\..\MyRTOS\programs\shell_core.c)(0x6970C058)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/shell_core.o -MMD)
-I (..\..\..\MyRTOS\programs\include\shell.h)(0x6970C058)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-F (..\..\..\MyRTOS\programs\shell_process_main.c)(0x6970C058)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/shell_process_main.o -MMD)
-I (..\..\..\MyRTOS\programs\include\shell.h)(0x6970C058)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\platform\include\platform.h)(0x6970CB80)
-I (..\config\platform_config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_VTS.h)(0x6970C058)
-F (..\..\..\MyRTOS\programs\shell_builtin.c)(0x6970C058)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/shell_builtin.o -MMD)
-I (..\..\..\MyRTOS\programs\include\shell.h)(0x6970C058)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-F (..\..\..\MyRTOS\programs\shell_monitor.c)(0x6970C058)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/shell_monitor.o -MMD)
-I (..\..\..\MyRTOS\programs\include\shell.h)(0x6970C058)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Monitor.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Monitor_Standards.h)(0x6970A60F)
-I (..\..\..\MyRTOS\kernel\include\MyRTOS_Port.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-F (..\..\..\MyRTOS\programs\shell_log.c)(0x6970C058)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/shell_log.o -MMD)
-I (..\..\..\MyRTOS\programs\include\shell.h)(0x6970C058)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Log.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_VTS.h)(0x6970C058)
-F (..\..\..\MyRTOS\programs\shell_process.c)(0x6970C058)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/shell_process.o -MMD)
-I (..\..\..\MyRTOS\programs\include\shell.h)(0x6970C058)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_VTS.h)(0x6970C058)
-F (..\..\..\MyRTOS\programs\shell_platform.c)(0x6970C058)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/shell_platform.o -MMD)
-I (..\..\..\MyRTOS\programs\include\shell.h)(0x6970C058)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\platform\include\platform.h)(0x6970CB80)
-I (..\config\platform_config.h)(0x6970C37A)
-F (..\..\..\MyRTOS\programs\shell_sysinfo.c)(0x6970C058)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/shell_sysinfo.o -MMD)
-I (..\..\..\MyRTOS\programs\include\shell.h)(0x6970C058)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Monitor.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Monitor_Standards.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_VTS.h)(0x6970C058)
-F (..\..\..\MyRTOS\programs\init_main.c)(0x6970C058)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/init_main.o -MMD)
-I (..\..\..\MyRTOS\programs\include\init.h)(0x6970C058)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_VTS.h)(0x6970C058)
-F (..\..\..\MyRTOS\programs\log_main.c)(0x6970C058)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/log_main.o -MMD)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Log.h)(0x6970A60F)
-F (..\..\..\MyRTOS\programs\shell_main.c)(0x6970C058)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -w -I ../config -I ../src -I ../platform/include -I ../Firmware/CMSIS/GD/GD32F4xx/Include -I ../Firmware/GD32F4xx_standard_peripheral/Include -I ../Firmware/CMSIS -I ../Libraries -I ../../../MyRTOS/include -I ../../../MyRTOS/private -I ../../../MyRTOS/kernel/include -I ../../../MyRTOS/boot/include -I ../../../MyRTOS/services/include -I ../../../MyRTOS/programs/include-IDevice/F4XX/Include-D__UVISION_VERSION="543" -DUSE_STDPERIPH_DRIVER -DGD32F407 -DDEBUG_PRINT="0"-o ./objects/shell_main.o -MMD)
-I (..\..\..\MyRTOS\programs\include\shell.h)(0x6970C058)
-I (..\..\..\MyRTOS\include\MyRTOS.h)(0x6970C115)
-I (..\config\MyRTOS_Config.h)(0x6970CE65)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\gd32f4xx.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmInstr.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cmFunc.h)(0x6970A60E)
-I (..\Firmware\CMSIS\core_cm4_simd.h)(0x6970A60E)
-I (..\Firmware\CMSIS\GD\GD32F4xx\Include\system_gd32f4xx.h)(0x6970A60E)
-I (..\config\gd32f4xx_libopt.h)(0x6970C37A)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_adc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_can.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_crc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_ctc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dac.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dbg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dci.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_dma.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exti.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fmc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_fwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_gpio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_i2c.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_iref.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_misc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_pmu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rcu.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_rtc.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_sdio.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_spi.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_syscfg.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_timer.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_trng.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_usart.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_wwdgt.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_enet.h)(0x6970A60E)
-I (..\Firmware\GD32F4xx_standard_peripheral\Include\gd32f4xx_exmc.h)(0x6970A60E)
-I (..\config\MyRTOS_Service_Config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Process.h)(0x6970C058)
-I (..\..\..\MyRTOS\services\include\MyRTOS_Stream_Def.h)(0x6970A60F)
-I (..\..\..\MyRTOS\services\include\MyRTOS_IO.h)(0x6970A60F)
-I (..\platform\include\platform.h)(0x6970CB80)
-I (..\config\platform_config.h)(0x6970C37A)
-I (..\..\..\MyRTOS\services\include\MyRTOS_VTS.h)(0x6970C058)
